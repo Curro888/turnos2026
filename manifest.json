@@ -1,0 +1,22 @@
+{
+  "name": "Planificación 2026",
+  "short_name": "Turnos 2026",
+  "description": "Gestión de turnos y cambios de libres",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1e1b4b",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "Bulldog.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "Bulldog.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

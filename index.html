@@ -1,0 +1,1323 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Planificación 2026</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="Bulldog.png">
+    <style>
+        :root {
+            --bg: #f5f3ff; --primary: #8b5cf6; --primary-dark: #7c3aed;
+            --text: #1e1b4b; --danger: #ef4444; --success: #22c55e;
+            --white: #ffffff; --yellow: #facc15; --card-blue: #bae6fd;
+            --free-bg: #fee2e2; --pink: #f472b6;
+        }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; user-select: none; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-top: env(safe-area-inset-top); overscroll-behavior-y: none; }
+        header { background: white; padding: 15px; border-bottom: 2px solid #ddd6fe; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .user-card { background: var(--card-blue) !important; padding: 16px; margin-bottom: 10px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #7dd3fc; }
+        .card-trabaja { border-left: 6px solid var(--primary); }
+        .card-libra { border-left: 6px solid var(--danger); }
+        .name-big { font-size: 1.1rem; font-weight: 800; color: var(--text); }
+        .id-black { font-size: 0.9rem; color: #334155; font-weight: 900; margin-left: 8px; }
+        .info-tag { font-size: 0.75rem; color: var(--primary-dark); background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px; font-weight: 700; margin-right: 8px; border: 1px solid #7dd3fc; }
+        .d-cell { padding: 10px 0; font-size: 0.85rem; text-align: center; border-radius: 6px; cursor: pointer; margin: 2px; font-weight: 500; border: 1px solid transparent; }
+        .is-free { background: #fee2e2; color: #991b1b; }
+        .is-work { background: #f8fafc; color: #475569; }
+        .is-sun { text-decoration: underline; font-weight: 900; color: #000; }
+        .b-inter { border: 2px solid var(--yellow) !important; background: #fefce8 !important; color: #854d0e !important; }
+        .b-cambio-libre { border: 2px solid var(--danger) !important; background: #fff1f2 !important; color: var(--danger) !important; }
+        .b-pend { border: 2px solid var(--primary) !important; background: var(--white) !important; color: var(--primary) !important; }
+        .b-vac { border: 2px solid var(--success) !important; background: #f0fdf4 !important; color: #166534 !important; }
+        .b-generado { border: 2px solid var(--pink) !important; background: #fdf2f8 !important; color: #be185d !important; }
+        .legend-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 12px; background: #ede9fe; border-radius: 12px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; padding: 4px; border-radius: 6px; }
+        .legend-item:active { background: #ddd6fe; }
+        .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); }
+        .cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; padding: 10px; }
+        .month-box { background: white; border-radius: 12px; padding: 10px; border: 1px solid #ddd6fe; }
+        .days-container { display: grid; grid-template-columns: repeat(7, 1fr); }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; }
+        .btn-main:active { background: var(--primary-dark); }
+
+        /* CONTEXT MENU - arrastrable */
+        #ctx-menu {
+            display: none; position: fixed; background: white; border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 2000; width: 240px;
+            border: 1px solid #ddd6fe; overflow: hidden;
+            touch-action: none;
+        }
+        #ctx-menu-handle {
+            background: #ede9fe; padding: 10px; text-align: center;
+            font-size: 0.7rem; font-weight: 800; color: var(--primary-dark);
+            letter-spacing: 0.05em; cursor: grab; border-bottom: 1px solid #ddd6fe;
+        }
+        .menu-opt { padding: 15px; border-bottom: 1px solid #f5f3ff; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--text); }
+        .menu-opt:active { background: #f5f3ff; }
+
+        #vac-modal, #report-modal, #confirm-modal {
+            display: none; position: fixed; inset: 0; background: rgba(30,27,75,0.6);
+            z-index: 3000; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-box { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--primary); }
+        .input-app { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd6fe; border-radius: 12px; font-size: 1.2rem; text-align: center; outline: none; color: var(--primary-dark); }
+        .report-content { max-height: 300px; overflow-y: auto; text-align: left; margin: 15px 0; padding-right: 5px; }
+        .report-row { padding: 10px; border-bottom: 1px solid #f5f3ff; font-size: 0.85rem; }
+        .close-panel-btn { position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; color: var(--primary-dark); border: 1px solid #ddd6fe; }
+        .close-panel-btn:active { background: #e2e8f0; }
+        #selection-notice { display: none; position: fixed; top: 0; left: 0; width: 100%; background: var(--yellow); padding: 10px; padding-top: calc(env(safe-area-inset-top) + 5px); text-align: center; font-weight: 800; font-size: 0.75rem; z-index: 4000; color: #854d0e; box-shadow: 0 2px 10px rgba(0,0,0,0.1); line-height: 1.2; pointer-events: none; }
+
+        /* LOGIN STEPS */
+        .login-step { display: none; }
+        .login-step.active { display: block; }
+        .login-btn-big { width: 100%; padding: 16px; margin: 8px 0; border: 2px solid var(--primary); border-radius: 14px; background: white; font-size: 1rem; font-weight: 800; color: var(--primary-dark); cursor: pointer; transition: background 0.15s; }
+        .login-btn-big:active { background: var(--bg); }
+        .login-btn-big.selected { background: var(--primary); color: white; }
+        select.input-app { appearance: none; background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 15px center; }
+
+        /* MEMBER LIST in group setup */
+        .member-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #ddd6fe; border-radius: 10px; margin-bottom: 8px; background: #faf9ff; font-size: 0.85rem; }
+        .member-row .member-name { font-weight: 700; color: var(--text); }
+        .member-row .member-sub { font-size: 0.75rem; color: #64748b; }
+        .btn-danger-sm { background: #fee2e2; color: var(--danger); border: none; border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
+    </style>
+</head>
+<body ontouchmove="cancelarTodoTimer()">
+
+<!-- ===== LOGIN ===== -->
+<div id="login-view" style="position:fixed; inset:0; background:#1e1b4b; display:flex; align-items:center; justify-content:center; z-index:9999; overflow-y:auto; padding: 20px 0;">
+    <div style="background:white; padding:28px; border-radius:20px; text-align:center; width:90%; max-width:340px; border-bottom:5px solid var(--primary);">
+        <h2 style="color:var(--primary); margin:0 0 4px 0;">Planificación 2026</h2>
+        <p style="font-size:0.8rem; color:#64748b; margin-bottom:20px;">¿Cómo quieres acceder?</p>
+
+        <!-- PASO 0: Individual o Grupo -->
+        <div id="step-0" class="login-step active">
+            <button class="login-btn-big" onclick="eligeModo('individual')">👤 Individual<br><span style="font-size:0.75rem; font-weight:500; opacity:0.7">Solo para mí</span></button>
+            <button class="login-btn-big" onclick="eligeModo('grupo')">👥 Grupo<br><span style="font-size:0.75rem; font-weight:500; opacity:0.7">Con compañeros</span></button>
+        </div>
+
+        <!-- PASO 1 (individual): ID + contraseña -->
+        <div id="step-individual" class="login-step">
+            <p style="font-size:0.8rem; color:#64748b; margin:0 0 10px 0;">Acceso individual</p>
+            <input type="number" id="userID" placeholder="ID Empleado" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <input type="password" id="userPass" placeholder="Contraseña" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
+            <button onclick="validarAcceso()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">ENTRAR</button>
+            <div onclick="volverStep('step-0')" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
+        </div>
+
+        <!-- PASO 1 (grupo): ¿Nuevo o existente? -->
+        <div id="step-grupo-tipo" class="login-step">
+            <p style="font-size:0.8rem; color:#64748b; margin:0 0 10px 0;">¿Qué quieres hacer?</p>
+            <button class="login-btn-big" onclick="eligeGrupoTipo('existente')">🔑 Unirme a un grupo existente</button>
+            <button class="login-btn-big" onclick="eligeGrupoTipo('nuevo')">✨ Crear un grupo nuevo</button>
+            <div onclick="volverStep('step-0')" style="font-size:0.8rem; color:var(--primary); cursor:pointer; margin-top:10px;">← Volver</div>
+        </div>
+
+        <!-- PASO: Unirse a grupo existente -->
+        <div id="step-grupo-existente" class="login-step">
+            <p style="font-size:0.8rem; color:#64748b; margin:0 0 10px 0;">Accede con los datos del grupo</p>
+            <input type="text" id="grupoCodigo" placeholder="Código del grupo" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <input type="password" id="grupoPass" placeholder="Contraseña del grupo" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <p style="font-size:0.8rem; color:#64748b; margin:0 0 10px 0;">Tus datos:</p>
+            <input type="text" id="grupoMiNombre" placeholder="Tu nombre" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <input type="number" id="grupoMiID" placeholder="Tu ID de empleado" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <select id="grupoMiTipo" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
+                <option value="">Selecciona tu turno</option>
+                <option value="73/27">🌙 N · 73/27</option>
+                <option value="80/20">🌙 N · 80/20</option>
+            </select>
+            <select id="grupoMiGrupo" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
+                <option value="">Selecciona tu grupo de libres</option>
+                <option value="1">Grupo 1</option><option value="2">Grupo 2</option>
+                <option value="3">Grupo 3</option><option value="4">Grupo 4</option>
+                <option value="5">Grupo 5</option><option value="6">Grupo 6</option>
+                <option value="7">Grupo 7</option><option value="8">Grupo 8</option>
+                <option value="9">Grupo 9</option><option value="10">Grupo 10</option>
+                <option value="11">Grupo 11</option><option value="12">Grupo 12</option>
+                <option value="13">Grupo 13</option><option value="14">Grupo 14</option>
+                <option value="15">Grupo 15</option>
+            </select>
+            <button onclick="unirseGrupo()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">ENTRAR AL GRUPO</button>
+            <div onclick="volverStep('step-grupo-tipo')" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
+        </div>
+
+        <!-- PASO: Crear grupo nuevo -->
+        <div id="step-grupo-nuevo" class="login-step">
+            <p style="font-size:0.8rem; color:#64748b; margin:0 0 10px 0;">Crea tu grupo</p>
+            <input type="text" id="nuevoGrupoNombre" placeholder="Nombre del grupo" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <input type="password" id="nuevoGrupoPass" placeholder="Contraseña del grupo" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <input type="password" id="nuevoGrupoPass2" placeholder="Repite la contraseña" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <p style="font-size:0.8rem; color:#64748b; margin:5px 0;">Tus datos (primer miembro):</p>
+            <input type="text" id="nuevoMiNombre" placeholder="Tu nombre" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <input type="number" id="nuevoMiID" placeholder="Tu ID de empleado" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <select id="nuevoMiTipo" class="input-app" style="font-size:1rem; margin:5px 0;">
+                <option value="">Selecciona tu turno</option>
+                <option value="73/27">🌙 N · 73/27</option>
+                <option value="80/20">🌙 N · 80/20</option>
+            </select>
+            <select id="nuevoMiGrupo" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
+                <option value="">Selecciona tu grupo de libres</option>
+                <option value="1">Grupo 1</option><option value="2">Grupo 2</option>
+                <option value="3">Grupo 3</option><option value="4">Grupo 4</option>
+                <option value="5">Grupo 5</option><option value="6">Grupo 6</option>
+                <option value="7">Grupo 7</option><option value="8">Grupo 8</option>
+                <option value="9">Grupo 9</option><option value="10">Grupo 10</option>
+                <option value="11">Grupo 11</option><option value="12">Grupo 12</option>
+                <option value="13">Grupo 13</option><option value="14">Grupo 14</option>
+                <option value="15">Grupo 15</option>
+            </select>
+            <button onclick="crearGrupo()" style="width:100%; padding:15px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">CREAR GRUPO</button>
+            <div onclick="volverStep('step-grupo-tipo')" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== APP PRINCIPAL ===== -->
+<div id="main-content" style="display:none">
+    <header>
+        <span id="user-title" style="font-weight:800; color:var(--primary-dark)"></span>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button id="btn-companeros" onclick="abrirCompaneros()" style="display:none; padding:8px 12px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.8rem; color:var(--primary);">👥 Compañeros</button>
+            <button id="btn-editar-grupo" onclick="abrirEditorGrupo()" style="display:none; padding:8px 12px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.8rem; color:var(--primary);">✏️ Grupo</button>
+            <button onclick="cerrarSesion()" style="padding:8px 12px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.8rem; color:var(--primary);">Salir</button>
+        </div>
+    </header>
+    <div id="list-container" style="padding:10px"></div>
+</div>
+
+<!-- Modal compañeros individual -->
+<div id="companions-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:5000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+    <div style="background:white; padding:25px; border-radius:20px; width:100%; max-width:420px; margin-top:20px; border:1px solid var(--primary);">
+        <h3 style="color:var(--primary-dark); margin:0 0 5px 0;">👥 Mis compañeros</h3>
+        <p style="font-size:0.8rem; color:#64748b; margin:0 0 15px 0;">Asigna nombres a cada grupo de libres para ver quién trabaja y quién libra cada día.</p>
+
+        <div style="display:flex; gap:8px; margin-bottom:15px;">
+            <button id="tab-7327" onclick="mostrarTablaComp('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
+            <button id="tab-8020" onclick="mostrarTablaComp('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
+        </div>
+
+        <div id="comp-grupos-container"></div>
+
+        <button onclick="cerrarCompaneros()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modal ver día individual -->
+<div id="dia-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:5000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:white; padding:25px; border-radius:20px; width:100%; max-width:340px; border:1px solid var(--primary); max-height:85vh; overflow-y:auto;">
+        <h3 id="dia-modal-titulo" style="margin:0 0 15px 0; color:var(--primary-dark);"></h3>
+        <div id="dia-modal-libre" style="margin-bottom:15px;"></div>
+        <div id="dia-modal-trabaja"></div>
+        <button onclick="document.getElementById('dia-modal').style.display='none'" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modal editar grupo -->
+<div id="edit-group-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:5000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+    <div style="background:white; padding:25px; border-radius:20px; width:100%; max-width:380px; margin-top:20px; border:1px solid var(--primary);">
+        <h3 style="color:var(--primary-dark); margin:0 0 5px 0;">✏️ Gestión del Grupo</h3>
+        <p id="edit-group-name-label" style="font-size:0.8rem; color:#64748b; margin:0 0 15px 0;"></p>
+        <div id="member-list-edit"></div>
+        <hr style="border:none; border-top:1px solid #ddd6fe; margin:15px 0;">
+        <p style="font-size:0.85rem; font-weight:700; color:var(--primary-dark); margin:0 0 10px 0;">➕ Añadir miembro</p>
+        <input type="text" id="new-member-name" placeholder="Nombre" class="input-app" style="font-size:0.95rem; margin:4px 0;">
+        <input type="number" id="new-member-id" placeholder="ID empleado" class="input-app" style="font-size:0.95rem; margin:4px 0;">
+        <select id="new-member-tipo" class="input-app" style="font-size:0.95rem; margin:4px 0;">
+            <option value="">Turno</option>
+            <option value="73/27">🌙 N · 73/27</option>
+            <option value="80/20">🌙 N · 80/20</option>
+        </select>
+        <select id="new-member-grupo" class="input-app" style="font-size:0.95rem; margin:4px 0 12px 0;">
+            <option value="">Grupo de libres</option>
+            <option value="1">Grupo 1</option><option value="2">Grupo 2</option>
+            <option value="3">Grupo 3</option><option value="4">Grupo 4</option>
+            <option value="5">Grupo 5</option><option value="6">Grupo 6</option>
+            <option value="7">Grupo 7</option><option value="8">Grupo 8</option>
+            <option value="9">Grupo 9</option><option value="10">Grupo 10</option>
+            <option value="11">Grupo 11</option><option value="12">Grupo 12</option>
+            <option value="13">Grupo 13</option><option value="14">Grupo 14</option>
+            <option value="15">Grupo 15</option>
+        </select>
+        <button onclick="añadirMiembro()" style="width:100%; padding:13px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">Añadir al grupo</button>
+        <button onclick="cerrarEditorGrupo()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modal confirmar cambio con compañero -->
+<div id="confirm-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:4500; align-items:center; justify-content:center; padding:20px;">
+    <div class="modal-box">
+        <div style="font-size:2rem; margin-bottom:8px;">🤝</div>
+        <h3 style="margin:0 0 10px 0; color:var(--primary-dark);">Confirmar cambio</h3>
+        <div id="confirm-body" style="font-size:0.85rem; color:#475569; margin:10px 0 20px 0; line-height:1.6;"></div>
+        <div style="background:#fefce8; border:1px solid var(--yellow); border-radius:10px; padding:10px; margin-bottom:15px; font-size:0.78rem; color:#854d0e; font-weight:600;">
+            ⚠️ El compañero debe confirmar también para que el cambio se registre.
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="rechazarCambio()" style="flex:1; padding:12px; background:#fee2e2; border:none; border-radius:10px; font-weight:bold; color:var(--danger);">Cancelar</button>
+            <button onclick="confirmarCambioComp()" style="flex:1; padding:12px; background:var(--success); color:white; border:none; border-radius:10px; font-weight:bold;">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pendiente de confirmación del otro -->
+<div id="pending-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:4500; align-items:center; justify-content:center; padding:20px;">
+    <div class="modal-box">
+        <div style="font-size:2rem; margin-bottom:8px;">⏳</div>
+        <h3 style="margin:0 0 10px 0; color:var(--primary-dark);">Esperando confirmación</h3>
+        <div id="pending-body" style="font-size:0.85rem; color:#475569; margin:10px 0 20px 0; line-height:1.6;"></div>
+        <div style="background:#f0fdf4; border:1px solid var(--success); border-radius:10px; padding:10px; margin-bottom:15px; font-size:0.78rem; color:#166534; font-weight:600;" id="pending-status-box">
+            🔄 Esperando que el compañero confirme...
+        </div>
+        <button onclick="cancelarSolicitudPendiente()" style="width:100%; padding:12px; background:#fee2e2; border:none; border-radius:10px; font-weight:bold; color:var(--danger);">Cancelar solicitud</button>
+    </div>
+</div>
+
+<div id="report-modal">
+    <div class="modal-box">
+        <h3 id="report-title" style="margin:0; color:var(--primary-dark);"></h3>
+        <div id="report-body" class="report-content"></div>
+        <button onclick="document.getElementById('report-modal').style.display='none'" style="width:100%; padding:12px; background:var(--bg); border:none; border-radius:10px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
+    </div>
+</div>
+
+<div id="vac-modal">
+    <div class="modal-box">
+        <h3 style="margin:0; color:var(--primary-dark);">Rango Vacaciones</h3>
+        <p id="vac-info" style="font-size:0.8rem; color:#64748b; margin:10px 0;"></p>
+        <input type="number" id="vac-input" class="input-app" placeholder="Día final">
+        <div style="display:flex; gap:10px;">
+            <button onclick="cerrarVacModal()" style="flex:1; padding:12px; background:#f5f3ff; border:none; border-radius:10px; font-weight:bold; color:var(--primary);">Cancelar</button>
+            <button onclick="confirmarVacaciones()" style="flex:1; padding:12px; background:var(--success); color:white; border:none; border-radius:10px; font-weight:bold;">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div id="m-cal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.9); z-index:100; overflow-y:auto; padding-top:env(safe-area-inset-top);">
+    <div style="background:white; width:95%; max-width:1200px; margin:20px auto; border-radius:20px; padding:15px; position:relative;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 id="cal-target-name" style="margin:0; color:var(--primary-dark); font-size:1.2rem;"></h2>
+            <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900;">Cerrar</button>
+        </div>
+        <div class="legend-container">
+            <div class="legend-item" onclick="mostrarInformeLeyenda('is-free','Días Libres Base')"><div class="legend-box is-free"></div><span>Libre</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda('is-work','Días de Trabajo')"><div class="legend-box is-work"></div><span>Trabaja</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda('b-cambio-libre','Libras por Cambio')"><div class="legend-box b-cambio-libre"></div><span>Libras (x cambio)</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda('b-inter','Haces por Cambio')"><div class="legend-box b-inter"></div><span>Haces (x cambio)</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda('b-vac','Vacaciones')"><div class="legend-box b-vac"></div><span>Vacaciones</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda('b-pend','Pendientes')"><div class="legend-box b-pend"></div><span>Pendiente</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda('b-generado','Generados')"><div class="legend-box b-generado"></div><span>Generado</span></div>
+        </div>
+        <div class="cal-grid" id="m-grid" ontouchmove="cancelarTodoTimer()"></div>
+    </div>
+</div>
+
+<div id="side-panel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:300px; background:white; z-index:150; padding:20px; overflow-y:auto; border-left:2px solid #ddd6fe; box-shadow:-5px 0 15px rgba(139,92,246,0.1);">
+    <div class="close-panel-btn" onclick="document.getElementById('side-panel').style.display='none'">✕</div>
+    <h3 id="panel-date" style="color:var(--primary-dark); margin-bottom:5px; padding-right:30px;"></h3>
+    <div id="p-stats" style="margin-bottom:15px; border-bottom:1px solid #f5f3ff; padding-bottom:10px;"></div>
+    <div id="p-free-list"></div>
+    <div id="p-work-list" style="margin-top:20px"></div>
+</div>
+
+<!-- Menú contextual arrastrable -->
+<div id="ctx-menu">
+    <div id="ctx-menu-handle">⠿ MANTÉN Y ARRASTRA</div>
+</div>
+<div id="selection-notice"></div>
+
+<script>
+    // ===== FIREBASE =====
+    const firebaseConfig = {
+        apiKey: "AIzaSyBJ1WtRyZxxLtJnrZZtaKxgIO3JgJwo_Ik",
+        authDomain: "calendarioturnos-6d35c.firebaseapp.com",
+        databaseURL: "https://calendarioturnos-6d35c-default-rtdb.firebaseio.com",
+        projectId: "calendarioturnos-6d35c",
+        storageBucket: "calendarioturnos-6d35c.firebasestorage.app",
+        messagingSenderId: "892183334973",
+        appId: "1:892183334973:web:837233c49e8b1249369a54"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ===== ESTADO =====
+    let miID = "", miNombreCompleto = "", modoGrupo = false, grupoActual = null;
+    let pressTimer, pressTimerActive = false;
+    let diaSeleccionado = null, modoSeleccionActivo = false, tipoCambio = null;
+    let primerDiaCambio = null, targetCompaneroID = null, idCalendarioAbierto = null;
+    let dbCambios = {}, dbSolicitudes = {};
+    let equipo = []; // Se puede sobreescribir con miembros del grupo
+    let pendingSolicitudKey = null;
+    let miSolicitudListener = null;
+
+    const hoy = new Date();
+    const dHoy = hoy.getDate(), mHoy = hoy.getMonth();
+
+    const equipoBase = [
+        { n:"Raul Infantes", id:"16161", g:"1", t:"73/27" }, { n:"Carlos Romero", id:"16225", g:"2", t:"73/27" },
+        { n:"Javi Ranz", id:"18393", g:"2", t:"73/27" }, { n:"Curro", id:"2669", g:"4", t:"73/27" },
+        { n:"Ricardo", id:"16128", g:"5", t:"73/27" }, { n:"Dani Alexandre", id:"18020", g:"5", t:"73/27" },
+        { n:"Alfredo", id:"18021", g:"6", t:"73/27" }, { n:"Angel Luis", id:"18023", g:"7", t:"73/27" },
+        { n:"David Fraile", id:"17989", g:"8", t:"73/27" }, { n:"Dani Furti", id:"14976", g:"9", t:"73/27" },
+        { n:"Sergio", id:"18005", g:"10", t:"73/27" }, { n:"José María", id:"18015", g:"11", t:"73/27" },
+        { n:"Dani Vime", id:"18011", g:"12", t:"73/27" }, { n:"Felix", id:"16108", g:"15", t:"73/27" },
+        { n:"Dani Rivas", id:"14388", g:"1", t:"80/20" }, { n:"Raúl Montoya", id:"16122", g:"12", t:"80/20" }
+    ];
+
+    const mesesArr = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+    const gruposLibres = {
+        "1":{0:[2,3,10,11,12,13,14,15,23,24,31],1:[1,6,7,11,12,21,22,26,27,28],2:[7,8,12,13,20,21,28,29],3:[2,3,11,12,17,18,25,26,27,28,29,30],4:[8,9,16,17,22,23,27,28],5:[6,7,11,12,13,20,21,25,26],6:[3,4,11,12,16,17,25,26,31],7:[1,8,9,10,11,12,13,21,22,29,30],8:[4,5,9,10,19,24,25,26],9:[3,4,8,9,16,17,24,25,29,30],10:[7,8,13,14,21,22,23,24,25,26],11:[4,5,12,13,18,19,23,24]},
+        "2":{0:[3,4,5,6,7,8,16,17,24,25,30,31],1:[4,5,14,15,19,20,21,28],2:[1,5,6,13,14,21,22,26,27],3:[4,5,10,11,18,19,20,21,22,23],4:[1,2,9,10,15,16,20,21,30,31],5:[4,5,6,13,14,18,19,26,27],6:[4,5,9,10,18,19,24,25],7:[1,2,3,4,5,6,14,15,22,23,28,29],8:[2,3,12,13,17,18,19,26,27],9:[1,2,9,10,17,18,22,23,31],10:[1,6,7,14,15,16,17,18,19,27,28],11:[5,6,11,12,16,17,26,27,31]},
+        "3":{0:[1,9,10,17,18,23,24,28,29],1:[7,8,12,13,14,21,22,26,27],2:[6,7,14,15,19,20,28,29],3:[3,4,11,12,13,14,15,16,24,25],4:[2,3,8,9,13,14,23,24,28,29,30],5:[6,7,11,12,19,20,27,28],6:[2,3,11,12,17,18,25,26,27,28,29,30],7:[7,8,15,16,21,22,26,27],8:[5,6,10,11,12,19,20,24,25],9:[2,3,10,11,15,16,24,25,30,31],10:[7,8,9,10,11,12,20,21,28,29],11:[4,5,9,10,19,20,24,25,26]},
+        "4":{0:[2,3,10,11,16,17,21,22,31],1:[1,5,6,7,14,15,19,20],2:[7,8,12,13,21,22,27,28],3:[4,5,6,7,8,9,17,18,25,26],4:[1,2,6,7,16,17,21,22,23,30,31],5:[4,5,12,13,20,21,25,26],6:[4,5,10,11,18,19,20,21,22,23,31],7:[1,8,9,14,15,19,20,29,30],8:[3,4,5,12,13,17,18,25,26],9:[3,4,8,9,17,18,23,24,31],10:[1,2,3,4,5,13,14,21,22,27,28],11:[2,3,12,13,17,18,19,26,27,31]},
+        "5":{0:[3,4,9,10,14,15,24,25,29,30,31],1:[7,8,12,13,20,21,28],2:[1,5,6,14,15,20,21,28,29,30,31],3:[1,2,10,11,18,19,24,25,29,30],4:[9,10,14,15,16,23,24,28,29],5:[5,6,13,14,18,19,27,28],6:[3,4,11,12,13,14,15,16,24,25],7:[1,2,7,8,12,13,22,23,27,28,29],8:[5,6,10,11,18,19,26,27],9:[1,2,10,11,16,17,24,25,26,27,28,29],10:[6,7,14,15,20,21,25,26],11:[5,6,10,11,12,19,20,24,25]},
+        "6":{0:[2,3,7,8,17,18,22,23,24,31],1:[1,5,6,13,14,21,22,26,27],2:[7,8,13,14,21,22,23,24,25,26],3:[3,4,11,12,17,18,22,23],4:[2,3,7,8,9,16,17,21,22,29,30],5:[6,7,11,12,20,21,26,27],6:[4,5,6,7,8,9,17,18,25,26,31],7:[1,5,6,15,16,20,21,22,29,30],8:[3,4,11,12,19,20,24,25],9:[3,4,9,10,17,18,19,20,21,22,30,31],10:[7,8,13,14,18,19,28,29],11:[3,4,5,12,13,17,18,25,26]},
+        "7":{0:[1,10,11,15,16,17,24,25,29,30],1:[6,7,14,15,19,20,28],2:[1,6,7,14,15,16,17,18,19,27,28],3:[4,5,10,11,15,16,17,25,26,30],4:[1,2,9,10,14,15,22,23,30,31],5:[4,5,13,14,19,20,27,28,29,30],6:[1,2,10,11,18,19,24,25,29,30],7:[8,9,13,14,15,22,23,27,28],8:[4,5,12,13,17,18,26,27],9:[2,3,10,11,12,13,14,15,23,24,31],10:[1,6,7,11,12,21,22,26,27,28],11:[5,6,10,11,18,19,26,27,31]},
+        "8":{0:[3,4,8,9,10,17,18,22,23,30,31],1:[7,8,12,13,21,22,27,28],2:[7,8,9,10,11,12,20,21,28,29],3:[3,4,8,9,18,19,23,24,25],4:[2,3,7,8,15,16,23,24,28,29],5:[6,7,12,13,20,21,22,23,24,25],6:[3,4,11,12,17,18,22,23],7:[1,2,6,7,8,15,16,20,21,28,29],8:[5,6,10,11,19,20,25,26],9:[3,4,5,6,7,8,16,17,24,25,30,31],10:[4,5,14,15,19,20,21,28,29],11:[3,4,11,12,19,20,24,25]},
+        "9":{0:[1,2,3,10,11,15,16,23,24,31],1:[1,5,6,14,15,20,21,28],2:[1,2,3,4,5,13,14,21,22,27,28],3:[1,2,11,12,16,17,18,25,26,30],4:[1,8,9,16,17,22,23,30,31],5:[5,6,13,14,15,16,17,18,26,27],6:[4,5,10,11,15,16,25,26,30,31],7:[1,8,9,13,14,21,22,29,30],8:[3,4,12,13,18,19,26,27,28,29,30],9:[1,9,10,17,18,23,24,28,29],10:[7,8,12,13,14,21,22,26,27],11:[4,5,12,13,17,18,26,27]},
+        "10":{0:[3,4,8,9,16,17,24,25,29,30],1:[7,8,13,14,21,22,23,24,25,26],2:[6,7,14,15,20,21,25,26],3:[4,5,9,10,11,18,19,23,24],4:[1,2,9,10,14,15,23,24,29,30],5:[6,7,8,9,10,11,19,20,27,28],6:[3,4,8,9,18,19,23,24,25],7:[1,2,6,7,14,15,22,23,27,28],8:[5,6,11,12,19,20,21,22,23,24],9:[2,3,10,11,16,17,21,22,31],10:[1,5,6,7,14,15,19,20,27,28],11:[5,6,10,11,19,20,25,26]},
+        "11":{0:[1,2,9,10,17,18,22,23,31],1:[1,6,7,14,15,16,17,18,19,27,28],2:[7,8,13,14,18,19,28,29],3:[2,3,4,11,12,16,17,24,25],4:[2,3,7,8,16,17,22,23,30,31],5:[1,2,3,4,12,13,20,21,26,27],6:[1,2,11,12,16,17,18,25,26,30,31],7:[7,8,15,16,20,21,29,30],8:[4,5,12,13,14,15,16,17,25,26],9:[2,4,9,10,14,15,24,25,29,30,31],10:[7,8,12,13,20,21,28,29],11:[3,4,12,13,18,19,26,27,28,29,30,31]},
+        "12":{0:[2,3,10,11,15,16,24,25,30,31],1:[7,8,9,10,11,12,20,21,28],2:[1,6,7,11,12,21,22,26,27,28],3:[4,5,9,10,17,18,25,26,30],4:[1,9,10,15,16,23,24,25,26,27,28],5:[5,6,13,14,19,20,24,25],6:[4,5,9,10,11,18,19,23,24,31],7:[1,8,9,13,14,22,23,28,29],8:[5,6,7,8,9,10,18,19,26,27],9:[2,3,7,8,17,18,22,23,24,31],10:[1,5,6,13,14,21,22,26,27],11:[5,6,11,12,19,20,21,22,23,24]},
+        "13":{0:[3,4,8,9,17,18,23,24,31],1:[1,2,3,4,5,13,14,21,22,27,28],2:[4,5,14,15,19,20,21,28,29],3:[2,3,10,11,18,19,23,24],4:[2,3,8,9,16,17,18,19,20,21,29,30],5:[6,7,12,13,17,18,27,28],6:[2,3,4,11,12,16,17,24,25],7:[1,2,6,7,15,16,21,22,29,30],8:[1,2,3,11,12,19,20,25,26,30],9:[1,10,11,15,16,17,24,25,29,30],10:[6,7,14,15,19,20,28,29],11:[4,5,12,13,14,15,16,17,25,26]},
+        "14":{0:[],1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[],11:[]},
+        "15":{0:[3,4,9,10,17,18,19,20,21,22,30,31],1:[7,8,13,14,18,19,28],2:[1,5,6,7,14,15,19,20,27,28],3:[4,5,9,10,18,19,24,25],4:[2,3,4,5,6,7,15,16,23,24,29,30],5:[3,4,13,14,18,19,20],6:[2,3,10,11,18,19,23,24],7:[1,2,7,8,15,16,17,18,19,20,28,29],8:[5,6,11,12,16,17,26,27],9:[1,2,3,10,11,15,16,23,24,31],10:[1,5,6,14,15,20,21,28,29,30],11:[1,2,3,11,12,19,20,25,26,30,31]}
+    };
+
+    // Grupos libres sistema 80/20 Noche (15 grupos)
+    const gruposLibres8020 = {
+        "1":{0:[3,4,9,10,17,18,19,20,21,22,30,31],1:[7,8,13,14,21,22,25,26],2:[5,6,7,14,15,20,21,28,29],3:[2,3,10,11,18,19,24,25],4:[2,3,4,5,6,7,15,16,23,24,29,30],5:[6,7,10,11,18,19,20,27,28],6:[3,4,11,12,16,17,24,25],7:[1,2,7,8,15,16,17,18,19,20,28,29],8:[5,6,11,12,19,20,23,24],9:[1,2,3,10,11,16,17,24,25,29,30],10:[6,7,14,15,20,21,28,29,30],11:[1,2,3,10,12,19,20,25,26]},
+        "2":{0:[2,3,10,11,12,13,14,15,23,24,31],1:[1,6,7,14,15,18,19,26,27,28],2:[7,8,13,14,21,22,26,27],3:[3,4,11,12,17,18,25,26,27,28,29,30],4:[8,9,16,17,22,23,30,31],5:[3,4,11,12,13,20,21,26,27],6:[4,5,9,10,17,18,25,26,31],7:[1,8,9,10,11,12,13,21,22,29,30],8:[4,5,12,13,16,17,24,25,26],9:[3,4,9,10,17,18,22,23,30,31],10:[7,8,13,14,21,22,23,24,25,26],11:[4,5,12,13,18,19,26,27,30,31]},
+        "3":{0:[3,4,5,6,7,8,16,17,24,25,30,31],1:[7,8,11,12,19,20,21,28],2:[1,6,7,14,15,19,20,27,28],3:[4,5,10,11,18,19,20,21,22,23],4:[1,2,9,10,15,16,23,24,27,28],5:[4,5,6,13,14,19,20,27,28],6:[2,3,10,11,18,19,24,25],7:[1,2,3,4,5,6,14,15,22,23,28,29],8:[5,6,9,10,17,18,19,26,27],9:[2,3,10,11,15,16,23,24,31],10:[1,6,7,14,15,16,17,18,19,27,28],11:[5,6,11,12,19,20,23,24,31]},
+        "4":{0:[1,9,10,17,18,23,24,31],1:[1,4,5,12,13,14,21,22,27,28],2:[7,8,12,13,20,21,28,29],3:[3,4,11,12,13,14,15,16,24,25],4:[2,3,8,9,16,17,20,21,28,29,30],5:[6,7,12,13,20,21,25,26],6:[3,4,11,12,17,18,25,26,27,28,29,30],7:[7,8,15,16,21,22,29,30],8:[2,3,10,11,12,19,20,25,26],9:[3,4,8,9,16,17,24,25,30,31],10:[7,8,9,10,11,12,20,21,28,29],11:[4,5,12,13,16,17,24,25,26]},
+        "5":{0:[2,3,10,11,16,17,24,25,28,29],1:[5,6,7,14,15,20,21,28],2:[1,5,6,13,14,21,22,27,28],3:[4,5,6,7,8,9,17,18,25,26],4:[1,2,9,10,13,14,21,22,23,30,31],5:[5,6,13,14,18,19,26,27],6:[4,5,10,11,18,19,20,21,22,23,31],7:[1,8,9,14,15,22,23,26,27],8:[3,4,5,12,13,18,19,26,27],9:[1,2,9,10,17,18,23,24,31],10:[1,2,3,4,5,13,14,21,22,27,28],11:[5,6,9,10,17,18,19,26,27]},
+        "6":{0:[3,4,9,10,17,18,21,22,29,30,31],1:[7,8,13,14,21,22,26,27],2:[6,7,14,15,20,21,28,29,30,31],3:[1,2,10,11,18,19,24,25],4:[2,3,6,7,14,15,16,23,24,29,30],5:[6,7,11,12,19,20,27,28],6:[3,4,11,12,13,14,15,16,24,25],7:[1,2,7,8,15,16,19,20,27,28,29],8:[5,6,11,12,19,20,24,25],9:[2,3,10,11,16,17,24,25,26,27,28,29],10:[6,7,14,15,20,21,28,29],11:[2,3,10,11,12,19,20,25,26]},
+        "7":{0:[2,3,10,11,14,15,22,23,24,31],1:[1,6,7,14,15,19,20,27,28],2:[7,8,13,14,21,22,23,24,25,26],3:[3,4,11,12,17,18,25,26,29,30],4:[7,8,9,16,17,22,23,30,31],5:[4,5,12,13,20,21,26,27],6:[4,5,6,7,8,9,17,18,25,26,31],7:[1,8,9,12,13,20,21,22,29,30],8:[4,5,12,13,17,18,25,26],9:[3,4,9,10,17,18,19,20,21,22,30,31],10:[7,8,13,14,21,22,25,26],11:[3,4,5,12,13,18,19,26,27,31]},
+        "8":{0:[3,4,7,8,15,16,17,24,25,30,31],1:[7,8,12,13,20,21,28],2:[1,6,7,14,15,16,17,18,19,27,28],3:[4,5,10,11,18,19,22,23,30],4:[1,2,9,10,15,16,23,24,28,29],5:[5,6,13,14,19,20,27,28,29,30],6:[1,2,10,11,18,19,24,25],7:[1,2,5,6,13,14,15,22,23,28,29],8:[5,6,10,11,18,19,26,27],9:[2,3,10,11,12,13,14,15,23,24,31],10:[1,6,7,14,15,18,19,26,27,28],11:[5,6,11,12,19,20,24,25]},
+        "9":{0:[1,8,9,10,17,18,23,24,31],1:[1,5,6,13,14,21,22,27,28],2:[7,8,9,10,11,12,20,21,28,29],3:[3,4,11,12,15,16,23,24,25],4:[2,3,8,9,16,17,21,22,29,30],5:[6,7,12,13,20,21,22,23,24,25],6:[3,4,11,12,17,18,25,26,29,30],7:[6,7,8,15,16,21,22,29,30],8:[3,4,11,12,19,20,25,26],9:[3,4,5,6,7,8,16,17,24,25,30,31],10:[7,8,11,12,19,20,21,28,29],11:[4,5,12,13,17,18,25,26]},
+        "10":{0:[1,2,3,10,11,16,17,24,25,29,30],1:[6,7,14,15,20,21,28],2:[1,2,3,4,5,13,14,21,22,27,28],3:[4,5,8,9,16,17,18,25,26],4:[1,2,9,10,14,15,22,23,30,31],5:[5,6,13,14,15,16,17,18,26,27],6:[4,5,10,11,18,19,22,23,30,31],7:[1,8,9,14,15,22,23,27,28],8:[4,5,12,13,18,19,26,27,28,29,30],9:[1,9,10,17,18,23,24,31],10:[1,4,5,12,13,14,21,22,27,28],11:[5,6,10,11,18,19,26,27]},
+        "11":{0:[3,4,9,10,17,18,22,23,30,31],1:[7,8,13,14,21,22,23,24,25,26],2:[6,7,14,15,20,21,28,29],3:[1,2,9,10,11,18,19,24,25],4:[2,3,7,8,15,16,23,24,29,30],5:[6,7,8,9,10,11,19,20,27,28],6:[3,4,11,12,15,16,23,24,25],7:[1,2,7,8,15,16,20,21,28,29],8:[5,6,11,12,19,20,21,22,23,24],9:[2,3,10,11,16,17,24,25,28,29],10:[5,6,7,14,15,20,21,28,29],11:[3,4,11,12,19,20,25,26]},
+        "12":{0:[2,3,10,11,15,16,23,24,31],1:[1,6,7,14,15,16,17,18,19,27,28],2:[7,8,13,14,21,22,25,26],3:[2,3,4,11,12,17,18,25,26,30],4:[1,8,9,16,17,22,23,30,31],5:[1,2,3,4,12,13,20,21,26,27],6:[4,5,8,9,16,17,18,25,26,31],7:[1,8,9,13,14,21,22,29,30],8:[4,5,12,13,14,15,16,17,25,26],9:[3,4,9,10,17,18,21,22,29,30,31],10:[7,8,13,14,21,22,26,27],11:[4,5,12,13,18,19,26,27,28,29,30,31]},
+        "13":{0:[3,4,8,9,16,17,24,25,30,31],1:[7,8,9,10,11,12,20,21,28],2:[1,6,7,14,15,18,19,26,27,28],3:[4,5,10,11,18,19,23,24],4:[1,2,9,10,15,16,23,24,25,26,27,28],5:[5,6,13,14,19,20,27,28],6:[1,2,9,10,11,18,19,24,25],7:[1,2,6,7,14,15,22,23,28,29],8:[5,6,7,8,9,10,18,19,26,27],9:[2,3,10,11,14,15,22,23,24,31],10:[1,6,7,14,15,19,20,27,28],11:[5,6,11,12,19,20,21,22,23,24]},
+        "14":{0:[1,2,9,10,17,18,23,24,31],1:[1,2,3,4,5,13,14,21,22,27,28],2:[7,8,11,12,19,20,21,28,29],3:[3,4,11,12,16,17,24,25],4:[2,3,8,9,16,17,18,19,20,21,29,30],5:[6,7,12,13,20,21,24,25],6:[2,3,4,11,12,17,18,25,26,30,31],7:[7,8,15,16,21,22,29,30],8:[1,2,3,11,12,19,20,25,26],9:[3,4,7,8,15,16,17,24,25,30,31],10:[7,8,12,13,20,21,28,29],11:[4,5,12,13,14,15,16,17,25,26]},
+        "15":{0:[2,3,10,11,16,17,24,25,26,27,28,29],1:[6,7,14,15,20,21,28],2:[1,4,5,12,13,14,21,22,27,28],3:[4,5,9,10,17,18,25,26],4:[1,2,9,10,11,12,13,14,22,23,30,31],5:[5,6,13,14,17,18,25,26,27],6:[4,5,10,11,18,19,23,24,31],7:[1,8,9,14,15,22,23,24,25,26,27],8:[4,5,12,13,18,19,26,27,30],9:[1,8,9,10,17,18,23,24,31],10:[1,5,6,13,14,21,22,27,28],11:[5,6,7,8,9,10,18,19,26,27]}
+    };
+
+    // ===== ESCUCHA FIREBASE EN TIEMPO REAL =====
+    let listenerCambios = null, listenerSolicitudes = null;
+
+    function iniciarListeners() {
+        if (listenerCambios) listenerCambios.off();
+        if (listenerSolicitudes) listenerSolicitudes.off();
+
+        listenerCambios = db.ref('cambios');
+        listenerCambios.on('value', (snapshot) => {
+            dbCambios = snapshot.val() || {};
+            if (miID) {
+                renderList();
+                if (idCalendarioAbierto) abrirCal(idCalendarioAbierto);
+            }
+        });
+
+        listenerSolicitudes = db.ref('solicitudes');
+        listenerSolicitudes.on('value', (snapshot) => {
+            dbSolicitudes = snapshot.val() || {};
+            if (miID) {
+                checkSolicitudesEntrantes();
+                limpiarSolicitudesAntiguas(snapshot.val() || {});
+            }
+        });
+    }
+
+    function limpiarSolicitudesAntiguas(todas) {
+        const LIMITE = 48 * 60 * 60 * 1000; // 48 horas
+        const ahora = Date.now();
+        Object.entries(todas).forEach(([key, sol]) => {
+            if (sol.ts && (ahora - sol.ts) > LIMITE) {
+                db.ref(`solicitudes/${key}`).remove();
+            }
+        });
+    }
+
+    // Intentar restaurar sesión al abrir la app
+    restaurarSesion();
+
+    // ===== LOGIN HELPERS =====
+    function eligeModo(modo) {
+        if (modo === 'individual') {
+            mostrarStep('step-individual');
+        } else {
+            mostrarStep('step-grupo-tipo');
+        }
+    }
+
+    function eligeGrupoTipo(tipo) {
+        if (tipo === 'existente') mostrarStep('step-grupo-existente');
+        else mostrarStep('step-grupo-nuevo');
+    }
+
+    function mostrarStep(stepId) {
+        document.querySelectorAll('.login-step').forEach(s => s.classList.remove('active'));
+        document.getElementById(stepId).classList.add('active');
+    }
+
+    function volverStep(stepId) { mostrarStep(stepId); }
+
+    // ===== ACCESO INDIVIDUAL =====
+    function validarAcceso() {
+        const id = document.getElementById('userID').value.trim();
+        const pass = document.getElementById('userPass').value.trim();
+        const p = equipoBase.find(x => x.id === id);
+        if (!p) { alert("ID de empleado no encontrado"); return; }
+        if (!pass) { alert("Introduce una contraseña"); return; }
+        miID = id; miNombreCompleto = p.n; modoGrupo = false; equipo = equipoBase;
+        guardarSesion();
+        iniciarApp();
+    }
+
+    // ===== CREAR GRUPO =====
+    function crearGrupo() {
+        const nombre = document.getElementById('nuevoGrupoNombre').value.trim();
+        const pass = document.getElementById('nuevoGrupoPass').value.trim();
+        const pass2 = document.getElementById('nuevoGrupoPass2').value.trim();
+        const miNom = document.getElementById('nuevoMiNombre').value.trim();
+        const miId = document.getElementById('nuevoMiID').value.trim();
+        const miTipo = document.getElementById('nuevoMiTipo').value;
+        const miGrupo = document.getElementById('nuevoMiGrupo').value;
+        if (!nombre || !pass || !miNom || !miId || !miTipo || !miGrupo) { alert("Rellena todos los campos"); return; }
+        if (pass !== pass2) { alert("Las contraseñas no coinciden"); return; }
+        const codigo = nombre.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') + '_' + Date.now().toString(36);
+        const primerMiembro = { n: miNom, id: miId, g: miGrupo, t: miTipo };
+        db.ref(`grupos/${codigo}`).set({
+            nombre, pass, miembros: { [miId]: primerMiembro }
+        }).then(() => {
+            alert(`✅ Grupo creado!\n\nCódigo del grupo: ${codigo}\nGuárdalo para compartirlo con tus compañeros.`);
+            miID = miId; miNombreCompleto = miNom; modoGrupo = true; grupoActual = codigo;
+            miTipoSesion = miTipo; miGrupoSesion = miGrupo;
+            guardarSesion();
+            cargarMiembrosGrupo(codigo);
+        });
+    }
+
+    // ===== UNIRSE A GRUPO =====
+    function unirseGrupo() {
+        const codigo = document.getElementById('grupoCodigo').value.trim();
+        const pass = document.getElementById('grupoPass').value.trim();
+        const miNom = document.getElementById('grupoMiNombre').value.trim();
+        const miId = document.getElementById('grupoMiID').value.trim();
+        const miTipo = document.getElementById('grupoMiTipo').value;
+        const miGrupo = document.getElementById('grupoMiGrupo').value;
+        if (!codigo || !pass || !miNom || !miId || !miTipo || !miGrupo) { alert("Rellena todos los campos"); return; }
+        db.ref(`grupos/${codigo}`).once('value').then(snap => {
+            const data = snap.val();
+            if (!data) { alert("Grupo no encontrado. Revisa que el código esté bien escrito (copia y pega desde el mensaje del creador del grupo)."); return; }
+            if (data.pass !== pass) { alert("Contraseña incorrecta"); return; }
+            // Guardar/actualizar miembro
+            db.ref(`grupos/${codigo}/miembros/${miId}`).set({ n: miNom, id: miId, g: miGrupo, t: miTipo }).then(() => {
+                miID = miId; miNombreCompleto = miNom; modoGrupo = true; grupoActual = codigo;
+                miTipoSesion = miTipo; miGrupoSesion = miGrupo;
+                guardarSesion();
+                cargarMiembrosGrupo(codigo);
+            });
+        });
+    }
+
+    let listenerMiembros = null;
+
+    function cargarMiembrosGrupo(codigo) {
+        if (listenerMiembros) { listenerMiembros.off(); listenerMiembros = null; }
+        listenerMiembros = db.ref(`grupos/${codigo}/miembros`);
+        listenerMiembros.on('value', snap => {
+            const m = snap.val() || {};
+            equipo = Object.values(m);
+            if (miID) {
+                renderList();
+                if (idCalendarioAbierto) abrirCal(idCalendarioAbierto);
+            }
+        });
+        iniciarApp();
+    }
+
+    // ===== SESIÓN PERSISTENTE =====
+    let miTipoSesion = "", miGrupoSesion = "";
+
+    function guardarSesion() {
+        localStorage.setItem('sesion2026', JSON.stringify({
+            miID, miNombreCompleto, modoGrupo, grupoActual, miTipoSesion, miGrupoSesion
+        }));
+    }
+
+    function restaurarSesion() {
+        try {
+            const raw = localStorage.getItem('sesion2026');
+            if (!raw) return false;
+            const s = JSON.parse(raw);
+            if (!s.miID) return false;
+            miID = s.miID; miNombreCompleto = s.miNombreCompleto;
+            modoGrupo = s.modoGrupo; grupoActual = s.grupoActual;
+            miTipoSesion = s.miTipoSesion || ""; miGrupoSesion = s.miGrupoSesion || "";
+            if (modoGrupo && grupoActual) {
+                cargarMiembrosGrupo(grupoActual);
+            } else {
+                equipo = equipoBase;
+                iniciarApp();
+            }
+            return true;
+        } catch(e) { return false; }
+    }
+
+    function rellenarCamposLogin() {
+        try {
+            const raw = localStorage.getItem('sesion2026');
+            if (!raw) return;
+            const s = JSON.parse(raw);
+            if (!s.miID) return;
+            if (!s.modoGrupo) {
+                mostrarStep('step-individual');
+                document.getElementById('userID').value = s.miID;
+            } else if (s.grupoActual) {
+                mostrarStep('step-grupo-existente');
+                document.getElementById('grupoCodigo').value = s.grupoActual;
+                document.getElementById('grupoMiID').value = s.miID;
+                document.getElementById('grupoMiNombre').value = s.miNombreCompleto;
+            }
+        } catch(e) {}
+    }
+
+    // ===== INICIAR APP =====
+    function iniciarApp() {
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        document.getElementById('user-title').innerText = "👤 " + miNombreCompleto;
+        if (modoGrupo) {
+            document.getElementById('btn-editar-grupo').style.display = 'inline-block';
+            document.getElementById('btn-companeros').style.display = 'none';
+        } else {
+            document.getElementById('btn-companeros').style.display = 'inline-block';
+            document.getElementById('btn-editar-grupo').style.display = 'none';
+        }
+        iniciarListeners();
+        renderList();
+    }
+
+    function cerrarSesion() {
+        if (listenerCambios) { listenerCambios.off(); listenerCambios = null; }
+        if (listenerSolicitudes) { listenerSolicitudes.off(); listenerSolicitudes = null; }
+        if (listenerMiembros) { listenerMiembros.off(); listenerMiembros = null; }
+        miID = ""; modoGrupo = false; grupoActual = null; equipo = [];
+        if (miSolicitudListener) miSolicitudListener.off();
+        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('login-view').style.display = 'flex';
+        document.querySelectorAll('.login-step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step-0').classList.add('active');
+        rellenarCamposLogin();
+    }
+
+    // ===== COMPAÑEROS INDIVIDUALES =====
+    let companerosTurnoActivo = '73/27';
+
+    function cargarCompaneros() {
+        try { return JSON.parse(localStorage.getItem('companeros2026') || '{}'); } catch(e) { return {}; }
+    }
+
+    function guardarCompaneros(data) {
+        localStorage.setItem('companeros2026', JSON.stringify(data));
+    }
+
+    function abrirCompaneros() {
+        document.getElementById('companions-modal').style.display = 'flex';
+        mostrarTablaComp('73/27');
+    }
+
+    function cerrarCompaneros() {
+        document.getElementById('companions-modal').style.display = 'none';
+        renderListIndividual();
+    }
+
+    function mostrarTablaComp(turno) {
+        companerosTurnoActivo = turno;
+        document.getElementById('tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
+        document.getElementById('tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)';
+        document.getElementById('tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#ddd6fe';
+        document.getElementById('tab-8020').style.background = turno === '80/20' ? 'var(--primary)' : 'white';
+        document.getElementById('tab-8020').style.color = turno === '80/20' ? 'white' : 'var(--primary)';
+        document.getElementById('tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#ddd6fe';
+
+        const comp = cargarCompaneros();
+        const tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres;
+        const grupos = Object.keys(tabla).sort((a,b) => parseInt(a)-parseInt(b));
+        let html = '';
+        grupos.forEach(g => {
+            const key = `${turno}_${g}`;
+            const nombres = comp[key] || [];
+            html += `
+            <div style="border:1px solid #ddd6fe; border-radius:12px; padding:12px; margin-bottom:10px; background:#faf9ff;">
+                <div style="font-weight:700; color:var(--primary-dark); margin-bottom:8px;">Grupo ${g}</div>
+                <div id="nombres-${turno.replace('/','')}-${g}" style="margin-bottom:8px;">
+                    ${nombres.map((n,i) => `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #f5f3ff;">
+                        <span style="font-size:0.85rem; color:var(--text);">${n}</span>
+                        <button onclick="eliminarCompanero('${key}',${i})" style="background:#fee2e2; color:var(--danger); border:none; border-radius:6px; padding:3px 8px; font-size:0.75rem; font-weight:700;">✕</button>
+                    </div>`).join('')}
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="input-${turno.replace('/','')}-${g}" placeholder="Nombre..." style="flex:1; padding:8px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.85rem; outline:none;">
+                    <button onclick="añadirCompanero('${key}','${turno.replace('/','')}-${g}')" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:8px 12px; font-weight:700; font-size:0.85rem;">+</button>
+                </div>
+            </div>`;
+        });
+        document.getElementById('comp-grupos-container').innerHTML = html;
+    }
+
+    function añadirCompanero(key, inputId) {
+        const input = document.getElementById('input-' + inputId);
+        const nombre = input.value.trim();
+        if (!nombre) return;
+        const comp = cargarCompaneros();
+        if (!comp[key]) comp[key] = [];
+        comp[key].push(nombre);
+        guardarCompaneros(comp);
+        input.value = '';
+        mostrarTablaComp(companerosTurnoActivo);
+    }
+
+    function eliminarCompanero(key, idx) {
+        const comp = cargarCompaneros();
+        if (!comp[key]) return;
+        comp[key].splice(idx, 1);
+        guardarCompaneros(comp);
+        mostrarTablaComp(companerosTurnoActivo);
+    }
+
+    // ===== RENDER LISTA INDIVIDUAL CON RESUMEN DEL DÍA =====
+    function renderListIndividual() {
+        const cont = document.getElementById('list-container');
+        const p = equipoBase.find(x => x.id === miID);
+        if (!p) return;
+
+        // Mi tarjeta
+        const { esLibreReal } = checkEstadoIndividual(p.g, p.t, mHoy, dHoy);
+        let html = `
+        <div class="user-card ${esLibreReal ? 'card-libra' : 'card-trabaja'}" style="margin-bottom:16px;">
+            <div><span class="name-big">${p.n}</span></div>
+            <div style="display:flex; align-items:center;">
+                <div class="info-tag">🌙N · G${p.g} · ${p.t}</div>
+                <button class="btn-main" onclick="abrirCal('${p.id}')">Calendario</button>
+            </div>
+        </div>`;
+
+        // Resumen compañeros hoy
+        const comp = cargarCompaneros();
+        const todasPersonas = [];
+        Object.entries(comp).forEach(([key, nombres]) => {
+            const [turno, grupo] = key.split(/_(.+)/);
+            const turnoReal = turno === '73' ? '73/27' : '80/20';
+            nombres.forEach(nombre => {
+                const libre = checkEstadoIndividual(grupo, turnoReal, mHoy, dHoy).esLibreReal;
+                todasPersonas.push({ nombre, grupo, turnoReal, libre });
+            });
+        });
+
+        if (todasPersonas.length > 0) {
+            const libran = todasPersonas.filter(x => x.libre);
+            const trabajan = todasPersonas.filter(x => !x.libre);
+            html += `
+            <div style="background:white; border-radius:14px; padding:14px; border:1px solid #ddd6fe; margin-bottom:10px;">
+                <div style="font-weight:700; color:var(--primary-dark); margin-bottom:10px; font-size:0.9rem;">Hoy — ${dHoy}/${mHoy+1}</div>
+                <div style="margin-bottom:8px;">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--danger); margin-bottom:5px;">LIBRAN (${libran.length})</div>
+                    ${libran.length ? libran.map(x=>`<div style="font-size:0.83rem; padding:4px 0; border-bottom:1px solid #f5f3ff; color:var(--text);">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--primary-dark); margin-bottom:5px;">TRABAJAN (${trabajan.length})</div>
+                    ${trabajan.length ? trabajan.map(x=>`<div style="font-size:0.83rem; padding:4px 0; border-bottom:1px solid #f5f3ff; color:var(--text);">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}
+                </div>
+            </div>`;
+        }
+
+        cont.innerHTML = html;
+    }
+
+    function checkEstadoIndividual(grupo, turno, mIdx, d) {
+        const tabla = (turno === '80/20') ? gruposLibres8020 : gruposLibres;
+        const libreBase = (tabla[grupo] && tabla[grupo][mIdx]?.includes(d));
+        return { esLibreReal: libreBase };
+    }
+
+    function verDiaIndividual(d, mIdx) {
+        const comp = cargarCompaneros();
+        const todasPersonas = [];
+        Object.entries(comp).forEach(([key, nombres]) => {
+            const parts = key.split('_');
+            const turnoRaw = parts[0];
+            const grupo = parts.slice(1).join('_');
+            const turnoReal = turnoRaw === '73' ? '73/27' : '80/20';
+            nombres.forEach(nombre => {
+                const libre = checkEstadoIndividual(grupo, turnoReal, mIdx, d).esLibreReal;
+                todasPersonas.push({ nombre, grupo, turnoReal, libre });
+            });
+        });
+
+        const libran = todasPersonas.filter(x => x.libre);
+        const trabajan = todasPersonas.filter(x => !x.libre);
+
+        document.getElementById('dia-modal-titulo').innerText = `${d}/${mIdx+1} — ${mesesArr[mIdx]}`;
+        document.getElementById('dia-modal-libre').innerHTML = `
+            <div style="font-size:0.75rem; font-weight:700; color:var(--danger); margin-bottom:6px;">LIBRAN (${libran.length})</div>
+            ${libran.length ? libran.map(x=>`<div style="font-size:0.85rem; padding:5px 0; border-bottom:1px solid #f5f3ff;">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}`;
+        document.getElementById('dia-modal-trabaja').innerHTML = `
+            <div style="font-size:0.75rem; font-weight:700; color:var(--primary-dark); margin-bottom:6px; margin-top:10px;">TRABAJAN (${trabajan.length})</div>
+            ${trabajan.length ? trabajan.map(x=>`<div style="font-size:0.85rem; padding:5px 0; border-bottom:1px solid #f5f3ff;">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}`;
+        document.getElementById('dia-modal').style.display = 'flex';
+    }
+
+    // ===== EDITOR DE GRUPO =====
+    function abrirEditorGrupo() {
+        if (!grupoActual) return;
+        db.ref(`grupos/${grupoActual}`).once('value').then(snap => {
+            const data = snap.val();
+            document.getElementById('edit-group-name-label').innerText = `Grupo: ${data.nombre}  |  Código: ${grupoActual}`;
+            renderMemberList(data.miembros || {});
+            document.getElementById('edit-group-modal').style.display = 'flex';
+        });
+    }
+
+    function renderMemberList(miembros) {
+        const cont = document.getElementById('member-list-edit'); cont.innerHTML = '';
+        Object.values(miembros).forEach(m => {
+            const esNoche = (m.t === '73/27' || m.t === '80/20');
+            cont.innerHTML += `
+            <div class="member-row">
+                <div>
+                    <div class="member-name">${m.n} <span style="color:#94a3b8; font-weight:500">#${m.id}</span></div>
+                    <div class="member-sub">Grupo ${m.g} · ${esNoche ? '🌙N · ' : ''}${m.t}</div>
+                </div>
+                <button class="btn-danger-sm" onclick="eliminarMiembro('${m.id}')">Eliminar</button>
+            </div>`;
+        });
+    }
+
+    function añadirMiembro() {
+        const nom = document.getElementById('new-member-name').value.trim();
+        const id = document.getElementById('new-member-id').value.trim();
+        const tipo = document.getElementById('new-member-tipo').value;
+        const grupo = document.getElementById('new-member-grupo').value;
+        if (!nom || !id || !tipo || !grupo) { alert("Rellena todos los campos"); return; }
+        db.ref(`grupos/${grupoActual}/miembros/${id}`).set({ n: nom, id, g: grupo, t: tipo }).then(() => {
+            document.getElementById('new-member-name').value = '';
+            document.getElementById('new-member-id').value = '';
+            document.getElementById('new-member-tipo').value = '';
+            document.getElementById('new-member-grupo').value = '';
+            abrirEditorGrupo();
+        });
+    }
+
+    function eliminarMiembro(id) {
+        if (id === miID) { alert("No puedes eliminarte a ti mismo"); return; }
+        if (!confirm("¿Eliminar a este miembro del grupo?")) return;
+        db.ref(`grupos/${grupoActual}/miembros/${id}`).remove().then(abrirEditorGrupo);
+    }
+
+    function cerrarEditorGrupo() { document.getElementById('edit-group-modal').style.display = 'none'; }
+
+    // ===== LÓGICA DE CALENDARIO =====
+    function checkEstado(uid, mIdx, d) {
+        const p = equipo.find(x => x.id === uid);
+        if (!p) return { esLibreReal: false, data: null };
+        const data = (dbCambios[uid] && dbCambios[uid][`${mIdx}_${d}`]) ? dbCambios[uid][`${mIdx}_${d}`] : null;
+        const tabla = (p.t === '80/20') ? gruposLibres8020 : gruposLibres;
+        const libreBase = (tabla[p.g] && tabla[p.g][mIdx]?.includes(d));
+        let esLibreReal = libreBase;
+        if (data) {
+            if (data.texto === "Vacaciones" || data.texto === "Generado" || data.texto.includes("Libras")) esLibreReal = true;
+            else if (data.texto === "Pendiente" || data.texto.includes("Haces")) esLibreReal = false;
+        }
+        return { esLibreReal, data };
+    }
+
+    function renderList() {
+        if (!modoGrupo) { renderListIndividual(); return; }
+        const cont = document.getElementById('list-container'); cont.innerHTML = "";
+        equipo.forEach(e => {
+            const { esLibreReal } = checkEstado(e.id, mHoy, dHoy);
+            const esNoche = (e.t === '73/27' || e.t === '80/20');
+            const tagLabel = `${esNoche ? '🌙N · ' : ''}G${e.g}`;
+            cont.innerHTML += `
+            <div class="user-card ${esLibreReal ? 'card-libra' : 'card-trabaja'}">
+                <div><span class="name-big">${e.n}</span><span class="id-black">${e.id}</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">${tagLabel}</div>
+                    <button class="btn-main" onclick="abrirCal('${e.id}')">Calendario</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    function abrirCal(uid) {
+        idCalendarioAbierto = uid;
+        if (modoSeleccionActivo && tipoCambio === 'COMP' && uid !== miID) {
+            targetCompaneroID = uid;
+            document.getElementById('selection-notice').innerText = "PASO 2: ELIGE EL DÍA EN EL CALENDARIO DE " + (equipo.find(x=>x.id===uid)?.n || uid).toUpperCase();
+        }
+        const p = equipo.find(x => x.id === uid);
+        if (!p) return;
+        document.getElementById('cal-target-name').innerText = p.n;
+        const grid = document.getElementById('m-grid'); grid.innerHTML = "";
+        mesesArr.forEach((m, mIdx) => {
+            let html = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`;
+            let start = new Date(2026, mIdx, 1).getDay(); start = (start === 0) ? 6 : start - 1;
+            for(let i=0; i<start; i++) html += `<div></div>`;
+            const totalDias = new Date(2026, mIdx+1, 0).getDate();
+            for(let d=1; d<=totalDias; d++) {
+                const { esLibreReal, data } = checkEstado(uid, mIdx, d);
+                let clase = esLibreReal ? "is-free" : "is-work";
+                if ((start + d - 1) % 7 === 6) clase += " is-sun";
+                if (data) clase += " " + data.clase;
+                html += `<div class="d-cell ${clase}"
+                    onclick="handleDayClick(${d},${mIdx},'${uid}')"
+                    onmousedown="pressStart(event,${d},${mIdx},'${uid}')"
+                    ontouchstart="touchDayStart(event,${d},${mIdx},'${uid}')"
+                    ontouchend="touchDayEnd(event,${d},${mIdx},'${uid}')"
+                    onmouseup="cancelarTodoTimer()">${d}</div>`;
+            }
+            grid.innerHTML += html + `</div></div>`;
+        });
+        document.getElementById('m-cal').style.display = "block";
+    }
+
+    function handleDayClick(d, mIdx, uid) {
+        if (pressTimerActive) return;
+        if (modoSeleccionActivo) {
+            // En móvil el compañero ya se gestiona en touchDayEnd
+            // Esto cubre el caso de desktop (ratón)
+            if (uid !== miID) {
+                finalizarProceso(d, mIdx, uid);
+            }
+        } else {
+            verDia(d, mIdx, uid);
+        }
+    }
+
+    function verDia(d, mIdx, uid) {
+        if (!modoGrupo) { verDiaIndividual(d, mIdx); return; }
+        let countFree = 0, countWork = 0, htmlFree = "", htmlWork = "";
+        document.getElementById('panel-date').innerText = d + " " + mesesArr[mIdx];
+        equipo.forEach(e => {
+            const { esLibreReal, data } = checkEstado(e.id, mIdx, d);
+            const html = `<div style="padding:8px; border-bottom:1px solid #f5f3ff; font-size:0.85rem;"><b style="color:var(--text)">${e.n}</b><br><small style="color:#64748b">${data ? data.texto : (esLibreReal?'Libre Base':'Trabaja Base')}</small></div>`;
+            if (esLibreReal) { htmlFree += html; countFree++; } else { htmlWork += html; countWork++; }
+        });
+        document.getElementById('p-free-list').innerHTML = `<b style="color:var(--danger)">LIBRAN (${countFree}):</b>` + htmlFree;
+        document.getElementById('p-work-list').innerHTML = `<b style="color:var(--primary-dark)">TRABAJAN (${countWork}):</b>` + htmlWork;
+        document.getElementById('p-stats').innerHTML = `<div style="font-size:0.8rem; font-weight:bold; color:#64748b; margin-bottom:5px;">Resumen Diario</div>`;
+        document.getElementById('side-panel').style.display = "block";
+    }
+
+    // ===== TOQUE LARGO con bloqueo de click =====
+    function touchDayStart(event, d, mIdx, uid) {
+        // En modo selección o en calendario ajeno: no activar menú contextual
+        if (modoSeleccionActivo || uid !== miID) return;
+        pressStart(event, d, mIdx, uid);
+    }
+
+    function touchDayEnd(event, d, mIdx, uid) {
+        if (uid !== miID && modoSeleccionActivo) {
+            // Tap en calendario del compañero durante modo cambio: ejecutar directo
+            event.preventDefault();
+            clearTimeout(pressTimer);
+            pressTimerActive = false;
+            finalizarProceso(d, mIdx, uid);
+            return;
+        }
+        cancelarTodoTimer();
+    }
+
+    function pressStart(event, d, mIdx, uid) {
+        if (modoSeleccionActivo || uid !== miID) return;
+        diaSeleccionado = { d, mIdx, uid };
+        const touch = event.touches ? event.touches[0] : event;
+        const x = touch.clientX, y = touch.clientY;
+        pressTimerActive = false;
+        clearTimeout(pressTimer);
+        pressTimer = setTimeout(() => {
+            pressTimerActive = true;
+            mostrarMenuContextual(x, y);
+        }, 600);
+    }
+
+    function cancelarTodoTimer() {
+        clearTimeout(pressTimer);
+        setTimeout(() => { pressTimerActive = false; }, 100);
+    }
+
+    function mostrarMenuContextual(x, y) {
+        const menu = document.getElementById('ctx-menu');
+        // Limpiar opciones anteriores, dejar handle intacto
+        const handle = document.getElementById('ctx-menu-handle');
+        // Eliminar opciones anteriores sin tocar el handle
+        Array.from(menu.children).forEach(c => { if (c !== handle) c.remove(); });
+
+        const accionesMenu = {
+            'generado': () => setCambio('Generado', 'b-generado'),
+            'pendiente': () => setCambio('Pendiente', 'b-pend'),
+            'vacaciones': () => abrirVacModal(),
+            'comp': () => prepararCambio('COMP'),
+            'auto': () => prepararCambio('AUTO'),
+            'borrar': () => borrarCambio()
+        };
+
+        const opts = [
+            { label: '✨ Generado', color: 'var(--pink)', key: 'generado' },
+            { label: '⏳ Pendiente', color: 'var(--primary)', key: 'pendiente' },
+            { label: '🌴 Vacaciones', color: 'var(--success)', key: 'vacaciones' },
+            { label: '🤝 Con Compañero', color: 'var(--text)', key: 'comp' },
+            { label: '🔄 Propio', color: 'var(--text)', key: 'auto' },
+            { label: '❌ Borrar', color: 'red', key: 'borrar' }
+        ];
+        opts.forEach(o => {
+            const div = document.createElement('div');
+            div.className = 'menu-opt';
+            div.style.color = o.color;
+            div.textContent = o.label;
+            div.addEventListener('click', () => accionesMenu[o.key]());
+            menu.appendChild(div);
+        });
+
+        // Posicionar: si el menú se sale por abajo, subirlo
+        const menuH = 280; // altura estimada
+        let top = y;
+        if (top + menuH > window.innerHeight - 20) top = window.innerHeight - menuH - 20;
+        if (top < 10) top = 10;
+        let left = Math.min(x, window.innerWidth - 250);
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+        menu.style.display = 'block';
+
+        // Drag arrastrable
+        iniciarDragMenu(menu, handle);
+    }
+
+    // ===== DRAG DEL MENÚ =====
+    function iniciarDragMenu(menu, handle) {
+        let startX, startY, startLeft, startTop, dragging = false;
+
+        function onDown(e) {
+            dragging = true;
+            const t = e.touches ? e.touches[0] : e;
+            startX = t.clientX; startY = t.clientY;
+            startLeft = parseInt(menu.style.left) || 0;
+            startTop = parseInt(menu.style.top) || 0;
+            e.preventDefault();
+        }
+        function onMove(e) {
+            if (!dragging) return;
+            const t = e.touches ? e.touches[0] : e;
+            const dx = t.clientX - startX, dy = t.clientY - startY;
+            let newLeft = startLeft + dx, newTop = startTop + dy;
+            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - 250));
+            newTop = Math.max(0, Math.min(newTop, window.innerHeight - 50));
+            menu.style.left = newLeft + 'px';
+            menu.style.top = newTop + 'px';
+            e.preventDefault();
+        }
+        function onUp() { dragging = false; }
+
+        handle.addEventListener('mousedown', onDown);
+        handle.addEventListener('touchstart', onDown, { passive: false });
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchend', onUp);
+    }
+
+    // ===== PREPARAR CAMBIO =====
+    function prepararCambio(tipo) {
+        tipoCambio = tipo; modoSeleccionActivo = true; primerDiaCambio = { ...diaSeleccionado };
+        cerrarDesplegables();
+        document.getElementById('selection-notice').style.display = 'block';
+        document.getElementById('selection-notice').innerText = tipo === 'COMP'
+            ? "PASO 1: ABRE EL CALENDARIO DEL COMPAÑERO"
+            : "PASO 2: ELIGE EL DÍA DE TU CALENDARIO";
+    }
+
+    // ===== FINALIZAR PROCESO (con confirmación si es COMP) =====
+    function finalizarProceso(d2, m2, uid2) {
+        if (tipoCambio === 'COMP' && uid2 === miID) return;
+        const d1 = primerDiaCambio.d, m1 = primerDiaCambio.mIdx;
+        const f1 = `${d1}/${m1+1}`, f2 = `${d2}/${m2+1}`;
+
+        if (tipoCambio === 'COMP') {
+            const compNom = equipo.find(x => x.id === uid2)?.n || uid2;
+            // Mostrar modal de confirmación
+            document.getElementById('confirm-body').innerHTML = `
+                <b>Tu día ${f1}:</b> pasas a <b>trabajar</b> (lo que libra ${compNom})<br>
+                <b>Tu día ${f2}:</b> pasas a <b>librar</b> (lo que trabaja ${compNom})<br><br>
+                <b>${compNom}:</b><br>
+                El ${f1} pasa a <b>librar</b><br>
+                El ${f2} pasa a <b>trabajar</b>`;
+            document.getElementById('confirm-modal').style.display = 'flex';
+            // Guardar estado para cuando confirme
+            window._pendingCambio = { d1, m1, d2, m2, uid2 };
+        } else {
+            aplicarCambioPropio(d1, m1, d2, m2);
+        }
+    }
+
+    function rechazarCambio() {
+        document.getElementById('confirm-modal').style.display = 'none';
+        modoSeleccionActivo = false;
+        document.getElementById('selection-notice').style.display = 'none';
+        window._pendingCambio = null;
+    }
+
+    function confirmarCambioComp() {
+        document.getElementById('confirm-modal').style.display = 'none';
+        const { d1, m1, d2, m2, uid2 } = window._pendingCambio;
+        const miNom = equipo.find(x => x.id === miID)?.n.split(" ")[0] || miID;
+        const compNom = equipo.find(x => x.id === uid2)?.n.split(" ")[0] || uid2;
+        const f1 = `${d1}/${m1+1}`, f2 = `${d2}/${m2+1}`;
+        const solKey = db.ref('solicitudes').push().key;
+        pendingSolicitudKey = solKey;
+
+        // Crear solicitud en Firebase esperando confirmación del compañero
+        db.ref(`solicitudes/${solKey}`).set({
+            de: miID, para: uid2,
+            d1, m1, d2, m2,
+            f1, f2,
+            miNom, compNom,
+            estado: 'pendiente',
+            ts: Date.now()
+        }).then(() => {
+            modoSeleccionActivo = false;
+            document.getElementById('selection-notice').style.display = 'none';
+            // Mostrar modal de espera
+            document.getElementById('pending-body').innerHTML = `
+                Solicitud enviada a <b>${compNom}</b>.<br><br>
+                Tu día ${f1}: <b>trabajarás</b><br>
+                Tu libre ${f2}: <b>librarás</b>`;
+            document.getElementById('pending-modal').style.display = 'flex';
+            escucharRespuestaSolicitud(solKey, uid2);
+        });
+    }
+
+    function escucharRespuestaSolicitud(solKey, uid2) {
+        const ref = db.ref(`solicitudes/${solKey}`);
+        ref.on('value', snap => {
+            const sol = snap.val();
+            if (!sol) return;
+            if (sol.estado === 'aceptada') {
+                ref.off();
+                document.getElementById('pending-modal').style.display = 'none';
+                pendingSolicitudKey = null;
+                alert("✅ Cambio confirmado por " + (equipo.find(x=>x.id===uid2)?.n || uid2) + ". ¡Ya está aplicado!");
+                db.ref(`solicitudes/${solKey}`).remove();
+            } else if (sol.estado === 'rechazada') {
+                ref.off();
+                document.getElementById('pending-modal').style.display = 'none';
+                pendingSolicitudKey = null;
+                alert("❌ El compañero rechazó el cambio.");
+                db.ref(`solicitudes/${solKey}`).remove();
+            }
+        });
+    }
+
+    function cancelarSolicitudPendiente() {
+        if (pendingSolicitudKey) {
+            db.ref(`solicitudes/${pendingSolicitudKey}`).remove();
+            pendingSolicitudKey = null;
+        }
+        document.getElementById('pending-modal').style.display = 'none';
+    }
+
+    // ===== ESCUCHAR SOLICITUDES ENTRANTES =====
+    function escucharSolicitudesEntrantes() {
+        db.ref('solicitudes').on('value', snap => {
+            const todas = snap.val() || {};
+            Object.entries(todas).forEach(([key, sol]) => {
+                if (sol.para === miID && sol.estado === 'pendiente') {
+                    mostrarSolicitudEntrante(key, sol);
+                }
+            });
+        });
+    }
+
+    function checkSolicitudesEntrantes() {
+        Object.entries(dbSolicitudes).forEach(([key, sol]) => {
+            if (sol.para === miID && sol.estado === 'pendiente') {
+                mostrarSolicitudEntrante(key, sol);
+            }
+        });
+    }
+
+    let solicitudesVistas = new Set();
+    function mostrarSolicitudEntrante(key, sol) {
+        if (solicitudesVistas.has(key)) return;
+        solicitudesVistas.add(key);
+        const remitente = equipo.find(x => x.id === sol.de)?.n || sol.miNom || sol.de;
+        // Mostrar como alerta/modal
+        const acepta = confirm(`🤝 SOLICITUD DE CAMBIO\n\n${remitente} quiere hacer un cambio contigo:\n\nTú libras el ${sol.f1} y trabajas el ${sol.f2}\n\n¿Aceptas?`);
+        if (acepta) {
+            aplicarCambioComp(sol).then(() => {
+                db.ref(`solicitudes/${key}`).update({ estado: 'aceptada' });
+            });
+        } else {
+            db.ref(`solicitudes/${key}`).update({ estado: 'rechazada' });
+            solicitudesVistas.delete(key); // Permitir volver a preguntar si no se llegó a responder
+        }
+    }
+
+    function aplicarCambioComp(sol) {
+        const { de: u1, para: u2, d1, m1, d2, m2, miNom, compNom, f1, f2 } = sol;
+        const updates = {
+            [`cambios/${u1}/${m1}_${d1}`]: { texto: `Haces (x ${compNom} ${f2})`, clase: 'b-inter' },
+            [`cambios/${u1}/${m2}_${d2}`]: { texto: `Libras (x ${compNom} ${f1})`, clase: 'b-cambio-libre' },
+            [`cambios/${u2}/${m1}_${d1}`]: { texto: `Libras (x ${miNom} ${f2})`, clase: 'b-cambio-libre' },
+            [`cambios/${u2}/${m2}_${d2}`]: { texto: `Haces (x ${miNom} ${f1})`, clase: 'b-inter' }
+        };
+        return db.ref().update(updates);
+    }
+
+    function aplicarCambioPropio(d1, m1, d2, m2) {
+        const f1 = `${d1}/${m1+1}`, f2 = `${d2}/${m2+1}`;
+        const updates = {
+            [`cambios/${miID}/${m1}_${d1}`]: { texto: `Haces (x ${f2})`, clase: 'b-inter' },
+            [`cambios/${miID}/${m2}_${d2}`]: { texto: `Libras (x ${f1})`, clase: 'b-cambio-libre' }
+        };
+        db.ref().update(updates).then(() => {
+            modoSeleccionActivo = false;
+            document.getElementById('selection-notice').style.display = 'none';
+        });
+    }
+
+    // ===== GESTIÓN DE DÍAS =====
+    function setCambio(texto, clase) {
+        const { d, mIdx, uid } = diaSeleccionado;
+        db.ref(`cambios/${uid}/${mIdx}_${d}`).set({ texto, clase }).then(cerrarDesplegables);
+    }
+
+    function borrarCambio() {
+        const { d, mIdx, uid } = diaSeleccionado;
+        const data = dbCambios[uid]?.[`${mIdx}_${d}`];
+        const esVacaciones = data?.texto === 'Vacaciones';
+
+        if (esVacaciones) {
+            const totalDias = new Date(2026, mIdx + 1, 0).getDate();
+            const diasVac = [];
+            for (let i = 1; i <= totalDias; i++) {
+                if (dbCambios[uid]?.[`${mIdx}_${i}`]?.texto === 'Vacaciones') diasVac.push(i);
+            }
+            if (diasVac.length > 1) {
+                const opcion = confirm(`Hay ${diasVac.length} días de vacaciones en este mes.\n\n¿Borrar TODO el mes?\n\nAceptar = todo el mes\nCancelar = solo este día`);
+                if (opcion) {
+                    const updates = {};
+                    diasVac.forEach(i => updates[`cambios/${uid}/${mIdx}_${i}`] = null);
+                    db.ref().update(updates).then(cerrarDesplegables);
+                    return;
+                }
+            }
+        }
+        db.ref(`cambios/${uid}/${mIdx}_${d}`).remove().then(cerrarDesplegables);
+    }
+
+    function abrirVacModal() {
+        cerrarDesplegables();
+        document.getElementById('vac-info').innerText = `Inicio: ${diaSeleccionado.d}/${diaSeleccionado.mIdx+1}`;
+        document.getElementById('vac-input').value = '';
+        document.getElementById('vac-modal').style.display = 'flex';
+    }
+    function cerrarVacModal() { document.getElementById('vac-modal').style.display = 'none'; }
+    function confirmarVacaciones() {
+        const hasta = parseInt(document.getElementById('vac-input').value);
+        const { d, mIdx, uid } = diaSeleccionado;
+        const totalDias = new Date(2026, mIdx + 1, 0).getDate();
+        if (!hasta || isNaN(hasta)) { alert("Introduce el día final"); return; }
+        if (hasta < d) { alert(`El día final (${hasta}) no puede ser menor que el día de inicio (${d})`); return; }
+        if (hasta > totalDias) { alert(`Este mes solo tiene ${totalDias} días`); return; }
+        const updates = {};
+        for (let i = d; i <= hasta; i++) updates[`cambios/${uid}/${mIdx}_${i}`] = { texto: 'Vacaciones', clase: 'b-vac' };
+        db.ref().update(updates).then(cerrarVacModal);
+    }
+
+    function cerrarDesplegables() { document.getElementById('ctx-menu').style.display = 'none'; }
+    function cerrarCalendario() {
+        document.getElementById('m-cal').style.display = 'none';
+        document.getElementById('side-panel').style.display = 'none';
+        idCalendarioAbierto = null;
+        // Si hay modo selección activo, NO lo cancelamos — el usuario necesita
+        // cerrar su calendario para ir a abrir el del compañero
+    }
+
+    function cerrarTodo() {
+        cerrarDesplegables();
+        document.getElementById('m-cal').style.display = 'none';
+        document.getElementById('side-panel').style.display = 'none';
+        idCalendarioAbierto = null;
+        if (modoSeleccionActivo) {
+            modoSeleccionActivo = false;
+            tipoCambio = null;
+            primerDiaCambio = null;
+            targetCompaneroID = null;
+            document.getElementById('selection-notice').style.display = 'none';
+        }
+    }
+
+    function mostrarInformeLeyenda(clase, titulo) {
+        const uid = idCalendarioAbierto;
+        document.getElementById('report-title').innerText = titulo;
+        let body = "";
+        for (let m = 0; m < 12; m++) {
+            for (let d = 1; d <= 31; d++) {
+                const res = checkEstado(uid, m, d);
+                if (res.data && res.data.clase === clase) body += `<div class="report-row"><b>${d}/${m+1}:</b> ${res.data.texto}</div>`;
+            }
+        }
+        document.getElementById('report-body').innerHTML = body;
+        document.getElementById('report-modal').style.display = "flex";
+    }
+
+    // Cerrar menú al tocar fuera
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('ctx-menu');
+        if (menu.style.display === 'block' && !menu.contains(e.target)) {
+            menu.style.display = 'none';
+        }
+    });
+
+    // ===== PULL TO REFRESH =====
+    let ptrStartY = 0, ptrActivo = false;
+    const PTR_UMBRAL = 80;
+
+    // ===== ARRANQUE =====
+    if (!restaurarSesion()) {
+        rellenarCamposLogin();
+    }
+
+    // ===== SERVICE WORKER =====
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
+    document.addEventListener('touchstart', (e) => {
+        const calAbierto = document.getElementById('m-cal').style.display !== 'none';
+        const panelAbierto = document.getElementById('side-panel').style.display !== 'none';
+        if (window.scrollY === 0 && document.getElementById('main-content').style.display !== 'none'
+            && !calAbierto && !panelAbierto && !modoSeleccionActivo) {
+            ptrStartY = e.touches[0].clientY;
+            ptrActivo = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+        if (!ptrActivo) return;
+        const dy = e.changedTouches[0].clientY - ptrStartY;
+        ptrActivo = false;
+        if (dy > PTR_UMBRAL) location.reload();
+    }, { passive: true });
+</script>
+</body>
+</html>
