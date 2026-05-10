@@ -1177,10 +1177,10 @@
     function aplicarCambioComp(sol) {
         const { de: u1, para: u2, d1, m1, d2, m2, miNom, compNom, f1, f2 } = sol;
         const updates = {
-            [`cambios/${u1}/${m1}_${d1}`]: { texto: `Haces (x ${compNom} ${f2})`, clase: 'b-inter' },
-            [`cambios/${u1}/${m2}_${d2}`]: { texto: `Libras (x ${compNom} ${f1})`, clase: 'b-cambio-libre' },
-            [`cambios/${u2}/${m1}_${d1}`]: { texto: `Libras (x ${miNom} ${f2})`, clase: 'b-cambio-libre' },
-            [`cambios/${u2}/${m2}_${d2}`]: { texto: `Haces (x ${miNom} ${f1})`, clase: 'b-inter' }
+            [`cambios/${u1}/${m1}_${d1}`]: { texto: `Haces (x ${compNom} ${f2})`, clase: 'b-inter', linkedUid: u2, linkedKey: `${m2}_${d2}` },
+            [`cambios/${u1}/${m2}_${d2}`]: { texto: `Libras (x ${compNom} ${f1})`, clase: 'b-cambio-libre', linkedUid: u2, linkedKey: `${m1}_${d1}` },
+            [`cambios/${u2}/${m1}_${d1}`]: { texto: `Libras (x ${miNom} ${f2})`, clase: 'b-cambio-libre', linkedUid: u1, linkedKey: `${m2}_${d2}` },
+            [`cambios/${u2}/${m2}_${d2}`]: { texto: `Haces (x ${miNom} ${f1})`, clase: 'b-inter', linkedUid: u1, linkedKey: `${m1}_${d1}` }
         };
         return db.ref().update(updates);
     }
@@ -1207,32 +1207,28 @@
         const { d, mIdx, uid } = diaSeleccionado;
         const data = dbCambios[uid]?.[`${mIdx}_${d}`];
         const esVacaciones = data?.texto === 'Vacaciones';
+        const esCambioComp = (data?.clase === 'b-inter' || data?.clase === 'b-cambio-libre') && data?.linkedUid;
 
-        // Si es un cambio con compañero, buscar y borrar también el día del otro
-        const esCambio = data?.clase === 'b-inter' || data?.clase === 'b-cambio-libre';
-        if (esCambio && modoGrupo) {
-            // Buscar el compañero implicado mirando el texto (ej: "Haces (x Curro 12/3)")
-            const textoComp = data.texto; // "Haces (x Nombre fecha)" o "Libras (x Nombre fecha)"
-            // Buscar en todos los miembros del equipo el día vinculado
-            const updates = {};
-            updates[`cambios/${uid}/${mIdx}_${d}`] = null;
-            // Buscar días del compañero que referencien este cambio
-            equipo.forEach(miembro => {
-                if (miembro.id === uid) return;
-                const cambiosMiembro = dbCambios[miembro.id] || {};
-                Object.entries(cambiosMiembro).forEach(([key, val]) => {
-                    if ((val.clase === 'b-inter' || val.clase === 'b-cambio-libre') &&
-                        val.texto && (val.texto.includes(`${d}/${mIdx+1}`) || textoComp.includes(miembro.n.split(' ')[0]))) {
-                        updates[`cambios/${miembro.id}/${key}`] = null;
-                    }
-                });
-            });
-            if (Object.keys(updates).length > 1) {
-                if (confirm(`Este día forma parte de un cambio con un compañero.\n¿Borrar el cambio para los dos?`)) {
-                    db.ref().update(updates).then(cerrarDesplegables);
-                    return;
+        if (esCambioComp) {
+            const linkedUid = data.linkedUid;
+            const linkedKey = data.linkedKey;
+            const compNombre = equipo.find(x => x.id === linkedUid)?.n || linkedUid;
+            if (confirm(`Este día es un cambio con ${compNombre}.\n¿Borrar el cambio para los dos?`)) {
+                const updates = {
+                    [`cambios/${uid}/${mIdx}_${d}`]: null,
+                    [`cambios/${linkedUid}/${linkedKey}`]: null
+                };
+                // Buscar también el otro día vinculado del compañero
+                const linkedData = dbCambios[linkedUid]?.[linkedKey];
+                if (linkedData?.linkedKey) {
+                    updates[`cambios/${uid}/${linkedData.linkedKey}`] = null;
+                    updates[`cambios/${linkedUid}/${linkedData.linkedUid === uid ? linkedKey : linkedData.linkedKey}`] = null;
                 }
+                db.ref().update(updates).then(cerrarDesplegables);
+            } else {
+                cerrarDesplegables();
             }
+            return;
         }
 
         if (esVacaciones) {
@@ -1242,7 +1238,7 @@
                 if (dbCambios[uid]?.[`${mIdx}_${i}`]?.texto === 'Vacaciones') diasVac.push(i);
             }
             if (diasVac.length > 1) {
-                const opcion = confirm(`Hay ${diasVac.length} días de vacaciones en este mes.\n\n¿Borrar TODO el mes?\n\nAceptar = todo el mes\nCancelar = solo este día`);
+                const opcion = confirm(`Hay ${diasVac.length} días de vacaciones en este mes.\n\nAceptar = todo el mes\nCancelar = solo este día`);
                 if (opcion) {
                     const updates = {};
                     diasVac.forEach(i => updates[`cambios/${uid}/${mIdx}_${i}`] = null);
@@ -1251,6 +1247,7 @@
                 }
             }
         }
+
         db.ref(`cambios/${uid}/${mIdx}_${d}`).remove().then(cerrarDesplegables);
     }
 
