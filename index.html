@@ -186,6 +186,7 @@
         <div style="display:flex;gap:8px;align-items:center;">
             <button id="btn-companeros" onclick="abrirCompaneros()" style="display:none; padding:8px 12px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.8rem; color:var(--primary);">👥 Compañeros</button>
             <button id="btn-editar-grupo" onclick="abrirEditorGrupo()" style="display:none; padding:8px 12px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.8rem; color:var(--primary);">✏️ Grupo</button>
+            <button onclick="abrirPanelGrupos()" style="padding:8px 12px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.8rem; color:var(--primary);">📅 Grupos</button>
             <button onclick="cerrarSesion()" style="padding:8px 12px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.8rem; color:var(--primary);">Salir</button>
         </div>
     </header>
@@ -327,6 +328,30 @@
 </div>
 
 <!-- Menú contextual arrastrable -->
+<!-- Modal panel todos los grupos -->
+<div id="grupos-panel" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:5000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+    <div style="background:white; padding:20px; border-radius:20px; width:100%; max-width:480px; margin-top:10px; border:1px solid var(--primary);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0; color:var(--primary-dark); font-size:1rem;">📅 Todos los grupos de libres</h3>
+            <button onclick="cerrarPanelGrupos()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;">✕</button>
+        </div>
+        <!-- Pestañas turno -->
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <button id="pg-tab-7327" onclick="setPanelTurno('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
+            <button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
+        </div>
+        <!-- Navegación mes -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; background:#f5f3ff; border-radius:12px; padding:8px 14px;">
+            <button onclick="cambiarMesPanel(-1)" style="background:none; border:none; font-size:1.4rem; color:var(--primary); cursor:pointer; font-weight:900;">‹</button>
+            <span id="pg-mes-label" style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;"></span>
+            <button onclick="cambiarMesPanel(1)" style="background:none; border:none; font-size:1.4rem; color:var(--primary); cursor:pointer; font-weight:900;">›</button>
+        </div>
+        <!-- Lista grupos -->
+        <div id="pg-grupos-lista"></div>
+        <button onclick="cerrarPanelGrupos()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;">Cerrar</button>
+    </div>
+</div>
+
 <div id="ctx-menu">
     <div id="ctx-menu-handle">⠿ MANTÉN Y ARRASTRA</div>
 </div>
@@ -1315,7 +1340,83 @@
         }
     });
 
-    // ===== PULL TO REFRESH =====
+    // ===== PANEL TODOS LOS GRUPOS =====
+    let panelTurno = '73/27';
+    let panelMes = new Date().getMonth();
+
+    function abrirPanelGrupos() {
+        panelMes = mHoy;
+        panelTurno = '73/27';
+        document.getElementById('grupos-panel').style.display = 'flex';
+        renderPanelGrupos();
+    }
+
+    function cerrarPanelGrupos() {
+        document.getElementById('grupos-panel').style.display = 'none';
+    }
+
+    function setPanelTurno(turno) {
+        panelTurno = turno;
+        document.getElementById('pg-tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
+        document.getElementById('pg-tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)';
+        document.getElementById('pg-tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#ddd6fe';
+        document.getElementById('pg-tab-8020').style.background = turno === '80/20' ? 'var(--primary)' : 'white';
+        document.getElementById('pg-tab-8020').style.color = turno === '80/20' ? 'white' : 'var(--primary)';
+        document.getElementById('pg-tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#ddd6fe';
+        renderPanelGrupos();
+    }
+
+    function cambiarMesPanel(dir) {
+        panelMes = (panelMes + dir + 12) % 12;
+        renderPanelGrupos();
+    }
+
+    function renderPanelGrupos() {
+        document.getElementById('pg-mes-label').innerText = mesesArr[panelMes] + ' 2026';
+        const tabla = panelTurno === '80/20' ? gruposLibres8020 : gruposLibres;
+        const cont = document.getElementById('pg-grupos-lista');
+        cont.innerHTML = '';
+
+        // Mapear miembros del equipo por grupo y turno
+        const miembrosPorGrupo = {};
+        equipo.forEach(m => {
+            if (m.t === panelTurno) {
+                if (!miembrosPorGrupo[m.g]) miembrosPorGrupo[m.g] = [];
+                miembrosPorGrupo[m.g].push(m.n);
+            }
+        });
+
+        Object.keys(tabla).sort((a,b) => parseInt(a)-parseInt(b)).forEach(g => {
+            const diasLibres = tabla[g][panelMes] || [];
+            const miembros = miembrosPorGrupo[g] || [];
+            const tieneMiembros = miembros.length > 0;
+
+            // Agrupar días consecutivos
+            const rangos = [];
+            let i = 0;
+            const dias = [...diasLibres].sort((a,b) => a-b);
+            while (i < dias.length) {
+                let inicio = dias[i], fin = dias[i];
+                while (i + 1 < dias.length && dias[i+1] === dias[i] + 1) { i++; fin = dias[i]; }
+                rangos.push(inicio === fin ? `${inicio}` : `${inicio}-${fin}`);
+                i++;
+            }
+
+            cont.innerHTML += `
+            <div style="border:1px solid ${tieneMiembros ? 'var(--primary)' : '#e2e8f0'}; border-radius:12px; padding:12px; margin-bottom:8px; background:${tieneMiembros ? '#faf9ff' : '#f8fafc'};">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;">Grupo ${g}</span>
+                    ${tieneMiembros ? `<span style="font-size:0.7rem; background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-weight:700;">${miembros.join(', ')}</span>` : `<span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Sin asignar</span>`}
+                </div>
+                <div style="font-size:0.78rem; color:#475569;">
+                    <span style="font-weight:700; color:var(--danger);">🗓 Libra: </span>
+                    ${diasLibres.length > 0 ? rangos.join(', ') : '<span style="color:#94a3b8;">Sin datos</span>'}
+                </div>
+            </div>`;
+        });
+    }
+
+    // ===== PANEL TODOS LOS GRUPOS FIN =====
     let ptrStartY = 0, ptrActivo = false;
     const PTR_UMBRAL = 80;
 
