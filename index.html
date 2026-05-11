@@ -529,6 +529,7 @@
             alert(`✅ Grupo creado!\n\nCódigo del grupo: ${codigo}\nGuárdalo para compartirlo con tus compañeros.`);
             miID = miId; miNombreCompleto = miNom; modoGrupo = true; grupoActual = codigo;
             miTipoSesion = miTipo; miGrupoSesion = miGrupo;
+            try { localStorage.setItem('lastID2026', miId); } catch(e) {}
             guardarSesion();
             cargarMiembrosGrupo(codigo);
         });
@@ -577,28 +578,54 @@
     let miTipoSesion = "", miGrupoSesion = "";
 
     function guardarSesion() {
-        localStorage.setItem('sesion2026', JSON.stringify({
-            miID, miNombreCompleto, modoGrupo, grupoActual, miTipoSesion, miGrupoSesion
-        }));
+        const sesion = { miID, miNombreCompleto, modoGrupo, grupoActual, miTipoSesion, miGrupoSesion };
+        // Guardar en localStorage (Android/Chrome)
+        try { localStorage.setItem('sesion2026', JSON.stringify(sesion)); } catch(e) {}
+        // Guardar en Firebase (iOS Safari)
+        if (miID) db.ref(`sesiones/${miID}`).set(sesion);
     }
 
     function restaurarSesion() {
+        // Intentar primero localStorage
         try {
             const raw = localStorage.getItem('sesion2026');
-            if (!raw) return false;
-            const s = JSON.parse(raw);
-            if (!s.miID) return false;
-            miID = s.miID; miNombreCompleto = s.miNombreCompleto;
-            modoGrupo = s.modoGrupo; grupoActual = s.grupoActual;
-            miTipoSesion = s.miTipoSesion || ""; miGrupoSesion = s.miGrupoSesion || "";
-            if (modoGrupo && grupoActual) {
-                cargarMiembrosGrupo(grupoActual);
-            } else {
-                equipo = equipoBase;
-                iniciarApp();
+            if (raw) {
+                const s = JSON.parse(raw);
+                if (s.miID) {
+                    aplicarSesion(s);
+                    return true;
+                }
             }
-            return true;
-        } catch(e) { return false; }
+        } catch(e) {}
+
+        // Si no hay localStorage, buscar por ID en Firebase
+        // Mostrar campo ID para recuperar sesión
+        const savedID = localStorage.getItem('lastID2026');
+        if (savedID) {
+            db.ref(`sesiones/${savedID}`).once('value').then(snap => {
+                const s = snap.val();
+                if (s && s.miID) {
+                    aplicarSesion(s);
+                } else {
+                    rellenarCamposLogin();
+                }
+            });
+            return true; // evitar que muestre login mientras carga
+        }
+        return false;
+    }
+
+    function aplicarSesion(s) {
+        miID = s.miID; miNombreCompleto = s.miNombreCompleto;
+        modoGrupo = s.modoGrupo; grupoActual = s.grupoActual;
+        miTipoSesion = s.miTipoSesion || ""; miGrupoSesion = s.miGrupoSesion || "";
+        try { localStorage.setItem('lastID2026', miID); } catch(e) {}
+        if (modoGrupo && grupoActual) {
+            cargarMiembrosGrupo(grupoActual);
+        } else {
+            equipo = equipoBase;
+            iniciarApp();
+        }
     }
 
     function rellenarCamposLogin() {
