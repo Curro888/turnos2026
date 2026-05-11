@@ -530,6 +530,7 @@
             miID = miId; miNombreCompleto = miNom; modoGrupo = true; grupoActual = codigo;
             miTipoSesion = miTipo; miGrupoSesion = miGrupo;
             try { localStorage.setItem('lastID2026', miId); } catch(e) {}
+            setCookie('uid2026', miId, 365);
             guardarSesion();
             cargarMiembrosGrupo(codigo);
         });
@@ -577,32 +578,40 @@
     // ===== SESIÓN PERSISTENTE =====
     let miTipoSesion = "", miGrupoSesion = "";
 
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+    }
+
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? v.pop() : null;
+    }
+
     function guardarSesion() {
         const sesion = { miID, miNombreCompleto, modoGrupo, grupoActual, miTipoSesion, miGrupoSesion };
-        // Guardar en localStorage (Android/Chrome)
         try { localStorage.setItem('sesion2026', JSON.stringify(sesion)); } catch(e) {}
-        // Guardar en Firebase (iOS Safari)
-        if (miID) db.ref(`sesiones/${miID}`).set(sesion);
+        if (miID) {
+            setCookie('uid2026', miID, 365);
+            db.ref(`sesiones/${miID}`).set(sesion);
+        }
     }
 
     function restaurarSesion() {
-        // Intentar primero localStorage
+        // Intentar localStorage primero
         try {
             const raw = localStorage.getItem('sesion2026');
             if (raw) {
                 const s = JSON.parse(raw);
-                if (s.miID) {
-                    aplicarSesion(s);
-                    return true;
-                }
+                if (s && s.miID) { aplicarSesion(s); return true; }
             }
         } catch(e) {}
 
-        // Si no hay localStorage, buscar por ID en Firebase
-        // Mostrar campo ID para recuperar sesión
-        const savedID = localStorage.getItem('lastID2026');
-        if (savedID) {
-            db.ref(`sesiones/${savedID}`).once('value').then(snap => {
+        // Intentar con cookie (iOS Safari)
+        const cookieID = getCookie('uid2026');
+        if (cookieID) {
+            db.ref(`sesiones/${cookieID}`).once('value').then(snap => {
                 const s = snap.val();
                 if (s && s.miID) {
                     aplicarSesion(s);
@@ -610,7 +619,7 @@
                     rellenarCamposLogin();
                 }
             });
-            return true; // evitar que muestre login mientras carga
+            return true;
         }
         return false;
     }
@@ -620,6 +629,7 @@
         modoGrupo = s.modoGrupo; grupoActual = s.grupoActual;
         miTipoSesion = s.miTipoSesion || ""; miGrupoSesion = s.miGrupoSesion || "";
         try { localStorage.setItem('lastID2026', miID); } catch(e) {}
+        setCookie('uid2026', miID, 365);
         if (modoGrupo && grupoActual) {
             cargarMiembrosGrupo(grupoActual);
         } else {
