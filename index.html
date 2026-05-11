@@ -1505,8 +1505,9 @@
     document.addEventListener('touchstart', (e) => {
         const calAbierto = document.getElementById('m-cal').style.display !== 'none';
         const panelAbierto = document.getElementById('side-panel').style.display !== 'none';
+        const gruposPanelAbierto = document.getElementById('grupos-panel').style.display !== 'none';
         if (window.scrollY === 0 && document.getElementById('main-content').style.display !== 'none'
-            && !calAbierto && !panelAbierto && !modoSeleccionActivo) {
+            && !calAbierto && !panelAbierto && !gruposPanelAbierto && !modoSeleccionActivo) {
             ptrStartY = e.touches[0].clientY;
             ptrActivo = true;
         }
