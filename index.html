@@ -1098,6 +1098,7 @@
         menu.style.left = left + 'px';
         menu.style.top = top + 'px';
         menu.style.display = 'block';
+        ignorarSiguienteClick = true;
 
         // Drag arrastrable
         iniciarDragMenu(menu, handle);
@@ -1404,9 +1405,11 @@
         document.getElementById('report-modal').style.display = "flex";
     }
 
-    // Cerrar menú al tocar fuera
+    // Cerrar menú al tocar fuera — ignorar el click que abre el menú
+    let ignorarSiguienteClick = false;
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('ctx-menu');
+        if (ignorarSiguienteClick) { ignorarSiguienteClick = false; return; }
         if (menu.style.display === 'block' && !menu.contains(e.target)) {
             menu.style.display = 'none';
         }
