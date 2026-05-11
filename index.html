@@ -578,6 +578,9 @@
     // ===== SESIÓN PERSISTENTE =====
     let miTipoSesion = "", miGrupoSesion = "";
 
+    // ===== INDEXEDDB PARA IOS SAFARI =====
+    let idbDB = null;
+
     function setCookie(name, value, days) {
         const d = new Date();
         d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -589,17 +592,41 @@
         return v ? v.pop() : null;
     }
 
+    function abrirIDB() {
+        return new Promise((res, rej) => {
+            const req = indexedDB.open('turnos2026', 1);
+            req.onupgradeneeded = e => e.target.result.createObjectStore('sesion', { keyPath: 'k' });
+            req.onsuccess = e => { idbDB = e.target.result; res(idbDB); };
+            req.onerror = () => rej();
+        });
+    }
+
+    function idbSet(key, value) {
+        return abrirIDB().then(db => new Promise((res, rej) => {
+            const tx = db.transaction('sesion', 'readwrite');
+            tx.objectStore('sesion').put({ k: key, v: value });
+            tx.oncomplete = res; tx.onerror = rej;
+        }));
+    }
+
+    function idbGet(key) {
+        return abrirIDB().then(db => new Promise((res) => {
+            const tx = db.transaction('sesion', 'readonly');
+            const req = tx.objectStore('sesion').get(key);
+            req.onsuccess = () => res(req.result ? req.result.v : null);
+            req.onerror = () => res(null);
+        }));
+    }
+
     function guardarSesion() {
         const sesion = { miID, miNombreCompleto, modoGrupo, grupoActual, miTipoSesion, miGrupoSesion };
         try { localStorage.setItem('sesion2026', JSON.stringify(sesion)); } catch(e) {}
-        if (miID) {
-            setCookie('uid2026', miID, 365);
-            db.ref(`sesiones/${miID}`).set(sesion);
-        }
+        idbSet('sesion2026', JSON.stringify(sesion)).catch(() => {});
+        if (miID) db.ref(`sesiones/${miID}`).set(sesion);
     }
 
     function restaurarSesion() {
-        // Intentar localStorage primero
+        // 1. Intentar localStorage
         try {
             const raw = localStorage.getItem('sesion2026');
             if (raw) {
@@ -608,28 +635,36 @@
             }
         } catch(e) {}
 
-        // Intentar con cookie (iOS Safari)
-        const cookieID = getCookie('uid2026');
-        if (cookieID) {
-            db.ref(`sesiones/${cookieID}`).once('value').then(snap => {
-                const s = snap.val();
-                if (s && s.miID) {
-                    aplicarSesion(s);
-                } else {
-                    rellenarCamposLogin();
-                }
-            });
-            return true;
-        }
-        return false;
+        // 2. Intentar IndexedDB (iOS Safari standalone)
+        idbGet('sesion2026').then(raw => {
+            if (raw) {
+                try {
+                    const s = JSON.parse(raw);
+                    if (s && s.miID) { aplicarSesion(s); return; }
+                } catch(e) {}
+            }
+            // 3. Intentar cookie
+            const cookieID = getCookie('uid2026');
+            if (cookieID) {
+                db.ref(`sesiones/${cookieID}`).once('value').then(snap => {
+                    const s = snap.val();
+                    if (s && s.miID) { aplicarSesion(s); }
+                    else { rellenarCamposLogin(); }
+                });
+            } else {
+                rellenarCamposLogin();
+            }
+        }).catch(() => rellenarCamposLogin());
+
+        return true; // evitar login mientras carga
     }
 
     function aplicarSesion(s) {
         miID = s.miID; miNombreCompleto = s.miNombreCompleto;
         modoGrupo = s.modoGrupo; grupoActual = s.grupoActual;
         miTipoSesion = s.miTipoSesion || ""; miGrupoSesion = s.miGrupoSesion || "";
-        try { localStorage.setItem('lastID2026', miID); } catch(e) {}
         setCookie('uid2026', miID, 365);
+        try { localStorage.setItem('lastID2026', miID); } catch(e) {}
         if (modoGrupo && grupoActual) {
             cargarMiembrosGrupo(grupoActual);
         } else {
