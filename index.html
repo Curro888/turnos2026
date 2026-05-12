@@ -1,4 +1,4 @@
-
+ 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1653,13 +1653,30 @@
             totalLibres += dias.length;
             finesLibres += fdsEsMes;
             festivosLibres += festEsMes;
-            const cambiosMes = Object.keys(dbCambios[miID] || {}).filter(k => k.startsWith(mIdx + '_')).length;
-            htmlMeses += '<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f1f5f9;">' +
+            const cambiosMiID = dbCambios[miID] || {};
+            const keysDelMes = Object.keys(cambiosMiID).filter(k => k.startsWith(mIdx + '_'));
+            let nComp = 0, nPropio = 0, nPend = 0, nGen = 0;
+            keysDelMes.forEach(k => {
+                const c = cambiosMiID[k];
+                if (c.clase === 'b-inter' || c.clase === 'b-cambio-libre') nComp++;
+                else if (c.clase === 'b-propio' || c.clase === 'b-cambio') nPropio++;
+                else if (c.clase === 'b-pend') nPend++;
+                else if (c.clase === 'b-generado') nGen++;
+            });
+            const totalCambiosMes = nComp + nPropio + nPend + nGen;
+            let etiquetasCambios = '';
+            if (nComp > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#ede9fe; color:#7c3aed; padding:2px 5px; border-radius:6px; margin-left:2px;">🤝' + nComp + '</span>';
+            if (nPropio > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:6px; margin-left:2px;">🔄' + nPropio + '</span>';
+            if (nPend > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#fef3c7; color:#b45309; padding:2px 5px; border-radius:6px; margin-left:2px;">⏳' + nPend + '</span>';
+            if (nGen > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#fce7f3; color:#be185d; padding:2px 5px; border-radius:6px; margin-left:2px;">✨' + nGen + '</span>';
+            htmlMeses += '<div style="padding:8px 0; border-bottom:1px solid #f1f5f9;">' +
+                '<div style="display:flex; justify-content:space-between; align-items:center;">' +
                 '<span style="font-weight:700; color:var(--primary-dark); width:35px;">' + meses[mIdx] + '</span>' +
                 '<span style="font-size:0.8rem; color:#475569;">' + dias.length + ' libres</span>' +
                 '<span style="font-size:0.8rem; color:#16a34a;">' + fdsEsMes + ' fds</span>' +
                 '<span style="font-size:0.8rem; color:#dc2626;">' + festEsMes + ' fest</span>' +
-                (cambiosMes > 0 ? '<span style="font-size:0.75rem; background:#f0fdf4; color:#16a34a; padding:2px 6px; border-radius:8px;">' + cambiosMes + ' cambios</span>' : '<span></span>') +
+                '</div>' +
+                (totalCambiosMes > 0 ? '<div style="display:flex; flex-wrap:wrap; gap:3px; margin-top:4px; padding-left:35px;">' + etiquetasCambios + '</div>' : '') +
                 '</div>';
         });
 
@@ -1670,7 +1687,7 @@
                 '<div style="background:#fef2f2; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:#dc2626;">' + festivosLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">FESTIVOS</div></div>' +
             '</div>' +
             '<div style="font-weight:700; color:var(--primary-dark); margin-bottom:8px; font-size:0.85rem;">Detalle por mes:</div>' +
-            '<div style="display:flex; justify-content:flex-end; gap:16px; margin-bottom:6px; font-size:0.7rem; color:#94a3b8; font-weight:600;"><span>LIBRES</span><span style="color:#16a34a">FDS</span><span style="color:#dc2626">FEST</span><span>CAMBIOS</span></div>' +
+            '<div style="display:flex; justify-content:flex-end; gap:16px; margin-bottom:6px; font-size:0.7rem; color:#94a3b8; font-weight:600;"><span>LIBRES</span><span style="color:#16a34a">FDS</span><span style="color:#dc2626">FEST</span></div>' +
             htmlMeses;
     }
 
