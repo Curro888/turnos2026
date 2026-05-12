@@ -1530,8 +1530,7 @@
 
     function cargarMensajes() {
         if (chatListener) { chatListener.off(); chatListener = null; }
-        const chatKey = grupoActual.replace(/[.#$\[\]]/g, '_');
-        const ref = db.ref('chats/' + chatKey);
+        const ref = db.ref('chats/' + grupoActual);
         chatListener = ref;
         ref.limitToLast(50).on('value', snap => {
             const msgs = snap.val() || {};
@@ -1558,8 +1557,7 @@
         if (!grupoActual) { alert('No estás en un grupo'); return; }
         input.value = '';
         const nombre = miNombreCompleto ? miNombreCompleto.split(' ')[0] : ('ID ' + miID);
-        const chatRef = db.ref('chats/' + grupoActual.replace(/[.#$\[\]]/g, '_'));
-        chatRef.push({
+        db.ref('chats/' + grupoActual).push({
             uid: miID, nom: nombre,
             texto: texto, ts: Date.now()
         });
@@ -1567,8 +1565,7 @@
 
     function iniciarListenerChat() {
         if (!grupoActual) return;
-        const chatRef = db.ref('chats/' + grupoActual.replace(/[.#$\[\]]/g, '_'));
-        chatRef.limitToLast(1).on('value', snap => {
+        db.ref('chats/' + grupoActual).limitToLast(1).on('value', snap => {
             const msgs = snap.val();
             if (!msgs) return;
             const msg = Object.values(msgs)[0];
