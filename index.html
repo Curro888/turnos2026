@@ -994,9 +994,9 @@
     function handleDayClick(d, mIdx, uid) {
         if (pressTimerActive) return;
         if (modoSeleccionActivo) {
-            // En móvil el compañero ya se gestiona en touchDayEnd
-            // Esto cubre el caso de desktop (ratón)
-            if (uid !== miID) {
+            if (tipoCambio === 'COMP' && uid !== miID) {
+                finalizarProceso(d, mIdx, uid);
+            } else if (tipoCambio === 'AUTO' && uid === miID) {
                 finalizarProceso(d, mIdx, uid);
             }
         } else {
@@ -1027,8 +1027,14 @@
     }
 
     function touchDayEnd(event, d, mIdx, uid) {
-        if (uid !== miID && modoSeleccionActivo) {
-            // Tap en calendario del compañero durante modo cambio: ejecutar directo
+        if (uid !== miID && modoSeleccionActivo && tipoCambio === 'COMP') {
+            event.preventDefault();
+            clearTimeout(pressTimer);
+            pressTimerActive = false;
+            finalizarProceso(d, mIdx, uid);
+            return;
+        }
+        if (uid === miID && modoSeleccionActivo && tipoCambio === 'AUTO') {
             event.preventDefault();
             clearTimeout(pressTimer);
             pressTimerActive = false;
