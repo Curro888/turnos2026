@@ -1148,9 +1148,13 @@
         tipoCambio = tipo; modoSeleccionActivo = true; primerDiaCambio = { ...diaSeleccionado };
         cerrarDesplegables();
         document.getElementById('selection-notice').style.display = 'block';
-        document.getElementById('selection-notice').innerText = tipo === 'COMP'
-            ? "PASO 1: ABRE EL CALENDARIO DEL COMPAÑERO"
-            : "PASO 2: ELIGE EL DÍA DE TU CALENDARIO";
+        if (tipo === 'COMP') {
+            document.getElementById('selection-notice').innerText = "PASO 1: ABRE EL CALENDARIO DEL COMPAÑERO";
+            cerrarCalendario();
+        } else {
+            document.getElementById('selection-notice').innerText = "✅ DÍA 1 GUARDADO — ELIGE EL SEGUNDO DÍA EN TU CALENDARIO";
+            // No cerrar el calendario — el usuario necesita elegir el segundo día aquí mismo
+        }
     }
 
     // ===== FINALIZAR PROCESO (con confirmación si es COMP) =====
