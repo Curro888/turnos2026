@@ -1541,7 +1541,7 @@
                 const nombre = m.nom || (esMio ? (miNombreCompleto.split(' ')[0] || 'Yo') : 'Compañero');
                 const hora = new Date(m.ts).toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
                 cont.innerHTML += '<div style="display:flex; flex-direction:column; align-items:' + (esMio ? 'flex-end' : 'flex-start') + '; margin-bottom:8px;">' +
-                    '<span style="font-size:0.7rem; color:' + (esMio ? 'var(--primary)' : '#94a3b8') + '; margin-bottom:2px; font-weight:600;">' + nombre + '</span>' +
+                    '<span style="font-size:0.75rem; color:' + (esMio ? 'var(--primary)' : '#7c3aed') + '; margin-bottom:2px; font-weight:800;">' + nombre + '</span>' +
                     '<div style="max-width:75%; padding:10px 14px; border-radius:' + (esMio ? '16px 16px 4px 16px' : '16px 16px 16px 4px') + '; background:' + (esMio ? 'var(--primary)' : '#f1f5f9') + '; color:' + (esMio ? 'white' : '#1e293b') + '; font-size:0.88rem;">' + m.texto + '</div>' +
                     '<span style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">' + hora + '</span>' +
                     '</div>';
