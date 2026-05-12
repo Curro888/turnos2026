@@ -1628,10 +1628,15 @@
             } catch(e) {}
         }
         const tabla = tSesion === '80/20' ? gruposLibres8020 : gruposLibres;
-        const diasLibresPorMes = tabla[gSesion] || tabla[parseInt(gSesion)] || [];
-        if (diasLibresPorMes.length === 0) {
+        const tablaGrupo = tabla[gSesion] || tabla[parseInt(gSesion)] || null;
+        if (!tablaGrupo) {
             document.getElementById('stats-content').innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">No hay datos de libres para tu grupo.<br><small>Grupo: ' + gSesion + ' | Turno: ' + (tSesion || 'no definido') + '</small></p>';
             return;
+        }
+        // La tabla es un objeto {0:[...], 1:[...], ...}, convertir a array de 12 meses
+        const diasLibresPorMes = [];
+        for (let i = 0; i < 12; i++) {
+            diasLibresPorMes.push(tablaGrupo[i] || []);
         }
         const festivos2026 = ['0_1','0_6','3_2','3_9','4_1','4_15','7_15','9_12','10_1','10_9','11_6','11_8','11_25'];
         const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
