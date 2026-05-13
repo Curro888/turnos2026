@@ -1,17 +1,15 @@
- 
- 
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
+<!-- saved from url=(0046)file:///C:/Users/Curro/Downloads/index_16.html -->
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Planificación 2026</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="Bulldog.png">
+    <script src="./index_files/firebase-app.js.descarga"></script>
+    <script src="./index_files/firebase-database.js.descarga"></script>
+    <link rel="manifest" href="file:///C:/Users/Curro/Downloads/manifest.json">
+    <link rel="apple-touch-icon" href="file:///C:/Users/Curro/Downloads/Bulldog.png">
     <style>
         :root {
             --bg: #f5f3ff; --primary: #8b5cf6; --primary-dark: #7c3aed;
@@ -92,15 +90,15 @@
 <body ontouchmove="handleGlobalTouchMove(event)">
 
 <!-- ===== LOGIN ===== -->
-<div id="login-view" style="position:fixed; inset:0; background:#1e1b4b; display:flex; align-items:center; justify-content:center; z-index:9999; overflow-y:auto; padding: 20px 0;">
+<div id="login-view" style="position: fixed; inset: 0px; background: rgb(30, 27, 75); display: none; align-items: center; justify-content: center; z-index: 9999; overflow-y: auto; padding: 20px 0px;">
     <div style="background:white; padding:28px; border-radius:20px; text-align:center; width:90%; max-width:340px; border-bottom:5px solid var(--primary);">
         <h2 style="color:var(--primary); margin:0 0 4px 0;">Planificación 2026</h2>
         <p style="font-size:0.8rem; color:#64748b; margin-bottom:20px;">¿Cómo quieres acceder?</p>
 
         <!-- PASO 0: Individual o Grupo -->
         <div id="step-0" class="login-step active">
-            <button class="login-btn-big" onclick="eligeModo('individual')">👤 Individual<br><span style="font-size:0.75rem; font-weight:500; opacity:0.7">Solo para mí</span></button>
-            <button class="login-btn-big" onclick="eligeModo('grupo')">👥 Grupo<br><span style="font-size:0.75rem; font-weight:500; opacity:0.7">Con compañeros</span></button>
+            <button class="login-btn-big" onclick="eligeModo(&#39;individual&#39;)">👤 Individual<br><span style="font-size:0.75rem; font-weight:500; opacity:0.7">Solo para mí</span></button>
+            <button class="login-btn-big" onclick="eligeModo(&#39;grupo&#39;)">👥 Grupo<br><span style="font-size:0.75rem; font-weight:500; opacity:0.7">Con compañeros</span></button>
         </div>
 
         <!-- PASO 1 (individual): ID + contraseña -->
@@ -109,15 +107,15 @@
             <input type="number" id="userID" placeholder="ID Empleado" class="input-app" style="font-size:1rem; margin:5px 0;">
             <input type="password" id="userPass" placeholder="Contraseña" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
             <button onclick="validarAcceso()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">ENTRAR</button>
-            <div onclick="volverStep('step-0')" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
+            <div onclick="volverStep(&#39;step-0&#39;)" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
         </div>
 
         <!-- PASO 1 (grupo): ¿Nuevo o existente? -->
         <div id="step-grupo-tipo" class="login-step">
             <p style="font-size:0.8rem; color:#64748b; margin:0 0 10px 0;">¿Qué quieres hacer?</p>
-            <button class="login-btn-big" onclick="eligeGrupoTipo('existente')">🔑 Unirme a un grupo existente</button>
-            <button class="login-btn-big" onclick="eligeGrupoTipo('nuevo')">✨ Crear un grupo nuevo</button>
-            <div onclick="volverStep('step-0')" style="font-size:0.8rem; color:var(--primary); cursor:pointer; margin-top:10px;">← Volver</div>
+            <button class="login-btn-big" onclick="eligeGrupoTipo(&#39;existente&#39;)">🔑 Unirme a un grupo existente</button>
+            <button class="login-btn-big" onclick="eligeGrupoTipo(&#39;nuevo&#39;)">✨ Crear un grupo nuevo</button>
+            <div onclick="volverStep(&#39;step-0&#39;)" style="font-size:0.8rem; color:var(--primary); cursor:pointer; margin-top:10px;">← Volver</div>
         </div>
 
         <!-- PASO: Unirse a grupo existente -->
@@ -145,7 +143,7 @@
                 <option value="15">Grupo 15</option>
             </select>
             <button onclick="unirseGrupo()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">ENTRAR AL GRUPO</button>
-            <div onclick="volverStep('step-grupo-tipo')" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
+            <div onclick="volverStep(&#39;step-grupo-tipo&#39;)" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
         </div>
 
         <!-- PASO: Crear grupo nuevo -->
@@ -174,26 +172,145 @@
                 <option value="15">Grupo 15</option>
             </select>
             <button onclick="crearGrupo()" style="width:100%; padding:15px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">CREAR GRUPO</button>
-            <div onclick="volverStep('step-grupo-tipo')" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
+            <div onclick="volverStep(&#39;step-grupo-tipo&#39;)" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
         </div>
 
     </div>
 </div>
 
 <!-- ===== APP PRINCIPAL ===== -->
-<div id="main-content" style="display:none">
+<div id="main-content" style="display: block;">
     <header style="flex-wrap:wrap; gap:6px;">
-        <span id="user-title" style="font-weight:800; color:var(--primary-dark); font-size:0.9rem;"></span>
+        <span id="user-title" style="font-weight:800; color:var(--primary-dark); font-size:0.9rem;">👤 Curro</span>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <button id="btn-companeros" onclick="abrirCompaneros()" style="display:none; padding:7px 10px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.78rem; color:var(--primary);">👥</button>
-            <button id="btn-editar-grupo" onclick="abrirEditorGrupo()" style="display:none; padding:7px 10px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.78rem; color:var(--primary);">✏️ Grupo</button>
+            <button id="btn-editar-grupo" onclick="abrirEditorGrupo()" style="display: inline-block; padding: 7px 10px; border-radius: 8px; border: 1px solid rgb(221, 214, 254); background: white; font-size: 0.78rem; color: var(--primary);">✏️ Grupo</button>
             <button onclick="abrirPanelGrupos()" style="padding:7px 10px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.78rem; color:var(--primary);">📅</button>
-            <button id="btn-chat" onclick="abrirChat()" style="display:none; padding:7px 10px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.78rem; color:var(--primary); position:relative;">💬<span id="chat-badge" style="display:none; position:absolute; top:-4px; right:-4px; background:red; color:white; border-radius:50%; width:16px; height:16px; font-size:0.6rem; line-height:16px; text-align:center;">!</span></button>
-            <button id="btn-stats" onclick="abrirEstadisticas()" style="display:none; padding:7px 10px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.78rem; color:var(--primary);">📊</button>
+            <button id="btn-chat" onclick="abrirChat()" style="display: inline-block; padding: 7px 10px; border-radius: 8px; border: 1px solid rgb(221, 214, 254); background: white; font-size: 0.78rem; color: var(--primary); position: relative;">💬<span id="chat-badge" style="display:none; position:absolute; top:-4px; right:-4px; background:red; color:white; border-radius:50%; width:16px; height:16px; font-size:0.6rem; line-height:16px; text-align:center;">!</span></button>
+            <button id="btn-stats" onclick="abrirEstadisticas()" style="display: inline-block; padding: 7px 10px; border-radius: 8px; border: 1px solid rgb(221, 214, 254); background: white; font-size: 0.78rem; color: var(--primary);">📊</button>
             <button onclick="cerrarSesion()" style="padding:7px 10px; border-radius:8px; border:1px solid #ddd6fe; background:white; font-size:0.78rem; color:var(--primary);">Salir</button>
         </div>
     </header>
-    <div id="list-container" style="padding:10px"></div>
+    <div id="list-container" style="padding:10px">
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Curro</span><span class="id-black">2669</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G4</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;2669&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Dani Rivas</span><span class="id-black">14388</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G1</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;14388&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Furti</span><span class="id-black">14976</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G9</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;14976&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Felix</span><span class="id-black">16108</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G15</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;16108&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Raúl Montoya</span><span class="id-black">16122</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G12</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;16122&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Ricardo</span><span class="id-black">16128</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G5</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;16128&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Raúl Infantes</span><span class="id-black">16161</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G1</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;16161&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Carlos Romero</span><span class="id-black">16225</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G2</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;16225&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">David</span><span class="id-black">17989</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G8</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;17989&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Jaime</span><span class="id-black">17990</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G6</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;17990&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Sergio</span><span class="id-black">18005</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G10</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;18005&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Dani Vime</span><span class="id-black">18011</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G12</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;18011&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Jose</span><span class="id-black">18015</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G11</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;18015&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Dani. Alexandre</span><span class="id-black">18020</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G5</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;18020&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Alfredo</span><span class="id-black">18021</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G6</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;18021&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-trabaja">
+                <div><span class="name-big">Ángel</span><span class="id-black">18023</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G7</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;18023&#39;)">Calendario</button>
+                </div>
+            </div>
+            <div class="user-card card-libra">
+                <div><span class="name-big">Javi Ranz</span><span class="id-black">18393</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div class="info-tag">🌙N · G2</div>
+                    <button class="btn-main" onclick="abrirCal(&#39;18393&#39;)">Calendario</button>
+                </div>
+            </div></div>
 </div>
 
 <!-- Modal compañeros individual -->
@@ -203,8 +320,8 @@
         <p style="font-size:0.8rem; color:#64748b; margin:0 0 15px 0;">Asigna nombres a cada grupo de libres para ver quién trabaja y quién libra cada día.</p>
 
         <div style="display:flex; gap:8px; margin-bottom:15px;">
-            <button id="tab-7327" onclick="mostrarTablaComp('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
-            <button id="tab-8020" onclick="mostrarTablaComp('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
+            <button id="tab-7327" onclick="mostrarTablaComp(&#39;73/27&#39;)" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
+            <button id="tab-8020" onclick="mostrarTablaComp(&#39;80/20&#39;)" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
         </div>
 
         <div id="comp-grupos-container"></div>
@@ -219,7 +336,7 @@
         <h3 id="dia-modal-titulo" style="margin:0 0 15px 0; color:var(--primary-dark);"></h3>
         <div id="dia-modal-libre" style="margin-bottom:15px;"></div>
         <div id="dia-modal-trabaja"></div>
-        <button onclick="document.getElementById('dia-modal').style.display='none'" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
+        <button onclick="document.getElementById(&#39;dia-modal&#39;).style.display=&#39;none&#39;" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
     </div>
 </div>
 
@@ -287,7 +404,7 @@
     <div class="modal-box">
         <h3 id="report-title" style="margin:0; color:var(--primary-dark);"></h3>
         <div id="report-body" class="report-content"></div>
-        <button onclick="document.getElementById('report-modal').style.display='none'" style="width:100%; padding:12px; background:var(--bg); border:none; border-radius:10px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
+        <button onclick="document.getElementById(&#39;report-modal&#39;).style.display=&#39;none&#39;" style="width:100%; padding:12px; background:var(--bg); border:none; border-radius:10px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
     </div>
 </div>
 
@@ -310,20 +427,20 @@
             <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900;">Cerrar</button>
         </div>
         <div class="legend-container">
-            <div class="legend-item" onclick="mostrarInformeLeyenda('is-free','Días Libres Base')"><div class="legend-box is-free"></div><span>Libre</span></div>
-            <div class="legend-item" onclick="mostrarInformeLeyenda('is-work','Días de Trabajo')"><div class="legend-box is-work"></div><span>Trabaja</span></div>
-            <div class="legend-item" onclick="mostrarInformeLeyenda('b-cambio-libre','Libras por Cambio')"><div class="legend-box b-cambio-libre"></div><span>Libras (x cambio)</span></div>
-            <div class="legend-item" onclick="mostrarInformeLeyenda('b-inter','Haces por Cambio')"><div class="legend-box b-inter"></div><span>Haces (x cambio)</span></div>
-            <div class="legend-item" onclick="mostrarInformeLeyenda('b-vac','Vacaciones')"><div class="legend-box b-vac"></div><span>Vacaciones</span></div>
-            <div class="legend-item" onclick="mostrarInformeLeyenda('b-pend','Pendientes')"><div class="legend-box b-pend"></div><span>Pendiente</span></div>
-            <div class="legend-item" onclick="mostrarInformeLeyenda('b-generado','Generados')"><div class="legend-box b-generado"></div><span>Generado</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda(&#39;is-free&#39;,&#39;Días Libres Base&#39;)"><div class="legend-box is-free"></div><span>Libre</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda(&#39;is-work&#39;,&#39;Días de Trabajo&#39;)"><div class="legend-box is-work"></div><span>Trabaja</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda(&#39;b-cambio-libre&#39;,&#39;Libras por Cambio&#39;)"><div class="legend-box b-cambio-libre"></div><span>Libras (x cambio)</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda(&#39;b-inter&#39;,&#39;Haces por Cambio&#39;)"><div class="legend-box b-inter"></div><span>Haces (x cambio)</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda(&#39;b-vac&#39;,&#39;Vacaciones&#39;)"><div class="legend-box b-vac"></div><span>Vacaciones</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda(&#39;b-pend&#39;,&#39;Pendientes&#39;)"><div class="legend-box b-pend"></div><span>Pendiente</span></div>
+            <div class="legend-item" onclick="mostrarInformeLeyenda(&#39;b-generado&#39;,&#39;Generados&#39;)"><div class="legend-box b-generado"></div><span>Generado</span></div>
         </div>
         <div class="cal-grid" id="m-grid"></div>
     </div>
 </div>
 
 <div id="side-panel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:300px; background:white; z-index:150; padding:20px; overflow-y:auto; border-left:2px solid #ddd6fe; box-shadow:-5px 0 15px rgba(139,92,246,0.1);">
-    <div class="close-panel-btn" onclick="document.getElementById('side-panel').style.display='none'">✕</div>
+    <div class="close-panel-btn" onclick="document.getElementById(&#39;side-panel&#39;).style.display=&#39;none&#39;">✕</div>
     <h3 id="panel-date" style="color:var(--primary-dark); margin-bottom:5px; padding-right:30px;"></h3>
     <div id="p-stats" style="margin-bottom:15px; border-bottom:1px solid #f5f3ff; padding-bottom:10px;"></div>
     <div id="p-free-list"></div>
@@ -340,8 +457,8 @@
         </div>
         <!-- Pestañas turno -->
         <div style="display:flex; gap:8px; margin-bottom:12px;">
-            <button id="pg-tab-7327" onclick="setPanelTurno('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
-            <button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
+            <button id="pg-tab-7327" onclick="setPanelTurno(&#39;73/27&#39;)" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
+            <button id="pg-tab-8020" onclick="setPanelTurno(&#39;80/20&#39;)" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
         </div>
         <!-- Navegación mes -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; background:#f5f3ff; border-radius:12px; padding:8px 14px;">
@@ -1827,8 +1944,7 @@
         </div>
         <div id="chat-messages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px;"></div>
         <div style="padding:12px 16px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center;">
-            <input id="chat-input" type="text" placeholder="Escribe un mensaje..." style="flex:1; padding:10px 14px; border:1px solid #ddd6fe; border-radius:20px; font-size:0.9rem; outline:none;"
-                onkeydown="if(event.key==='Enter') enviarMensaje()">
+            <input id="chat-input" type="text" placeholder="Escribe un mensaje..." style="flex:1; padding:10px 14px; border:1px solid #ddd6fe; border-radius:20px; font-size:0.9rem; outline:none;" onkeydown="if(event.key===&#39;Enter&#39;) enviarMensaje()">
             <button onclick="enviarMensaje()" style="background:var(--primary); color:white; border:none; border-radius:50%; width:40px; height:40px; font-size:1.1rem; cursor:pointer;">➤</button>
         </div>
     </div>
@@ -1850,5 +1966,6 @@
 <audio id="notif-sound" preload="auto">
     <source src="https://www.soundjay.com/buttons/sounds/button-09.mp3" type="audio/mpeg">
 </audio>
-</body>
-</html>
+
+
+</body></html>
