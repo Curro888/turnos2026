@@ -1085,7 +1085,7 @@
         };
 
         const mesesCortos = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        const diaLabel = diaSeleccionado ? diaSeleccionado.d + ' ' + mesesCortos[diaSeleccionado.mIdx] : '';
+        const diaLabel = (diaSeleccionado && diaSeleccionado.d != null) ? diaSeleccionado.d + ' ' + mesesCortos[diaSeleccionado.mIdx] + ' — ' : '';
 
         const opts = [
             { label: '✨ ' + diaLabel + ' Generado', color: 'var(--pink)', key: 'generado' },
