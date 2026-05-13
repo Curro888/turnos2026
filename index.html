@@ -1084,12 +1084,15 @@
             'borrar': () => borrarCambio()
         };
 
+        const mesesCortos = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        const diaLabel = diaSeleccionado ? diaSeleccionado.d + ' ' + mesesCortos[diaSeleccionado.mIdx] : '';
+
         const opts = [
-            { label: '✨ Generado', color: 'var(--pink)', key: 'generado' },
-            { label: '⏳ Pendiente', color: 'var(--primary)', key: 'pendiente' },
+            { label: '✨ ' + diaLabel + ' Generado', color: 'var(--pink)', key: 'generado' },
+            { label: '⏳ ' + diaLabel + ' Pendiente', color: 'var(--primary)', key: 'pendiente' },
             { label: '🌴 Vacaciones', color: 'var(--success)', key: 'vacaciones' },
-            { label: '🤝 Con Compañero', color: 'var(--text)', key: 'comp' },
-            { label: '🔄 Propio', color: 'var(--text)', key: 'auto' },
+            { label: '🤝 Cambio con Compañero', color: 'var(--text)', key: 'comp' },
+            { label: '🔄 Cambio Propio', color: 'var(--text)', key: 'auto' },
             { label: '❌ Borrar', color: 'red', key: 'borrar' }
         ];
         opts.forEach(o => {
