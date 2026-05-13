@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/Curro/Downloads/index_16.html -->
+<!-- saved from url=(0046)file:///C:/Users/Curro/Downloads/index_17.html -->
 <html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -341,11 +341,470 @@
 </div>
 
 <!-- Modal editar grupo -->
-<div id="edit-group-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:5000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+<div id="edit-group-modal" style="display: none; position: fixed; inset: 0px; background: rgba(30, 27, 75, 0.7); z-index: 5000; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto;">
     <div style="background:white; padding:25px; border-radius:20px; width:100%; max-width:380px; margin-top:20px; border:1px solid var(--primary);">
         <h3 style="color:var(--primary-dark); margin:0 0 5px 0;">✏️ Gestión del Grupo</h3>
-        <p id="edit-group-name-label" style="font-size:0.8rem; color:#64748b; margin:0 0 15px 0;"></p>
-        <div id="member-list-edit"></div>
+        <p id="edit-group-name-label" style="font-size:0.8rem; color:#64748b; margin:0 0 15px 0;">Grupo: Perrotes  |  Código: perrotes_mp041g1f</p>
+        <div id="member-list-edit">
+            <div class="member-row" id="mrow-2669" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Curro <span style="color:#94a3b8; font-weight:500">#2669</span></div>
+                        <div class="member-sub">Grupo 4 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;2669&#39;,&#39;Curro&#39;,&#39;2669&#39;,&#39;73/27&#39;,&#39;4&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;2669&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-2669" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-2669" value="Curro" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-2669" value="2669" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-2669" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-2669" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected="">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;2669&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;2669&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-14388" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Dani Rivas <span style="color:#94a3b8; font-weight:500">#14388</span></div>
+                        <div class="member-sub">Grupo 1 · 🌙N · 80/20</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;14388&#39;,&#39;Dani Rivas&#39;,&#39;14388&#39;,&#39;80/20&#39;,&#39;1&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;14388&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-14388" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-14388" value="Dani Rivas" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-14388" value="14388" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-14388" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27">🌙 N · 73/27</option>
+                        <option value="80/20" selected="">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-14388" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1" selected="">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;14388&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;14388&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-14976" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Furti <span style="color:#94a3b8; font-weight:500">#14976</span></div>
+                        <div class="member-sub">Grupo 9 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;14976&#39;,&#39;Furti&#39;,&#39;14976&#39;,&#39;73/27&#39;,&#39;9&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;14976&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-14976" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-14976" value="Furti" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-14976" value="14976" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-14976" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-14976" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected="">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;14976&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;14976&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-16108" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Felix <span style="color:#94a3b8; font-weight:500">#16108</span></div>
+                        <div class="member-sub">Grupo 15 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;16108&#39;,&#39;Felix&#39;,&#39;16108&#39;,&#39;73/27&#39;,&#39;15&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;16108&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-16108" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-16108" value="Felix" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-16108" value="16108" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-16108" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-16108" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15" selected="">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;16108&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;16108&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-16122" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Raúl Montoya <span style="color:#94a3b8; font-weight:500">#16122</span></div>
+                        <div class="member-sub">Grupo 12 · 🌙N · 80/20</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;16122&#39;,&#39;Raúl Montoya&#39;,&#39;16122&#39;,&#39;80/20&#39;,&#39;12&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;16122&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-16122" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-16122" value="Raúl Montoya" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-16122" value="16122" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-16122" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27">🌙 N · 73/27</option>
+                        <option value="80/20" selected="">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-16122" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12" selected="">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;16122&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;16122&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-16128" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Ricardo <span style="color:#94a3b8; font-weight:500">#16128</span></div>
+                        <div class="member-sub">Grupo 5 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;16128&#39;,&#39;Ricardo&#39;,&#39;16128&#39;,&#39;73/27&#39;,&#39;5&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;16128&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-16128" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-16128" value="Ricardo" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-16128" value="16128" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-16128" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-16128" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected="">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;16128&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;16128&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-16161" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Raúl Infantes <span style="color:#94a3b8; font-weight:500">#16161</span></div>
+                        <div class="member-sub">Grupo 1 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;16161&#39;,&#39;Raúl Infantes&#39;,&#39;16161&#39;,&#39;73/27&#39;,&#39;1&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;16161&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-16161" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-16161" value="Raúl Infantes" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-16161" value="16161" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-16161" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-16161" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1" selected="">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;16161&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;16161&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-16225" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Carlos Romero <span style="color:#94a3b8; font-weight:500">#16225</span></div>
+                        <div class="member-sub">Grupo 2 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;16225&#39;,&#39;Carlos Romero&#39;,&#39;16225&#39;,&#39;73/27&#39;,&#39;2&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;16225&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-16225" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-16225" value="Carlos Romero" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-16225" value="16225" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-16225" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-16225" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2" selected="">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;16225&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;16225&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-17989" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">David <span style="color:#94a3b8; font-weight:500">#17989</span></div>
+                        <div class="member-sub">Grupo 8 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;17989&#39;,&#39;David&#39;,&#39;17989&#39;,&#39;73/27&#39;,&#39;8&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;17989&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-17989" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-17989" value="David" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-17989" value="17989" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-17989" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-17989" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected="">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;17989&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;17989&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-17990" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Jaime <span style="color:#94a3b8; font-weight:500">#17990</span></div>
+                        <div class="member-sub">Grupo 6 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;17990&#39;,&#39;Jaime&#39;,&#39;17990&#39;,&#39;73/27&#39;,&#39;6&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;17990&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-17990" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-17990" value="Jaime" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-17990" value="17990" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-17990" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-17990" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6" selected="">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;17990&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;17990&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-18005" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Sergio <span style="color:#94a3b8; font-weight:500">#18005</span></div>
+                        <div class="member-sub">Grupo 10 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;18005&#39;,&#39;Sergio&#39;,&#39;18005&#39;,&#39;73/27&#39;,&#39;10&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;18005&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-18005" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-18005" value="Sergio" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-18005" value="18005" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-18005" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-18005" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10" selected="">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;18005&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;18005&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-18011" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Dani Vime <span style="color:#94a3b8; font-weight:500">#18011</span></div>
+                        <div class="member-sub">Grupo 12 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;18011&#39;,&#39;Dani Vime&#39;,&#39;18011&#39;,&#39;73/27&#39;,&#39;12&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;18011&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-18011" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-18011" value="Dani Vime" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-18011" value="18011" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-18011" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-18011" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12" selected="">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;18011&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;18011&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-18015" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Jose <span style="color:#94a3b8; font-weight:500">#18015</span></div>
+                        <div class="member-sub">Grupo 11 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;18015&#39;,&#39;Jose&#39;,&#39;18015&#39;,&#39;73/27&#39;,&#39;11&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;18015&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-18015" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-18015" value="Jose" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-18015" value="18015" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-18015" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-18015" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11" selected="">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;18015&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;18015&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-18020" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Dani. Alexandre <span style="color:#94a3b8; font-weight:500">#18020</span></div>
+                        <div class="member-sub">Grupo 5 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;18020&#39;,&#39;Dani. Alexandre&#39;,&#39;18020&#39;,&#39;73/27&#39;,&#39;5&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;18020&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-18020" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-18020" value="Dani. Alexandre" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-18020" value="18020" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-18020" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-18020" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected="">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;18020&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;18020&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-18021" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Alfredo <span style="color:#94a3b8; font-weight:500">#18021</span></div>
+                        <div class="member-sub">Grupo 6 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;18021&#39;,&#39;Alfredo&#39;,&#39;18021&#39;,&#39;73/27&#39;,&#39;6&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;18021&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-18021" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-18021" value="Alfredo" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-18021" value="18021" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-18021" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-18021" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6" selected="">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;18021&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;18021&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-18023" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Ángel <span style="color:#94a3b8; font-weight:500">#18023</span></div>
+                        <div class="member-sub">Grupo 7 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;18023&#39;,&#39;Ángel&#39;,&#39;18023&#39;,&#39;73/27&#39;,&#39;7&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;18023&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-18023" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-18023" value="Ángel" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-18023" value="18023" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-18023" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-18023" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7" selected="">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;18023&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;18023&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="member-row" id="mrow-18393" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">Javi Ranz <span style="color:#94a3b8; font-weight:500">#18393</span></div>
+                        <div class="member-sub">Grupo 2 · 🌙N · 73/27</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro(&#39;18393&#39;,&#39;Javi Ranz&#39;,&#39;18393&#39;,&#39;73/27&#39;,&#39;2&#39;)">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro(&#39;18393&#39;)">✕</button>
+                    </div>
+                </div>
+                <div id="edit-inline-18393" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-18393" value="Javi Ranz" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-18393" value="18393" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-18393" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" selected="">🌙 N · 73/27</option>
+                        <option value="80/20">🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-18393" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="1">1</option><option value="2" selected="">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro(&#39;18393&#39;)" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro(&#39;18393&#39;)" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
+            </div></div>
         <hr style="border:none; border-top:1px solid #ddd6fe; margin:15px 0;">
         <p style="font-size:0.85rem; font-weight:700; color:var(--primary-dark); margin:0 0 10px 0;">➕ Añadir miembro</p>
         <input type="text" id="new-member-name" placeholder="Nombre" class="input-app" style="font-size:0.95rem; margin:4px 0;">
