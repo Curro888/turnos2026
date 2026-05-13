@@ -895,19 +895,72 @@
         });
     }
 
+    let editandoMiembroID = null;
+
     function renderMemberList(miembros) {
         const cont = document.getElementById('member-list-edit'); cont.innerHTML = '';
         Object.values(miembros).forEach(m => {
             const esNoche = (m.t === '73/27' || m.t === '80/20');
+            const grupoOpts = Array.from({length:15},(_,i)=>i+1).map(n=>`<option value="${n}" ${m.g==n?'selected':''}>${n}</option>`).join('');
             cont.innerHTML += `
-            <div class="member-row">
-                <div>
-                    <div class="member-name">${m.n} <span style="color:#94a3b8; font-weight:500">#${m.id}</span></div>
-                    <div class="member-sub">Grupo ${m.g} · ${esNoche ? '🌙N · ' : ''}${m.t}</div>
+            <div class="member-row" id="mrow-${m.id}" style="flex-direction:column; align-items:stretch; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="member-name">${m.n} <span style="color:#94a3b8; font-weight:500">#${m.id}</span></div>
+                        <div class="member-sub">Grupo ${m.g} · ${esNoche ? '🌙N · ' : ''}${m.t}</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro('${m.id}','${m.n}','${m.id}','${m.t}','${m.g}')">✏️</button>
+                        <button class="btn-danger-sm" onclick="eliminarMiembro('${m.id}')">✕</button>
+                    </div>
                 </div>
-                <button class="btn-danger-sm" onclick="eliminarMiembro('${m.id}')">Eliminar</button>
+                <div id="edit-inline-${m.id}" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-${m.id}" value="${m.n}" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-${m.id}" value="${m.id}" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-${m.id}" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        <option value="73/27" ${m.t==='73/27'?'selected':''}>🌙 N · 73/27</option>
+                        <option value="80/20" ${m.t==='80/20'?'selected':''}>🌙 N · 80/20</option>
+                    </select>
+                    <select id="ei-grp-${m.id}" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:white;">
+                        ${grupoOpts}
+                    </select>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="guardarEdicionMiembro('${m.id}')" style="flex:1; padding:8px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">✅ Guardar</button>
+                        <button onclick="toggleEditMiembro('${m.id}')" style="flex:1; padding:8px; background:#f1f5f9; color:#475569; border:none; border-radius:8px; font-weight:700; font-size:0.85rem;">Cancelar</button>
+                    </div>
+                </div>
             </div>`;
         });
+    }
+
+    function toggleEditMiembro(id) {
+        const el = document.getElementById('edit-inline-' + id);
+        if (!el) return;
+        const visible = el.style.display === 'flex';
+        // Cerrar todos primero
+        document.querySelectorAll('[id^="edit-inline-"]').forEach(e => e.style.display = 'none');
+        if (!visible) el.style.display = 'flex';
+    }
+
+    function guardarEdicionMiembro(oldId) {
+        const nom = document.getElementById('ei-nom-' + oldId).value.trim();
+        const newId = document.getElementById('ei-id-' + oldId).value.trim();
+        const tipo = document.getElementById('ei-tipo-' + oldId).value;
+        const grupo = document.getElementById('ei-grp-' + oldId).value;
+        if (!nom || !newId || !tipo || !grupo) { alert("Rellena todos los campos"); return; }
+        const updates = {};
+        // Si cambió el ID: borrar el nodo viejo y crear uno nuevo
+        if (newId !== oldId) {
+            if (newId === miID) { alert("Ese ID ya eres tú"); return; }
+            updates[`grupos/${grupoActual}/miembros/${oldId}`] = null;
+        }
+        updates[`grupos/${grupoActual}/miembros/${newId}`] = { n: nom, id: newId, g: grupo, t: tipo };
+        // Si el miembro editado somos nosotros mismos, actualizar sesión
+        if (oldId === miID) {
+            miID = newId; miNombreCompleto = nom; miTipoSesion = tipo; miGrupoSesion = grupo;
+            guardarSesion();
+        }
+        db.ref().update(updates).then(() => abrirEditorGrupo());
     }
 
     function añadirMiembro() {
@@ -1732,8 +1785,12 @@
         const gruposPanelAbierto = document.getElementById('grupos-panel').style.display !== 'none';
         const chatAbierto2 = document.getElementById('chat-modal').style.display !== 'none';
         const statsAbierto = document.getElementById('stats-modal').style.display !== 'none';
+        const editGrupoAbierto = document.getElementById('edit-group-modal').style.display !== 'none';
+        const companeroAbierto = document.getElementById('companions-modal').style.display !== 'none';
+        const diaModalAbierto = document.getElementById('dia-modal').style.display !== 'none';
         if (window.scrollY === 0 && document.getElementById('main-content').style.display !== 'none'
-            && !calAbierto && !panelAbierto && !gruposPanelAbierto && !chatAbierto2 && !statsAbierto && !modoSeleccionActivo) {
+            && !calAbierto && !panelAbierto && !gruposPanelAbierto && !chatAbierto2 && !statsAbierto
+            && !editGrupoAbierto && !companeroAbierto && !diaModalAbierto && !modoSeleccionActivo) {
             ptrStartY = e.touches[0].clientY;
             ptrActivo = true;
         }
