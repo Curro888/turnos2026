@@ -88,7 +88,7 @@
         .btn-danger-sm { background: #fee2e2; color: var(--danger); border: none; border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
     </style>
 </head>
-<body ontouchmove="cancelarTodoTimer()">
+<body ontouchmove="handleGlobalTouchMove(event)">
 
 <!-- ===== LOGIN ===== -->
 <div id="login-view" style="position:fixed; inset:0; background:#1e1b4b; display:flex; align-items:center; justify-content:center; z-index:9999; overflow-y:auto; padding: 20px 0;">
@@ -317,7 +317,7 @@
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-pend','Pendientes')"><div class="legend-box b-pend"></div><span>Pendiente</span></div>
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-generado','Generados')"><div class="legend-box b-generado"></div><span>Generado</span></div>
         </div>
-        <div class="cal-grid" id="m-grid" ontouchmove="cancelarTodoTimer()"></div>
+        <div class="cal-grid" id="m-grid"></div>
     </div>
 </div>
 
@@ -376,6 +376,7 @@
     // ===== ESTADO =====
     let miID = "", miNombreCompleto = "", modoGrupo = false, grupoActual = null;
     let pressTimer, pressTimerActive = false;
+    let ignorarSiguienteClick = false;
     let diaSeleccionado = null, modoSeleccionActivo = false, tipoCambio = null;
     let primerDiaCambio = null, targetCompaneroID = null, idCalendarioAbierto = null;
     let dbCambios = {}, dbSolicitudes = {};
@@ -476,9 +477,6 @@
         });
     }
 
-    // Intentar restaurar sesión al abrir la app
-    restaurarSesion();
-
     // ===== LOGIN HELPERS =====
     function eligeModo(modo) {
         if (modo === 'individual') {
@@ -566,15 +564,18 @@
     function cargarMiembrosGrupo(codigo) {
         if (listenerMiembros) { listenerMiembros.off(); listenerMiembros = null; }
         listenerMiembros = db.ref(`grupos/${codigo}/miembros`);
+        let appIniciada = false;
         listenerMiembros.on('value', snap => {
             const m = snap.val() || {};
             equipo = Object.values(m);
-            if (miID) {
+            if (!appIniciada) {
+                appIniciada = true;
+                iniciarApp();
+            } else if (miID) {
                 renderList();
                 if (idCalendarioAbierto) abrirCal(idCalendarioAbierto);
             }
         });
-        iniciarApp();
     }
 
     // ===== SESIÓN PERSISTENTE =====
@@ -998,7 +999,8 @@
     }
 
     function handleDayClick(d, mIdx, uid) {
-        if (pressTimerActive) return;
+        if (pressTimerActive) { pressTimerActive = false; return; }
+        if (ignorarSiguienteClick) { ignorarSiguienteClick = false; return; }
         if (modoSeleccionActivo) {
             if (tipoCambio === 'COMP' && uid !== miID) {
                 finalizarProceso(d, mIdx, uid);
@@ -1026,9 +1028,16 @@
     }
 
     // ===== TOQUE LARGO con bloqueo de click =====
+    let touchStartX = 0, touchStartY = 0;
+    const MOVE_THRESHOLD = 10; // píxeles
+
     function touchDayStart(event, d, mIdx, uid) {
         // En modo selección o en calendario ajeno: no activar menú contextual
         if (modoSeleccionActivo || uid !== miID) return;
+        if (event.touches) {
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+        }
         pressStart(event, d, mIdx, uid);
     }
 
@@ -1066,6 +1075,16 @@
     function cancelarTodoTimer() {
         clearTimeout(pressTimer);
         setTimeout(() => { pressTimerActive = false; }, 100);
+    }
+
+    function handleGlobalTouchMove(event) {
+        if (!pressTimer) return;
+        const t = event.touches ? event.touches[0] : event;
+        const dx = Math.abs(t.clientX - touchStartX);
+        const dy = Math.abs(t.clientY - touchStartY);
+        if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
+            cancelarTodoTimer();
+        }
     }
 
     function mostrarMenuContextual(x, y) {
@@ -1425,7 +1444,6 @@
     }
 
     // Cerrar menú al tocar fuera — ignorar el click que abre el menú
-    let ignorarSiguienteClick = false;
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('ctx-menu');
         if (ignorarSiguienteClick) { ignorarSiguienteClick = false; return; }
