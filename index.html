@@ -1651,9 +1651,16 @@
                 const esMio = m.uid === miID;
                 const nombre = m.nom || (esMio ? (miNombreCompleto.split(' ')[0] || 'Yo') : 'Compañero');
                 const hora = new Date(m.ts).toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+                let contenido = '';
+                if (m.imagen) {
+                    contenido += '<img src="' + m.imagen + '" style="max-width:100%; max-height:200px; border-radius:8px; display:block; cursor:pointer;" onclick="verImagenCompleta(this.src)">';
+                    if (m.texto) contenido += '<div style="margin-top:5px; font-size:0.88rem;">' + m.texto + '</div>';
+                } else {
+                    contenido = '<span style="font-size:0.88rem;">' + m.texto + '</span>';
+                }
                 cont.innerHTML += '<div style="display:flex; flex-direction:column; align-items:' + (esMio ? 'flex-end' : 'flex-start') + '; margin-bottom:8px;">' +
                     '<span style="font-size:0.75rem; color:' + (esMio ? 'var(--primary)' : '#7c3aed') + '; margin-bottom:2px; font-weight:800;">' + nombre + '</span>' +
-                    '<div style="max-width:75%; padding:10px 14px; border-radius:' + (esMio ? '16px 16px 4px 16px' : '16px 16px 16px 4px') + '; background:' + (esMio ? 'var(--primary)' : '#f1f5f9') + '; color:' + (esMio ? 'white' : '#1e293b') + '; font-size:0.88rem;">' + m.texto + '</div>' +
+                    '<div style="max-width:75%; padding:10px 14px; border-radius:' + (esMio ? '16px 16px 4px 16px' : '16px 16px 16px 4px') + '; background:' + (esMio ? 'var(--primary)' : '#f1f5f9') + '; color:' + (esMio ? 'white' : '#1e293b') + ';">' + contenido + '</div>' +
                     '<span style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">' + hora + '</span>' +
                     '</div>';
             });
@@ -1661,17 +1668,54 @@
         });
     }
 
+    let archivoBase64Pendiente = null;
+
+    function previsualizarArchivo(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (file.size > 800 * 1024) {
+            alert('La imagen no puede superar 800KB');
+            event.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            archivoBase64Pendiente = e.target.result;
+            document.getElementById('chat-preview-img').src = archivoBase64Pendiente;
+            document.getElementById('chat-preview-area').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function cancelarArchivo() {
+        archivoBase64Pendiente = null;
+        document.getElementById('chat-preview-area').style.display = 'none';
+        document.getElementById('chat-preview-img').src = '';
+        document.getElementById('chat-file-input').value = '';
+    }
+
+    function verImagenCompleta(src) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        overlay.onclick = () => document.body.removeChild(overlay);
+        const img = document.createElement('img');
+        img.src = src;
+        img.style.cssText = 'max-width:95vw;max-height:90vh;border-radius:10px;';
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+    }
+
     function enviarMensaje() {
         const input = document.getElementById('chat-input');
         const texto = input.value.trim();
-        if (!texto) return;
+        if (!texto && !archivoBase64Pendiente) return;
         if (!grupoActual) { alert('No estás en un grupo'); return; }
-        input.value = '';
         const nombre = miNombreCompleto ? miNombreCompleto.split(' ')[0] : ('ID ' + miID);
-        db.ref('chats/' + grupoActual).push({
-            uid: miID, nom: nombre,
-            texto: texto, ts: Date.now()
-        });
+        const msg = { uid: miID, nom: nombre, texto: texto || '', ts: Date.now() };
+        if (archivoBase64Pendiente) msg.imagen = archivoBase64Pendiente;
+        input.value = '';
+        cancelarArchivo();
+        db.ref('chats/' + grupoActual).push(msg);
     }
 
     function iniciarListenerChat() {
@@ -1852,10 +1896,18 @@
             </div>
         </div>
         <div id="chat-messages" style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px;"></div>
+        <div id="chat-preview-area" style="display:none; padding:8px 16px 0; background:#f8f7ff; border-top:1px solid #ede9fe;">
+            <div style="position:relative; display:inline-block;">
+                <img id="chat-preview-img" src="" style="max-height:80px; max-width:180px; border-radius:10px; border:2px solid var(--primary);">
+                <button onclick="cancelarArchivo()" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:22px; height:22px; font-size:0.7rem; font-weight:900; cursor:pointer; line-height:22px; padding:0;">✕</button>
+            </div>
+        </div>
         <div style="padding:12px 16px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center;">
+            <input id="chat-file-input" type="file" accept="image/*" style="display:none;" onchange="previsualizarArchivo(event)">
+            <button onclick="document.getElementById('chat-file-input').click()" style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:50%; width:40px; height:40px; font-size:1.1rem; cursor:pointer; flex-shrink:0;">📎</button>
             <input id="chat-input" type="text" placeholder="Escribe un mensaje..." style="flex:1; padding:10px 14px; border:1px solid #ddd6fe; border-radius:20px; font-size:0.9rem; outline:none;"
                 onkeydown="if(event.key==='Enter') enviarMensaje()">
-            <button onclick="enviarMensaje()" style="background:var(--primary); color:white; border:none; border-radius:50%; width:40px; height:40px; font-size:1.1rem; cursor:pointer;">➤</button>
+            <button onclick="enviarMensaje()" style="background:var(--primary); color:white; border:none; border-radius:50%; width:40px; height:40px; font-size:1.1rem; cursor:pointer; flex-shrink:0;">➤</button>
         </div>
     </div>
 </div>
