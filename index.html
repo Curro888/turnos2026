@@ -1,3 +1,4 @@
+ 
 
  
 <!DOCTYPE html>
@@ -1670,21 +1671,37 @@
 
     let archivoBase64Pendiente = null;
 
+    function comprimirImagen(file, callback) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                // Máximo 800px en el lado más largo
+                const MAX = 800;
+                let w = img.width, h = img.height;
+                if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+                else       { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+                canvas.width = w;
+                canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                // Calidad 0.7 → ~50-150KB típico
+                const base64 = canvas.toDataURL('image/jpeg', 0.7);
+                callback(base64);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
     function previsualizarArchivo(event) {
         const file = event.target.files[0];
         if (!file) return;
-        if (file.size > 800 * 1024) {
-            alert('La imagen no puede superar 800KB');
-            event.target.value = '';
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            archivoBase64Pendiente = e.target.result;
-            document.getElementById('chat-preview-img').src = archivoBase64Pendiente;
+        comprimirImagen(file, function(base64) {
+            archivoBase64Pendiente = base64;
+            document.getElementById('chat-preview-img').src = base64;
             document.getElementById('chat-preview-area').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+        });
     }
 
     function cancelarArchivo() {
