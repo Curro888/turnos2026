@@ -2110,27 +2110,24 @@ window.addEventListener('popstate', () => {
     }
 });
 
-// Estado inicial
+// Estado inicial — dos entradas para que el primer atrás cierre modal y el segundo salga
 history.pushState(null, '');
 
-// Parchear las funciones de apertura para que registren en el stack
-document.addEventListener('DOMContentLoaded', () => {
-    // Parchear aperturas inline (dia-modal, side-panel, etc.) con MutationObserver solo para pushModal
-    const toObserve = Object.keys(modalCierres);
-    const obs = new MutationObserver(mutations => {
-        mutations.forEach(m => {
-            const el = m.target;
-            if (!toObserve.includes(el.id)) return;
-            const visible = el.style.display !== 'none' && el.style.display !== '';
-            if (visible && !modalStack.includes(el.id)) {
-                pushModal(el.id);
-            }
-        });
+// Registrar observer directamente, el script está al final del body y el DOM ya existe
+const _modalCierreIds = Object.keys(modalCierres);
+const _obs = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+        const el = m.target;
+        if (!_modalCierreIds.includes(el.id)) return;
+        const visible = el.style.display !== 'none' && el.style.display !== '';
+        if (visible && !modalStack.includes(el.id)) {
+            pushModal(el.id);
+        }
     });
-    toObserve.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) obs.observe(el, { attributes: true, attributeFilter: ['style'] });
-    });
+});
+_modalCierreIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) _obs.observe(el, { attributes: true, attributeFilter: ['style'] });
 });
 </script>
 </body>
