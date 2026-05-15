@@ -1192,7 +1192,9 @@
             }
             grid.innerHTML += html + `</div></div>`;
         });
-        document.getElementById('m-cal').style.display = "block"; _onModalOpen();
+        const calYaAbierto = document.getElementById('m-cal').style.display !== 'none';
+        document.getElementById('m-cal').style.display = "block";
+        if (!calYaAbierto) _onModalOpen();
     }
 
     function handleDayClick(d, mIdx, uid) {
