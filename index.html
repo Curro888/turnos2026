@@ -2055,42 +2055,30 @@
 <script>
 // ===== BOTÓN ATRÁS MÓVIL =====
 
-// Mapa de modal → función de cierre
-const modalCierres = {
+const _modalCierres = {
     'dia-modal':        () => document.getElementById('dia-modal').style.display = 'none',
     'report-modal':     () => document.getElementById('report-modal').style.display = 'none',
     'side-panel':       () => document.getElementById('side-panel').style.display = 'none',
     'companions-modal': () => document.getElementById('companions-modal').style.display = 'none',
-    'chat-modal':       () => { if(typeof cerrarChat === 'function') cerrarChat(); else document.getElementById('chat-modal').style.display = 'none'; },
-    'edit-group-modal': () => { if(typeof cerrarEditorGrupo === 'function') cerrarEditorGrupo(); else document.getElementById('edit-group-modal').style.display = 'none'; },
+    'chat-modal':       () => { if(typeof cerrarChat==='function') cerrarChat(); else document.getElementById('chat-modal').style.display='none'; },
+    'edit-group-modal': () => { if(typeof cerrarEditorGrupo==='function') cerrarEditorGrupo(); else document.getElementById('edit-group-modal').style.display='none'; },
     'confirm-modal':    () => document.getElementById('confirm-modal').style.display = 'none',
     'pending-modal':    () => document.getElementById('pending-modal').style.display = 'none',
-    'vac-modal':        () => { if(typeof cerrarVacModal === 'function') cerrarVacModal(); else document.getElementById('vac-modal').style.display = 'none'; },
+    'vac-modal':        () => { if(typeof cerrarVacModal==='function') cerrarVacModal(); else document.getElementById('vac-modal').style.display='none'; },
     'grupos-panel':     () => document.getElementById('grupos-panel').style.display = 'none',
-    'stats-modal':      () => { if(typeof cerrarEstadisticas === 'function') cerrarEstadisticas(); else document.getElementById('stats-modal').style.display = 'none'; },
+    'stats-modal':      () => { if(typeof cerrarEstadisticas==='function') cerrarEstadisticas(); else document.getElementById('stats-modal').style.display='none'; },
     'ctx-menu':         () => document.getElementById('ctx-menu').style.display = 'none',
 };
 
-let modalStack = [];
-
-function pushModal(id) {
-    history.pushState({ modal: id }, '');
-    modalStack.push(id);
+function _hayModalAbierto() {
+    return Object.keys(_modalCierres).some(id => {
+        const el = document.getElementById(id);
+        return el && el.style.display !== 'none' && el.style.display !== '';
+    });
 }
 
-function cerrarTopmostModal() {
-    // Busca el último modal abierto visible
-    for (let i = modalStack.length - 1; i >= 0; i--) {
-        const id = modalStack[i];
-        const el = document.getElementById(id);
-        if (el && el.style.display !== 'none' && el.style.display !== '') {
-            modalCierres[id]?.();
-            modalStack.splice(i, 1);
-            return true;
-        }
-    }
-    // Por si acaso, busca cualquier modal visible aunque no esté en el stack
-    for (const [id, fn] of Object.entries(modalCierres)) {
+function _cerrarModalVisible() {
+    for (const [id, fn] of Object.entries(_modalCierres)) {
         const el = document.getElementById(id);
         if (el && el.style.display !== 'none' && el.style.display !== '') {
             fn();
@@ -2100,34 +2088,34 @@ function cerrarTopmostModal() {
     return false;
 }
 
-window.addEventListener('popstate', () => {
-    if (!cerrarTopmostModal()) {
-        // Estamos en la página principal: salir (dejar la app en background)
-        // No hacemos nada — el navegador maneja la salida normalmente
-    } else {
-        // Reponemos el estado para que el próximo atrás también funcione
-        history.pushState(null, '');
-    }
-});
+// Siempre mantenemos DOS estados en el historial cuando hay un modal abierto
+// Al abrir modal: pushState → hay 2 estados → primer atrás hace popstate → cerramos modal → volvemos a pushState
+// En página principal: solo 1 estado → atrás sale de la app
 
-// Estado inicial — dos entradas para que el primer atrás cierre modal y el segundo salga
-history.pushState(null, '');
+function _onModalOpen() {
+    history.pushState({ modal: true }, '');
+}
 
-// Registrar observer directamente, el script está al final del body y el DOM ya existe
-const _modalCierreIds = Object.keys(modalCierres);
-const _obs = new MutationObserver(mutations => {
-    mutations.forEach(m => {
+// Observar cambios de display en todos los modales
+const _obs = new MutationObserver(muts => {
+    muts.forEach(m => {
         const el = m.target;
-        if (!_modalCierreIds.includes(el.id)) return;
+        if (!Object.keys(_modalCierres).includes(el.id)) return;
         const visible = el.style.display !== 'none' && el.style.display !== '';
-        if (visible && !modalStack.includes(el.id)) {
-            pushModal(el.id);
-        }
+        if (visible) _onModalOpen();
     });
 });
-_modalCierreIds.forEach(id => {
+Object.keys(_modalCierres).forEach(id => {
     const el = document.getElementById(id);
     if (el) _obs.observe(el, { attributes: true, attributeFilter: ['style'] });
+});
+
+window.addEventListener('popstate', () => {
+    if (_cerrarModalVisible()) {
+        // Modal cerrado — reponer el estado extra solo si aún quedan modales abiertos
+        if (_hayModalAbierto()) history.pushState({ modal: true }, '');
+    }
+    // Si no había modal: dejar que el navegador salga normalmente
 });
 </script>
 </body>
