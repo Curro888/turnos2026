@@ -85,6 +85,11 @@
         .member-row .member-name { font-weight: 700; color: var(--text); }
         .member-row .member-sub { font-size: 0.75rem; color: #64748b; }
         .btn-danger-sm { background: #fee2e2; color: var(--danger); border: none; border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
+    @keyframes badgePulse {
+        0%   { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
+        50%  { transform: scale(1.2); box-shadow: 0 0 12px rgba(239,68,68,0.9); }
+        100% { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
+    }
     </style>
 </head>
 <body ontouchmove="handleGlobalTouchMove(event)">
@@ -198,7 +203,7 @@
             <div style="position:relative;">
                 <button onclick="toggleMenu()" style="padding:8px 13px; border-radius:8px; border:1px solid var(--primary); background:var(--primary); color:white; font-size:0.85rem; font-weight:800; position:relative;">
                     ☰
-                    <span id="chat-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:red; color:white; border-radius:50%; width:16px; height:16px; font-size:0.6rem; line-height:16px; text-align:center;">!</span>
+                    <span id="chat-badge" style="display:none; position:absolute; top:-8px; right:-8px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; font-weight:900; line-height:20px; text-align:center; padding:0 4px; border:2px solid white; animation:badgePulse 1s infinite; box-shadow:0 0 6px rgba(239,68,68,0.7);">0</span>
                 </button>
                 <div id="dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:white; border:1px solid #ddd6fe; border-radius:16px; box-shadow:0 8px 30px rgba(139,92,246,0.18); z-index:9999; min-width:200px; overflow:hidden;">
                     <div id="dmenu-editar-grupo" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer; active-background:#f5f3ff;" ontouchend="this.click()" onclick="closeMenu();abrirEditorGrupo();">✏️ Editar grupo</div>
@@ -1845,15 +1850,19 @@
 
     function iniciarListenerChat() {
         if (!grupoActual) return;
-        db.ref('chats/' + grupoActual).limitToLast(1).on('value', snap => {
+        db.ref('chats/' + grupoActual).on('value', snap => {
             const msgs = snap.val();
             if (!msgs) return;
-            const msg = Object.values(msgs)[0];
-            if (msg.uid === miID || chatAbierto) return;
+            if (chatAbierto) return;
             try { ultimoMensajeVisto = localStorage.getItem('ultimoMsgVisto') || '0'; } catch(e) {}
-            if (msg.ts.toString() > ultimoMensajeVisto) {
-                document.getElementById('chat-badge').style.display = 'block';
+            const noLeidos = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto).length;
+            const badge = document.getElementById('chat-badge');
+            if (noLeidos > 0) {
+                badge.style.display = 'block';
+                badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
                 if (!chatSilenciado) reproducirSonido();
+            } else {
+                badge.style.display = 'none';
             }
         });
     }
