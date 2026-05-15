@@ -760,21 +760,21 @@
             }
         } catch(e) {}
 
-        // Si hay sesión activa guardada (individual o grupo), entrar directo sin preguntar
-        try {
-            const raw = localStorage.getItem('sesion2026');
-            if (raw) {
-                const s = JSON.parse(raw);
-                if (s && s.miID) { aplicarSesion(s); return true; }
-            }
-        } catch(e) {}
-
-        // Sin sesión activa — si hay grupos guardados, mostrar selector
+        // Si hay grupos guardados, mostrar selector
         const misGrupos = cargarMisGrupos();
         if (misGrupos.length > 0) {
             mostrarPantallaGrupos();
             return true;
         }
+
+        // Sin grupos — intentar sesión individual
+        try {
+            const raw = localStorage.getItem('sesion2026');
+            if (raw) {
+                const s = JSON.parse(raw);
+                if (s && s.miID && !s.modoGrupo) { aplicarSesion(s); return true; }
+            }
+        } catch(e) {}
 
         // Intentar IndexedDB (iOS Safari standalone)
         idbGet('sesion2026').then(raw => {
@@ -836,10 +836,6 @@
         document.getElementById('login-view').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
         document.getElementById('user-title').innerText = "👤 " + miNombreCompleto;
-        // Pedir permiso de notificaciones
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
-        }
         if (modoGrupo) {
             document.getElementById('dmenu-editar-grupo').style.display = 'block';
             document.getElementById('dmenu-companeros').style.display = 'none';
@@ -1523,11 +1519,6 @@
         if (solicitudesVistas.has(key)) return;
         solicitudesVistas.add(key);
         const remitente = equipo.find(x => x.id === sol.de)?.n || sol.miNom || sol.de;
-        // Notificación en barra si app en segundo plano
-        enviarNotificacion(
-            '🤝 Solicitud de cambio',
-            `${remitente} quiere cambiar contigo: libras el ${sol.f1} y trabajas el ${sol.f2}`
-        );
         reproducirSonido();
         const acepta = confirm(`🤝 SOLICITUD DE CAMBIO\n\n${remitente} quiere hacer un cambio contigo:\n\nTú libras el ${sol.f1} y trabajas el ${sol.f2}\n\n¿Aceptas?`);
         if (acepta) {
@@ -1887,15 +1878,6 @@
                 badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
                 if (!chatSilenciado) {
                     reproducirSonido();
-                    // Notificación en barra si app en segundo plano
-                    const msgsArr = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto);
-                    if (msgsArr.length > 0) {
-                        const ultimo = msgsArr[msgsArr.length - 1];
-                        enviarNotificacion(
-                            '💬 ' + (ultimo.nom || 'Compañero'),
-                            ultimo.imagen ? '📷 Imagen' : ultimo.texto,
-                        );
-                    }
                 }
             } else {
                 badge.style.display = 'none';
@@ -1912,18 +1894,7 @@
         document.getElementById('btn-silencio').innerText = chatSilenciado ? '🔕' : '🔔';
     }
 
-    function enviarNotificacion(titulo, cuerpo, icono) {
-        if (!('Notification' in window) || Notification.permission !== 'granted') return;
-        if (document.visibilityState === 'visible') return; // Solo si app en segundo plano
-        try {
-            new Notification(titulo, {
-                body: cuerpo,
-                icon: icono || 'https://cdn-icons-png.flaticon.com/512/1827/1827347.png',
-                badge: 'https://cdn-icons-png.flaticon.com/512/1827/1827347.png',
-                vibrate: [200, 100, 200]
-            });
-        } catch(e) {}
-    }
+    function reproducirSonido() {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             // Primer pitido
