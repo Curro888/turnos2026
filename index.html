@@ -882,7 +882,7 @@
     }
 
     function abrirCompaneros() {
-        document.getElementById('companions-modal').style.display = 'flex';
+        document.getElementById('companions-modal').style.display = 'flex'; _onModalOpen();
         mostrarTablaComp('73/27');
     }
 
@@ -1025,7 +1025,7 @@
         document.getElementById('dia-modal-trabaja').innerHTML = `
             <div style="font-size:0.75rem; font-weight:700; color:var(--primary-dark); margin-bottom:6px; margin-top:10px;">TRABAJAN (${trabajan.length})</div>
             ${trabajan.length ? trabajan.map(x=>`<div style="font-size:0.85rem; padding:5px 0; border-bottom:1px solid #f5f3ff;">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}`;
-        document.getElementById('dia-modal').style.display = 'flex';
+        document.getElementById('dia-modal').style.display = 'flex'; _onModalOpen();
     }
 
     // ===== EDITOR DE GRUPO =====
@@ -1035,7 +1035,7 @@
             const data = snap.val();
             document.getElementById('edit-group-name-label').innerText = `Grupo: ${data.nombre}  |  Código: ${grupoActual}`;
             renderMemberList(data.miembros || {});
-            document.getElementById('edit-group-modal').style.display = 'flex';
+            document.getElementById('edit-group-modal').style.display = 'flex'; _onModalOpen();
         });
     }
 
@@ -1222,7 +1222,7 @@
         document.getElementById('p-free-list').innerHTML = `<b style="color:var(--danger)">LIBRAN (${countFree}):</b>` + htmlFree;
         document.getElementById('p-work-list').innerHTML = `<b style="color:var(--primary-dark)">TRABAJAN (${countWork}):</b>` + htmlWork;
         document.getElementById('p-stats').innerHTML = `<div style="font-size:0.8rem; font-weight:bold; color:#64748b; margin-bottom:5px;">Resumen Diario</div>`;
-        document.getElementById('side-panel').style.display = "block";
+        document.getElementById('side-panel').style.display = "block"; _onModalOpen();
     }
 
     // ===== TOQUE LARGO con bloqueo de click =====
@@ -1398,7 +1398,7 @@
                 <b>${compNom}:</b><br>
                 El ${f1} pasa a <b>librar</b><br>
                 El ${f2} pasa a <b>trabajar</b>`;
-            document.getElementById('confirm-modal').style.display = 'flex';
+            document.getElementById('confirm-modal').style.display = 'flex'; _onModalOpen();
             // Guardar estado para cuando confirme
             window._pendingCambio = { d1, m1, d2, m2, uid2 };
         } else {
@@ -1438,7 +1438,7 @@
                 Solicitud enviada a <b>${compNom}</b>.<br><br>
                 Tu día ${f1}: <b>trabajarás</b><br>
                 Tu libre ${f2}: <b>librarás</b>`;
-            document.getElementById('pending-modal').style.display = 'flex';
+            document.getElementById('pending-modal').style.display = 'flex'; _onModalOpen();
             escucharRespuestaSolicitud(solKey, uid2);
         });
     }
@@ -1589,7 +1589,7 @@
         cerrarDesplegables();
         document.getElementById('vac-info').innerText = `Inicio: ${diaSeleccionado.d}/${diaSeleccionado.mIdx+1}`;
         document.getElementById('vac-input').value = '';
-        document.getElementById('vac-modal').style.display = 'flex';
+        document.getElementById('vac-modal').style.display = 'flex'; _onModalOpen();
     }
     function cerrarVacModal() { document.getElementById('vac-modal').style.display = 'none'; }
     function confirmarVacaciones() {
@@ -1637,7 +1637,7 @@
             }
         }
         document.getElementById('report-body').innerHTML = body;
-        document.getElementById('report-modal').style.display = "flex";
+        document.getElementById('report-modal').style.display = "flex"; _onModalOpen();
     }
 
     // Cerrar menú al tocar fuera — ignorar el click que abre el menú
@@ -1656,7 +1656,7 @@
     function abrirPanelGrupos() {
         panelMes = mHoy;
         panelTurno = '73/27';
-        document.getElementById('grupos-panel').style.display = 'flex';
+        document.getElementById('grupos-panel').style.display = 'flex'; _onModalOpen();
         renderPanelGrupos();
     }
 
@@ -1731,7 +1731,7 @@
     let chatAbierto = false;
 
     function abrirChat() {
-        document.getElementById('chat-modal').style.display = 'flex';
+        document.getElementById('chat-modal').style.display = 'flex'; _onModalOpen();
         chatAbierto = true;
         document.getElementById('chat-badge').style.display = 'none';
         ultimoMensajeVisto = Date.now().toString();
@@ -1882,7 +1882,7 @@
 
     // ===== ESTADÍSTICAS =====
     function abrirEstadisticas() {
-        document.getElementById('stats-modal').style.display = 'flex';
+        document.getElementById('stats-modal').style.display = 'flex'; _onModalOpen();
         renderEstadisticas();
     }
 
@@ -2070,11 +2070,8 @@ const _modalCierres = {
     'ctx-menu':         () => document.getElementById('ctx-menu').style.display = 'none',
 };
 
-function _hayModalAbierto() {
-    return Object.keys(_modalCierres).some(id => {
-        const el = document.getElementById(id);
-        return el && el.style.display !== 'none' && el.style.display !== '';
-    });
+function _onModalOpen() {
+    history.pushState({ modal: true }, '');
 }
 
 function _cerrarModalVisible() {
@@ -2088,34 +2085,11 @@ function _cerrarModalVisible() {
     return false;
 }
 
-// Siempre mantenemos DOS estados en el historial cuando hay un modal abierto
-// Al abrir modal: pushState → hay 2 estados → primer atrás hace popstate → cerramos modal → volvemos a pushState
-// En página principal: solo 1 estado → atrás sale de la app
-
-function _onModalOpen() {
-    history.pushState({ modal: true }, '');
-}
-
-// Observar cambios de display en todos los modales
-const _obs = new MutationObserver(muts => {
-    muts.forEach(m => {
-        const el = m.target;
-        if (!Object.keys(_modalCierres).includes(el.id)) return;
-        const visible = el.style.display !== 'none' && el.style.display !== '';
-        if (visible) _onModalOpen();
-    });
-});
-Object.keys(_modalCierres).forEach(id => {
-    const el = document.getElementById(id);
-    if (el) _obs.observe(el, { attributes: true, attributeFilter: ['style'] });
-});
-
 window.addEventListener('popstate', () => {
     if (_cerrarModalVisible()) {
-        // Modal cerrado — reponer el estado extra solo si aún quedan modales abiertos
-        if (_hayModalAbierto()) history.pushState({ modal: true }, '');
+        history.pushState({ modal: true }, '');
     }
-    // Si no había modal: dejar que el navegador salga normalmente
+    // Sin modal abierto → el navegador sale normalmente
 });
 </script>
 </body>
