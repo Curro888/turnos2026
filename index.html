@@ -1192,7 +1192,7 @@
             }
             grid.innerHTML += html + `</div></div>`;
         });
-        document.getElementById('m-cal').style.display = "block";
+        document.getElementById('m-cal').style.display = "block"; _onModalOpen();
     }
 
     function handleDayClick(d, mIdx, uid) {
@@ -2057,6 +2057,7 @@
 
 const _modalCierres = {
     'dia-modal':        () => document.getElementById('dia-modal').style.display = 'none',
+    'm-cal':            () => { if(typeof cerrarCal==='function') cerrarCal(); else document.getElementById('m-cal').style.display='none'; },
     'report-modal':     () => document.getElementById('report-modal').style.display = 'none',
     'side-panel':       () => document.getElementById('side-panel').style.display = 'none',
     'companions-modal': () => document.getElementById('companions-modal').style.display = 'none',
