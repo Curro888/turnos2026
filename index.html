@@ -2053,7 +2053,7 @@
 </audio>
 
 <script>
-// ===== BOTÓN ATRÁS MÓVIL =====
+// ===== BOTÓN ATRÁS MÓVIL (PWA Android) =====
 
 const _modalCierres = {
     'dia-modal':        () => document.getElementById('dia-modal').style.display = 'none',
@@ -2070,10 +2070,6 @@ const _modalCierres = {
     'ctx-menu':         () => document.getElementById('ctx-menu').style.display = 'none',
 };
 
-function _onModalOpen() {
-    history.pushState({ modal: true }, '');
-}
-
 function _cerrarModalVisible() {
     for (const [id, fn] of Object.entries(_modalCierres)) {
         const el = document.getElementById(id);
@@ -2085,11 +2081,32 @@ function _cerrarModalVisible() {
     return false;
 }
 
-window.addEventListener('popstate', () => {
-    if (_cerrarModalVisible()) {
-        history.pushState({ modal: true }, '');
+function _onModalOpen() {
+    history.pushState({ modal: true }, '');
+}
+
+// Rellenar historial con 50 entradas al arrancar
+// En PWA Android, el atrás consume una entrada por tap
+// Con 50 entradas tenemos margen para interceptar
+(function() {
+    for (let i = 0; i < 50; i++) {
+        history.pushState({ pad: i }, '');
     }
-    // Sin modal abierto → el navegador sale normalmente
+})();
+
+window.addEventListener('popstate', function(e) {
+    if (_cerrarModalVisible()) {
+        // Modal cerrado — rellenar de nuevo para próximos atrás
+        for (let i = 0; i < 50; i++) {
+            history.pushState({ pad: i }, '');
+        }
+        return;
+    }
+    // Sin modal: rellenar para evitar salir sin querer en pantalla principal
+    // Solo dejamos salir si el usuario da atrás muchas veces seguidas
+    if (history.length > 2) {
+        history.pushState({ pad: 0 }, '');
+    }
 });
 </script>
 </body>
