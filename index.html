@@ -836,6 +836,10 @@
         document.getElementById('login-view').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
         document.getElementById('user-title').innerText = "👤 " + miNombreCompleto;
+        // Pedir permiso notificaciones (solo una vez)
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
         if (modoGrupo) {
             document.getElementById('dmenu-editar-grupo').style.display = 'block';
             document.getElementById('dmenu-companeros').style.display = 'none';
@@ -1520,6 +1524,10 @@
         solicitudesVistas.add(key);
         const remitente = equipo.find(x => x.id === sol.de)?.n || sol.miNom || sol.de;
         reproducirSonido();
+        // Notificación si app en segundo plano
+        if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
+            try { new Notification('🤝 Solicitud de cambio', { body: remitente + ' quiere cambiar contigo: libras el ' + sol.f1 + ' y trabajas el ' + sol.f2, icon: 'https://cdn-icons-png.flaticon.com/512/1827/1827347.png' }); } catch(e) {}
+        }
         const acepta = confirm(`🤝 SOLICITUD DE CAMBIO\n\n${remitente} quiere hacer un cambio contigo:\n\nTú libras el ${sol.f1} y trabajas el ${sol.f2}\n\n¿Aceptas?`);
         if (acepta) {
             aplicarCambioComp(sol).then(() => {
@@ -1878,6 +1886,14 @@
                 badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
                 if (!chatSilenciado) {
                     reproducirSonido();
+                    // Notificación si app en segundo plano
+                    if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
+                        const msgsArr = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto);
+                        if (msgsArr.length > 0) {
+                            const ultimo = msgsArr[msgsArr.length - 1];
+                            try { new Notification('💬 ' + (ultimo.nom || 'Compañero'), { body: ultimo.imagen ? '📷 Imagen' : ultimo.texto, icon: 'https://cdn-icons-png.flaticon.com/512/1827/1827347.png' }); } catch(e) {}
+                        }
+                    }
                 }
             } else {
                 badge.style.display = 'none';
