@@ -98,10 +98,20 @@
         <h2 style="color:var(--primary); margin:0 0 4px 0;">Planificación 2026</h2>
         <p style="font-size:0.8rem; color:#64748b; margin-bottom:20px;">¿Cómo quieres acceder?</p>
 
+        <!-- PASO -1: Elegir grupo guardado -->
+        <div id="step-mis-grupos" class="login-step">
+            <p style="font-size:0.8rem; color:#64748b; margin:0 0 12px 0;">Elige con qué grupo entrar:</p>
+            <div id="lista-mis-grupos" style="max-height:280px; overflow-y:auto; margin-bottom:12px;"></div>
+            <button class="login-btn-big" onclick="mostrarStep('step-0')" style="border-style:dashed; color:#64748b; border-color:#cbd5e1;">
+                ➕ Unirme a otro grupo
+            </button>
+        </div>
+
         <!-- PASO 0: Individual o Grupo -->
         <div id="step-0" class="login-step active">
             <button class="login-btn-big" onclick="eligeModo('individual')">👤 Individual<br><span style="font-size:0.75rem; font-weight:500; opacity:0.7">Solo para mí</span></button>
             <button class="login-btn-big" onclick="eligeModo('grupo')">👥 Grupo<br><span style="font-size:0.75rem; font-weight:500; opacity:0.7">Con compañeros</span></button>
+            <div id="btn-volver-grupos" onclick="mostrarPantallaGrupos()" style="display:none; font-size:0.8rem; color:var(--primary); cursor:pointer; margin-top:10px;">← Mis grupos</div>
         </div>
 
         <!-- PASO 1 (individual): ID + contraseña -->
@@ -645,19 +655,98 @@
         try { localStorage.setItem('sesion2026', JSON.stringify(sesion)); } catch(e) {}
         idbSet('sesion2026', JSON.stringify(sesion)).catch(() => {});
         if (miID) db.ref(`sesiones/${miID}`).set(sesion);
+        // Guardar en lista de grupos del usuario
+        if (modoGrupo && grupoActual) guardarGrupoEnLista(grupoActual, miID, miNombreCompleto, miTipoSesion, miGrupoSesion);
+    }
+
+    function guardarGrupoEnLista(codigo, id, nombre, tipo, grupoLibres) {
+        try {
+            const lista = JSON.parse(localStorage.getItem('misGrupos2026') || '[]');
+            const idx = lista.findIndex(g => g.codigo === codigo);
+            const entrada = { codigo, id, nombre, tipo, grupoLibres };
+            if (idx >= 0) lista[idx] = entrada;
+            else lista.push(entrada);
+            localStorage.setItem('misGrupos2026', JSON.stringify(lista));
+        } catch(e) {}
+    }
+
+    function cargarMisGrupos() {
+        try { return JSON.parse(localStorage.getItem('misGrupos2026') || '[]'); } catch(e) { return []; }
+    }
+
+    function eliminarGrupoGuardado(codigo) {
+        try {
+            const lista = cargarMisGrupos().filter(g => g.codigo !== codigo);
+            localStorage.setItem('misGrupos2026', JSON.stringify(lista));
+            mostrarPantallaGrupos();
+        } catch(e) {}
+    }
+
+    function mostrarPantallaGrupos() {
+        const lista = cargarMisGrupos();
+        if (lista.length === 0) { rellenarCamposLogin(); return; }
+        // Mostrar botón "← Mis grupos" en step-0 para cuando naveguen hacia atrás
+        const btnVolver = document.getElementById('btn-volver-grupos');
+        if (btnVolver) btnVolver.style.display = 'block';
+        const cont = document.getElementById('lista-mis-grupos');
+        cont.innerHTML = '';
+        lista.forEach(g => {
+            const div = document.createElement('div');
+            div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:2px solid #ddd6fe; border-radius:14px; margin-bottom:8px; background:#faf9ff; cursor:pointer;';
+            div.innerHTML = `
+                <div onclick="entrarEnGrupo(${JSON.stringify(g).replace(/"/g,'&quot;')})" style="flex:1; text-align:left;">
+                    <div style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;">👥 ${g.codigo}</div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">${g.nombre} · ID ${g.id} · G${g.grupoLibres} · ${g.tipo}</div>
+                </div>
+                <button onclick="event.stopPropagation(); eliminarGrupoGuardado('${g.codigo}')" style="background:#fee2e2; color:#ef4444; border:none; border-radius:8px; padding:5px 9px; font-size:0.75rem; font-weight:700; margin-left:8px;">✕</button>
+            `;
+            div.querySelector('div[onclick]').style.cssText += 'flex:1; text-align:left;';
+            cont.appendChild(div);
+        });
+        mostrarStep('step-mis-grupos');
+    }
+
+    function entrarEnGrupo(g) {
+        db.ref(`grupos/${g.codigo}`).once('value').then(snap => {
+            const data = snap.val();
+            if (!data) { alert('El grupo ya no existe'); eliminarGrupoGuardado(g.codigo); return; }
+            miID = g.id; miNombreCompleto = g.nombre; modoGrupo = true; grupoActual = g.codigo;
+            miTipoSesion = g.tipo; miGrupoSesion = g.grupoLibres;
+            guardarSesion();
+            cargarMiembrosGrupo(g.codigo);
+        });
     }
 
     function restaurarSesion() {
-        // 1. Intentar localStorage
+        // Migrar sesión antigua de grupo a misGrupos2026 si no está ya
         try {
             const raw = localStorage.getItem('sesion2026');
             if (raw) {
                 const s = JSON.parse(raw);
-                if (s && s.miID) { aplicarSesion(s); return true; }
+                if (s && s.miID && s.modoGrupo && s.grupoActual) {
+                    guardarGrupoEnLista(s.grupoActual, s.miID, s.miNombreCompleto, s.miTipoSesion || '', s.miGrupoSesion || '');
+                }
             }
         } catch(e) {}
 
-        // 2. Intentar IndexedDB (iOS Safari standalone)
+        const misGrupos = cargarMisGrupos();
+
+        // Si hay grupos guardados, mostrar pantalla de selección
+        if (misGrupos.length > 0) {
+            mostrarPantallaGrupos();
+            return true;
+        }
+
+        // Si no hay grupos, intentar sesión individual guardada
+        try {
+            const raw = localStorage.getItem('sesion2026');
+            if (raw) {
+                const s = JSON.parse(raw);
+                if (s && s.miID && !s.modoGrupo) { aplicarSesion(s); return true; }
+            }
+        } catch(e) {}
+
+        // Intentar IndexedDB (iOS Safari standalone)
         idbGet('sesion2026').then(raw => {
             if (raw) {
                 try {
@@ -665,7 +754,6 @@
                     if (s && s.miID) { aplicarSesion(s); return; }
                 } catch(e) {}
             }
-            // 3. Intentar cookie
             const cookieID = getCookie('uid2026');
             if (cookieID) {
                 db.ref(`sesiones/${cookieID}`).once('value').then(snap => {
@@ -678,7 +766,7 @@
             }
         }).catch(() => rellenarCamposLogin());
 
-        return true; // evitar login mientras carga
+        return true;
     }
 
     function aplicarSesion(s) {
@@ -760,8 +848,13 @@
         document.getElementById('main-content').style.display = 'none';
         document.getElementById('login-view').style.display = 'flex';
         document.querySelectorAll('.login-step').forEach(s => s.classList.remove('active'));
-        document.getElementById('step-0').classList.add('active');
-        rellenarCamposLogin();
+        const misGrupos = cargarMisGrupos();
+        if (misGrupos.length > 0) {
+            mostrarPantallaGrupos();
+        } else {
+            document.getElementById('step-0').classList.add('active');
+            rellenarCamposLogin();
+        }
     }
 
     // ===== COMPAÑEROS INDIVIDUALES =====
