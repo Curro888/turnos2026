@@ -1,3 +1,5 @@
+
+ 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -97,11 +99,12 @@
 
         <!-- PASO -1: Elegir grupo guardado -->
         <div id="step-mis-grupos" class="login-step">
-            <p style="font-size:0.8rem; color:#64748b; margin:0 0 12px 0;">Elige con qué grupo entrar:</p>
-            <div id="lista-mis-grupos" style="max-height:280px; overflow-y:auto; margin-bottom:12px;"></div>
-            <button class="login-btn-big" onclick="mostrarStep('step-0')" style="border-style:dashed; color:#64748b; border-color:#cbd5e1;">
-                ➕ Unirme a otro grupo
-            </button>
+            <p style="font-size:0.9rem; color:#64748b; margin:0 0 14px 0;">¿A qué quieres acceder?</p>
+            <select id="select-grupo" class="input-app" style="font-size:0.95rem; margin-bottom:14px;"></select>
+            <button class="login-btn" onclick="entrarDesdeSelector()" style="width:100%; padding:13px; font-size:1rem;">Entrar</button>
+            <div style="text-align:center; margin-top:14px;">
+                <span onclick="mostrarStep('step-0')" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">+ Unirme a otro grupo</span>
+            </div>
         </div>
 
         <!-- PASO 0: Individual o Grupo -->
@@ -682,31 +685,44 @@
     function mostrarPantallaGrupos() {
         const lista = cargarMisGrupos();
         if (lista.length === 0) { rellenarCamposLogin(); return; }
-        // Mostrar botón "← Mis grupos" en step-0 para cuando naveguen hacia atrás
         const btnVolver = document.getElementById('btn-volver-grupos');
         if (btnVolver) btnVolver.style.display = 'block';
-        const cont = document.getElementById('lista-mis-grupos');
-        cont.innerHTML = '';
-        lista.forEach(g => {
-            const div = document.createElement('div');
-            div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:2px solid #ddd6fe; border-radius:14px; margin-bottom:8px; background:#faf9ff; cursor:pointer;';
-            div.innerHTML = `
-                <div onclick="entrarEnGrupo(${JSON.stringify(g).replace(/"/g,'&quot;')})" style="flex:1; text-align:left;">
-                    <div style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;">👥 ${g.codigo}</div>
-                    <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">${g.nombre} · ID ${g.id} · G${g.grupoLibres} · ${g.tipo}</div>
-                </div>
-                <button onclick="event.stopPropagation(); eliminarGrupoGuardado('${g.codigo}')" style="background:#fee2e2; color:#ef4444; border:none; border-radius:8px; padding:5px 9px; font-size:0.75rem; font-weight:700; margin-left:8px;">✕</button>
-            `;
-            div.querySelector('div[onclick]').style.cssText += 'flex:1; text-align:left;';
-            cont.appendChild(div);
+        const sel = document.getElementById('select-grupo');
+        sel.innerHTML = '';
+        // Opción individual si existe sesión individual
+        try {
+            const raw = localStorage.getItem('sesion2026');
+            if (raw) { const s = JSON.parse(raw); if (s && s.miID && !s.modoGrupo) {
+                const opt = document.createElement('option');
+                opt.value = '__individual__';
+                opt.textContent = '👤 Individual — ' + (s.miNombreCompleto || 'ID ' + s.miID);
+                sel.appendChild(opt);
+            }}
+        } catch(e) {}
+        lista.forEach((g, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = '👥 ' + g.codigo + ' — ' + g.nombre;
+            sel.appendChild(opt);
         });
         mostrarStep('step-mis-grupos');
     }
 
-    function entrarEnGrupo(g) {
+    function entrarDesdeSelector() {
+        const sel = document.getElementById('select-grupo');
+        const val = sel.value;
+        if (val === '__individual__') {
+            try {
+                const s = JSON.parse(localStorage.getItem('sesion2026'));
+                if (s) { aplicarSesion(s); return; }
+            } catch(e) {}
+            mostrarStep('step-individual'); return;
+        }
+        const lista = cargarMisGrupos();
+        const g = lista[parseInt(val)];
+        if (!g) return;
         db.ref(`grupos/${g.codigo}`).once('value').then(snap => {
-            const data = snap.val();
-            if (!data) { alert('El grupo ya no existe'); eliminarGrupoGuardado(g.codigo); return; }
+            if (!snap.val()) { alert('El grupo ya no existe'); eliminarGrupoGuardado(g.codigo); return; }
             miID = g.id; miNombreCompleto = g.nombre; modoGrupo = true; grupoActual = g.codigo;
             miTipoSesion = g.tipo; miGrupoSesion = g.grupoLibres;
             guardarSesion();
@@ -2035,5 +2051,60 @@
 <audio id="notif-sound" preload="auto">
     <source src="https://www.soundjay.com/buttons/sounds/button-09.mp3" type="audio/mpeg">
 </audio>
+
+<script>
+// ===== BOTÓN ATRÁS MÓVIL =====
+const modalIds = [
+    'dia-modal', 'report-modal', 'side-panel', 'companions-modal',
+    'chat-modal', 'edit-group-modal', 'confirm-modal', 'pending-modal',
+    'vac-modal', 'grupos-panel', 'stats-modal', 'ctx-menu'
+];
+
+function cerrarModalAbierto() {
+    for (const id of modalIds) {
+        const el = document.getElementById(id);
+        if (el && el.style.display !== 'none' && el.style.display !== '') {
+            el.style.display = 'none';
+            return true;
+        }
+    }
+    return false;
+}
+
+// Interceptar aperturas de modales para pushState
+const _origSetDisplay = CSSStyleDeclaration.prototype.__lookupSetter__('display');
+// En lugar de parchear el setter (complejo), usamos MutationObserver
+const observer = new MutationObserver(mutations => {
+    mutations.forEach(m => {
+        if (m.type === 'attributes' && m.attributeName === 'style') {
+            const el = m.target;
+            if (modalIds.includes(el.id)) {
+                const visible = el.style.display !== 'none' && el.style.display !== '';
+                if (visible) {
+                    history.pushState({ modal: el.id }, '');
+                }
+            }
+        }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    modalIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el, { attributes: true, attributeFilter: ['style'] });
+    });
+});
+
+window.addEventListener('popstate', e => {
+    // Si hay algún modal abierto, cerrarlo
+    if (!cerrarModalAbierto()) {
+        // No hay modal — no hacer nada (no cerrar la app)
+        history.pushState(null, '');
+    }
+});
+
+// Empujar estado inicial para que el primer "atrás" no salga de la app
+history.pushState(null, '');
+</script>
 </body>
 </html>
