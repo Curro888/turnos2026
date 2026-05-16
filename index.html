@@ -122,7 +122,6 @@
         100% { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
     }
     </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body ontouchmove="handleGlobalTouchMove(event)">
 <div id="splash-screen">
@@ -1985,18 +1984,25 @@
         const box = document.getElementById('m-cal-box');
         const nombre = document.getElementById('cal-target-name').innerText || 'calendario';
         const btns = box.querySelectorAll('button');
-        btns.forEach(b => b.style.display = 'none');
         const bg = document.body.classList.contains('dark-mode') ? '#2a2d45' : '#ffffff';
-        html2canvas(box, { scale: 2, useCORS: true, backgroundColor: bg }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `turnos_${nombre}_2026.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            btns.forEach(b => b.style.display = '');
-        }).catch(() => {
-            btns.forEach(b => b.style.display = '');
-            alert('Error al generar la imagen');
-        });
+        const doExport = () => {
+            btns.forEach(b => b.style.display = 'none');
+            html2canvas(box, { scale: 2, useCORS: true, backgroundColor: bg }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `turnos_${nombre}_2026.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btns.forEach(b => b.style.display = '');
+            }).catch(() => { btns.forEach(b => b.style.display = ''); alert('Error al generar la imagen'); });
+        };
+        if (typeof html2canvas !== 'undefined') {
+            doExport();
+        } else {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            s.onload = doExport;
+            document.head.appendChild(s);
+        }
     }
         const splash = document.getElementById('splash-screen');
         if (splash) splash.remove();
