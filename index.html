@@ -16,11 +16,19 @@
             --text: #1e1b4b; --danger: #ef4444; --success: #22c55e;
             --white: #ffffff; --yellow: #facc15; --card-blue: #bae6fd;
             --free-bg: #fee2e2; --pink: #f472b6;
+            --surface: #ffffff; --border: #ddd6fe; --surface2: #f5f3ff;
+            --text2: #64748b; --card-bg: #bae6fd;
+        }
+        body.dark-mode {
+            --bg: #0f0f1a; --text: #e2e0ff; --white: #1a1a2e;
+            --surface: #1a1a2e; --border: #3b3460; --surface2: #13131f;
+            --text2: #9994cc; --card-bg: #1e3a5f; --card-blue: #1e3a5f;
+            --free-bg: #3b1a1a; --primary-dark: #a78bfa;
         }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; user-select: none; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-top: env(safe-area-inset-top); overscroll-behavior-y: none; }
-        header { background: white; padding: 15px; border-bottom: 2px solid #ddd6fe; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-        .user-card { background: var(--card-blue) !important; padding: 16px; margin-bottom: 10px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #7dd3fc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-top: env(safe-area-inset-top); overscroll-behavior-y: none; transition: background 0.3s, color 0.3s; }
+        header { background: var(--surface); padding: 15px; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .user-card { background: var(--card-bg) !important; padding: 16px; margin-bottom: 10px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); }
         .card-trabaja { border-left: 6px solid var(--primary); }
         .card-libra { border-left: 6px solid var(--danger); }
         .name-big { font-size: 1.1rem; font-weight: 800; color: var(--text); }
@@ -35,41 +43,41 @@
         .b-pend { border: 2px solid var(--primary) !important; background: var(--white) !important; color: var(--primary) !important; }
         .b-vac { border: 2px solid var(--success) !important; background: #f0fdf4 !important; color: #166534 !important; }
         .b-generado { border: 2px solid var(--pink) !important; background: #fdf2f8 !important; color: #be185d !important; }
-        .legend-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 12px; background: #ede9fe; border-radius: 12px; justify-content: center; }
+        .legend-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 12px; background: var(--surface2); border-radius: 12px; justify-content: center; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; padding: 4px; border-radius: 6px; }
-        .legend-item:active { background: #ddd6fe; }
+        .legend-item:active { background: var(--border); }
         .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.1); }
         .cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; padding: 10px; }
-        .month-box { background: white; border-radius: 12px; padding: 10px; border: 1px solid #ddd6fe; }
+        .month-box { background: var(--surface); border-radius: 12px; padding: 10px; border: 1px solid var(--border); }
         .days-container { display: grid; grid-template-columns: repeat(7, 1fr); }
         .btn-main { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; }
         .btn-main:active { background: var(--primary-dark); }
 
         /* CONTEXT MENU - arrastrable */
         #ctx-menu {
-            display: none; position: fixed; background: white; border-radius: 14px;
+            display: none; position: fixed; background: var(--surface); border-radius: 14px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 2000; width: 240px;
-            border: 1px solid #ddd6fe; overflow: hidden;
+            border: 1px solid var(--border); overflow: hidden;
             touch-action: none;
         }
         #ctx-menu-handle {
-            background: #ede9fe; padding: 10px; text-align: center;
+            background: var(--surface2); padding: 10px; text-align: center;
             font-size: 0.7rem; font-weight: 800; color: var(--primary-dark);
-            letter-spacing: 0.05em; cursor: grab; border-bottom: 1px solid #ddd6fe;
+            letter-spacing: 0.05em; cursor: grab; border-bottom: 1px solid var(--border);
         }
-        .menu-opt { padding: 15px; border-bottom: 1px solid #f5f3ff; cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--text); }
-        .menu-opt:active { background: #f5f3ff; }
+        .menu-opt { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--text); }
+        .menu-opt:active { background: var(--surface2); }
 
         #vac-modal, #report-modal, #confirm-modal {
             display: none; position: fixed; inset: 0; background: rgba(30,27,75,0.6);
             z-index: 3000; align-items: center; justify-content: center; padding: 20px;
         }
-        .modal-box { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--primary); }
-        .input-app { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd6fe; border-radius: 12px; font-size: 1.2rem; text-align: center; outline: none; color: var(--primary-dark); }
+        .modal-box { background: var(--surface); padding: 25px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--primary); }
+        .input-app { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid var(--border); border-radius: 12px; font-size: 1.2rem; text-align: center; outline: none; color: var(--primary-dark); background: var(--surface); }
         .report-content { max-height: 300px; overflow-y: auto; text-align: left; margin: 15px 0; padding-right: 5px; }
-        .report-row { padding: 10px; border-bottom: 1px solid #f5f3ff; font-size: 0.85rem; }
-        .close-panel-btn { position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; color: var(--primary-dark); border: 1px solid #ddd6fe; }
-        .close-panel-btn:active { background: #e2e8f0; }
+        .report-row { padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--text); }
+        .close-panel-btn { position: absolute; top: 15px; right: 15px; width: 30px; height: 30px; background: var(--surface2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; color: var(--primary-dark); border: 1px solid var(--border); }
+        .close-panel-btn:active { background: var(--border); }
         #selection-notice { display: none; position: fixed; top: 0; left: 0; width: 100%; background: var(--yellow); padding: 10px; padding-top: calc(env(safe-area-inset-top) + 5px); text-align: center; font-weight: 800; font-size: 0.75rem; z-index: 4000; color: #854d0e; box-shadow: 0 2px 10px rgba(0,0,0,0.1); line-height: 1.2; pointer-events: none; }
 
         /* LOGIN STEPS */
@@ -205,12 +213,13 @@
                     ☰
                     <span id="chat-badge" style="display:none; position:absolute; top:-8px; right:-8px; background:#ef4444; color:white; border-radius:50%; min-width:20px; height:20px; font-size:0.7rem; font-weight:900; line-height:20px; text-align:center; padding:0 4px; border:2px solid white; animation:badgePulse 1s infinite; box-shadow:0 0 6px rgba(239,68,68,0.7);">0</span>
                 </button>
-                <div id="dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:white; border:1px solid #ddd6fe; border-radius:16px; box-shadow:0 8px 30px rgba(139,92,246,0.18); z-index:9999; min-width:200px; overflow:hidden;">
+                <div id="dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:0 8px 30px rgba(139,92,246,0.18); z-index:9999; min-width:200px; overflow:hidden;">
                     <div id="dmenu-editar-grupo" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer; active-background:#f5f3ff;" ontouchend="this.click()" onclick="closeMenu();abrirEditorGrupo();">✏️ Editar grupo</div>
                     <div id="dmenu-companeros" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirCompaneros();">👥 Compañeros</div>
                     <div id="dmenu-chat" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirChat();">💬 Chat</div>
                     <div id="dmenu-stats" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirEstadisticas();">📊 Estadísticas</div>
-                    <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
+                    <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
+                    <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
                 </div>
             </div>
@@ -345,7 +354,7 @@
     </div>
 </div>
 
-<div id="side-panel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:300px; background:white; z-index:150; padding:20px; overflow-y:auto; border-left:2px solid #ddd6fe; box-shadow:-5px 0 15px rgba(139,92,246,0.1);">
+<div id="side-panel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:300px; background:var(--surface); z-index:150; padding:20px; overflow-y:auto; border-left:2px solid var(--border); box-shadow:-5px 0 15px rgba(139,92,246,0.1);">
     <div class="close-panel-btn" onclick="document.getElementById('side-panel').style.display='none'">✕</div>
     <h3 id="panel-date" style="color:var(--primary-dark); margin-bottom:5px; padding-right:30px;"></h3>
     <div id="p-stats" style="margin-bottom:15px; border-bottom:1px solid #f5f3ff; padding-bottom:10px;"></div>
@@ -1892,6 +1901,23 @@
         try { localStorage.setItem('chatSilenciado', chatSilenciado); } catch(e) {}
         document.getElementById('btn-silencio').innerText = chatSilenciado ? '🔕' : '🔔';
     }
+
+    function toggleDarkMode() {
+        const dark = document.body.classList.toggle('dark-mode');
+        try { localStorage.setItem('darkMode2026', dark ? '1' : '0'); } catch(e) {}
+        document.getElementById('dmenu-darkmode').textContent = dark ? '☀️ Modo claro' : '🌙 Modo oscuro';
+    }
+
+    // Aplicar modo oscuro guardado al cargar
+    try {
+        if (localStorage.getItem('darkMode2026') === '1') {
+            document.body.classList.add('dark-mode');
+            document.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('dmenu-darkmode');
+                if (btn) btn.textContent = '☀️ Modo claro';
+            });
+        }
+    } catch(e) {}
 
     function activarNotificaciones() {
         if (!('Notification' in window)) { alert('Tu navegador no soporta notificaciones'); return; }
