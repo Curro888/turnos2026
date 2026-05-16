@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1837,6 +1837,8 @@
         if (chatListener) { chatListener.off(); chatListener = null; }
         const ref = db.ref('chats/' + grupoActual);
         chatListener = ref;
+        // Marcar mensajes como leídos por mí
+        db.ref(`chatLeidos/${grupoActual}/${miID}`).set(Date.now());
         ref.limitToLast(50).on('value', snap => {
             const msgs = snap.val() || {};
             const cont = document.getElementById('chat-messages');
@@ -1852,10 +1854,13 @@
                 } else {
                     contenido = '<span style="font-size:0.88rem;">' + m.texto + '</span>';
                 }
+                // Ticks para mensajes míos
+                const leido = m.leido === true;
+                const ticks = esMio ? '<span style="font-size:0.7rem; margin-left:4px;">' + (leido ? '<span style="color:#a78bfa;">✓✓</span>' : '<span style="color:#94a3b8;">✓</span>') + '</span>' : '';
                 cont.innerHTML += '<div style="display:flex; flex-direction:column; align-items:' + (esMio ? 'flex-end' : 'flex-start') + '; margin-bottom:8px;">' +
                     '<span style="font-size:0.75rem; color:' + (esMio ? 'var(--primary)' : '#7c3aed') + '; margin-bottom:2px; font-weight:800;">' + nombre + '</span>' +
                     '<div style="max-width:75%; padding:10px 14px; border-radius:' + (esMio ? '16px 16px 4px 16px' : '16px 16px 16px 4px') + '; background:' + (esMio ? 'var(--primary)' : '#f1f5f9') + '; color:' + (esMio ? 'white' : '#1e293b') + ';">' + contenido + '</div>' +
-                    '<span style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">' + hora + '</span>' +
+                    '<span style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">' + hora + ticks + '</span>' +
                     '</div>';
             });
             cont.scrollTop = cont.scrollHeight;
@@ -1928,11 +1933,20 @@
         if (!texto && !archivoBase64Pendiente) return;
         if (!grupoActual) { alert('No estás en un grupo'); return; }
         const nombre = miNombreCompleto ? miNombreCompleto.split(' ')[0] : ('ID ' + miID);
-        const msg = { uid: miID, nom: nombre, texto: texto || '', ts: Date.now() };
+        const msg = { uid: miID, nom: nombre, texto: texto || '', ts: Date.now(), leido: false };
         if (archivoBase64Pendiente) msg.imagen = archivoBase64Pendiente;
         input.value = '';
         cancelarArchivo();
-        db.ref('chats/' + grupoActual).push(msg);
+        const newRef = db.ref('chats/' + grupoActual).push(msg);
+        // Escuchar cuando alguien lo lee
+        db.ref(`chatLeidos/${grupoActual}`).on('value', snap => {
+            const leidos = snap.val() || {};
+            const hayOtro = Object.entries(leidos).some(([uid, ts]) => uid !== miID && ts >= msg.ts);
+            if (hayOtro) {
+                newRef.update({ leido: true });
+                db.ref(`chatLeidos/${grupoActual}`).off();
+            }
+        });
     }
 
     function actualizarBadgeChat() {
@@ -2370,4 +2384,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html> 
+</html>
