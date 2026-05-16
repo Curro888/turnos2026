@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -247,6 +247,7 @@
                     <div id="dmenu-chat" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirChat();">💬 Chat</div>
                     <div id="dmenu-stats" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirEstadisticas();">📊 Estadísticas</div>
                     <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
+                    <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
                     <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:#1e1b4b; border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
                 </div>
@@ -865,6 +866,7 @@
             document.getElementById('dmenu-companeros').style.display = 'none';
             document.getElementById('dmenu-chat').style.display = 'block';
             document.getElementById('dmenu-stats').style.display = 'block';
+            document.getElementById('dmenu-historial').style.display = 'block';
             iniciarListenerChat();
         } else {
             document.getElementById('dmenu-companeros').style.display = 'block';
@@ -1595,6 +1597,12 @@
             [`cambios/${u2}/${m1}_${d1}`]: { texto: `Libras (x ${miNom} ${f2})`, clase: 'b-cambio-libre', linkedUid: u1, linkedKey: `${m2}_${d2}` },
             [`cambios/${u2}/${m2}_${d2}`]: { texto: `Haces (x ${miNom} ${f1})`, clase: 'b-inter', linkedUid: u1, linkedKey: `${m1}_${d1}` }
         };
+        // Guardar en historial personal de cada uno
+        const ts = Date.now();
+        const hKey = `historial/${u1}/${ts}`;
+        const hKey2 = `historial/${u2}/${ts}`;
+        db.ref(hKey).set({ con: compNom, conId: u2, diaTrabaja: f2, diaLibra: f1, ts, nota: '' });
+        db.ref(hKey2).set({ con: miNom, conId: u1, diaTrabaja: f1, diaLibra: f2, ts, nota: '' });
         return db.ref().update(updates);
     }
 
@@ -2017,6 +2025,41 @@
     document.addEventListener('touchend', () => { _audioDesbloqueado = true; }, { passive: true, once: true });
     document.addEventListener('click', () => { _audioDesbloqueado = true; }, { passive: true, once: true });
 
+    // ===== HISTORIAL DE CAMBIOS =====
+    function abrirHistorial() {
+        document.getElementById('historial-modal').style.display = 'flex'; _onModalOpen();
+        const cont = document.getElementById('historial-content');
+        cont.innerHTML = '<div style="text-align:center; color:var(--text2); padding:20px;">Cargando...</div>';
+        db.ref(`historial/${miID}`).orderByChild('ts').once('value').then(snap => {
+            const items = snap.val();
+            if (!items) { cont.innerHTML = '<div style="text-align:center; color:var(--text2); padding:20px;">No tienes cambios registrados aún</div>'; return; }
+            const lista = Object.entries(items).sort((a,b) => b[1].ts - a[1].ts);
+            cont.innerHTML = lista.map(([key, h]) => {
+                const fecha = new Date(h.ts).toLocaleDateString('es', {day:'2-digit', month:'2-digit', year:'numeric'});
+                return `<div style="border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; background:var(--surface2);">
+                    <div style="font-weight:800; color:var(--primary-dark); margin-bottom:4px;">🔄 Cambio con ${h.con}</div>
+                    <div style="font-size:0.82rem; color:var(--text2); margin-bottom:8px;">
+                        Trabajas el <b>${h.diaTrabaja}</b> · Libras el <b>${h.diaLibra}</b><br>
+                        <span style="font-size:0.75rem;">Registrado: ${fecha}</span>
+                    </div>
+                    <textarea id="nota-${key}" placeholder="Añadir nota..." style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.82rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box;" rows="2">${h.nota || ''}</textarea>
+                    <button onclick="guardarNota('${key}')" style="margin-top:6px; background:var(--primary); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:0.82rem; font-weight:700;">💾 Guardar nota</button>
+                </div>`;
+            }).join('');
+        });
+    }
+
+    function guardarNota(key) {
+        const nota = document.getElementById(`nota-${key}`)?.value || '';
+        db.ref(`historial/${miID}/${key}/nota`).set(nota).then(() => {
+            alert('✅ Nota guardada');
+        });
+    }
+
+    function cerrarHistorial() {
+        document.getElementById('historial-modal').style.display = 'none';
+    }
+
     function reproducirSonido() {
         try { if ('vibrate' in navigator) navigator.vibrate([200, 100, 200, 100, 200]); } catch(e) {}
         try {
@@ -2193,6 +2236,17 @@
     </div>
 </div>
 
+<div id="historial-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.85); z-index:6000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+    <div style="background:var(--surface); width:100%; max-width:480px; border-radius:20px; padding:20px; margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0; color:var(--primary-dark);">📋 Mis cambios</h3>
+            <button onclick="cerrarHistorial()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;">✕</button>
+        </div>
+        <div id="historial-content" style="max-height:70vh; overflow-y:auto;"></div>
+        <button onclick="cerrarHistorial()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;">Cerrar</button>
+    </div>
+</div>
+
 <!-- SONIDO NOTIFICACION -->
 <audio id="notif-sound" preload="auto" src="./notif.mp3"></audio>
 
@@ -2212,6 +2266,7 @@ const _modalCierres = {
     'vac-modal':        () => { if(typeof cerrarVacModal==='function') cerrarVacModal(); else document.getElementById('vac-modal').style.display='none'; },
     'grupos-panel':     () => document.getElementById('grupos-panel').style.display = 'none',
     'stats-modal':      () => { if(typeof cerrarEstadisticas==='function') cerrarEstadisticas(); else document.getElementById('stats-modal').style.display='none'; },
+    'historial-modal':  () => cerrarHistorial(),
     'ctx-menu':         () => document.getElementById('ctx-menu').style.display = 'none',
 };
 
@@ -2270,4 +2325,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html> 
+</html>
