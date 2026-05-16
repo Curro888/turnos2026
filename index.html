@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -122,6 +122,7 @@
         100% { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
     }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body ontouchmove="handleGlobalTouchMove(event)">
 <div id="splash-screen">
@@ -1983,30 +1984,18 @@
     function exportarCalendario() {
         const box = document.getElementById('m-cal-box');
         const nombre = document.getElementById('cal-target-name').innerText || 'calendario';
-        const btn = box.querySelector('button[onclick="exportarCalendario()"]');
-        if (btn) btn.style.display = 'none';
-        import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js').then(() => {
-            html2canvas(box, { scale: 2, useCORS: true, backgroundColor: document.body.classList.contains('dark-mode') ? '#2a2d45' : '#ffffff' }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `turnos_${nombre}_2026.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                if (btn) btn.style.display = '';
-            });
+        const btns = box.querySelectorAll('button');
+        btns.forEach(b => b.style.display = 'none');
+        const bg = document.body.classList.contains('dark-mode') ? '#2a2d45' : '#ffffff';
+        html2canvas(box, { scale: 2, useCORS: true, backgroundColor: bg }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `turnos_${nombre}_2026.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            btns.forEach(b => b.style.display = '');
         }).catch(() => {
-            // Fallback: cargar script dinámicamente
-            const s = document.createElement('script');
-            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-            s.onload = () => {
-                html2canvas(box, { scale: 2, useCORS: true, backgroundColor: document.body.classList.contains('dark-mode') ? '#2a2d45' : '#ffffff' }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `turnos_${nombre}_2026.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    if (btn) btn.style.display = '';
-                });
-            };
-            document.head.appendChild(s);
+            btns.forEach(b => b.style.display = '');
+            alert('Error al generar la imagen');
         });
     }
         const splash = document.getElementById('splash-screen');
@@ -2300,4 +2289,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html> 
+</html>
