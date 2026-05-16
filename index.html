@@ -1843,7 +1843,7 @@
             const msgs = snap.val() || {};
             const cont = document.getElementById('chat-messages');
             cont.innerHTML = '';
-            Object.values(msgs).sort((a,b) => a.ts - b.ts).forEach(m => {
+            Object.entries(msgs).sort((a,b) => a[1].ts - b[1].ts).forEach(([msgKey, m]) => {
                 const esMio = m.uid === miID;
                 const nombre = m.nom || (esMio ? (miNombreCompleto.split(' ')[0] || 'Yo') : 'Compañero');
                 const hora = new Date(m.ts).toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
@@ -1857,7 +1857,8 @@
                 // Ticks para mensajes míos
                 const leido = m.leido === true;
                 const ticks = esMio ? '<span style="font-size:0.7rem; margin-left:4px;">' + (leido ? '<span style="color:#a78bfa;">✓✓</span>' : '<span style="color:#94a3b8;">✓</span>') + '</span>' : '';
-                cont.innerHTML += '<div style="display:flex; flex-direction:column; align-items:' + (esMio ? 'flex-end' : 'flex-start') + '; margin-bottom:8px;">' +
+                const deleteable = esMio ? `oncontextmenu="borrarMensaje('${msgKey}');return false;" ontouchstart="iniciarLongPress('${msgKey}')" ontouchend="cancelarLongPress()" ontouchmove="cancelarLongPress()"` : '';
+                cont.innerHTML += '<div style="display:flex; flex-direction:column; align-items:' + (esMio ? 'flex-end' : 'flex-start') + '; margin-bottom:8px;" ' + deleteable + '>' +
                     '<span style="font-size:0.75rem; color:' + (esMio ? 'var(--primary)' : '#7c3aed') + '; margin-bottom:2px; font-weight:800;">' + nombre + '</span>' +
                     '<div style="max-width:75%; padding:10px 14px; border-radius:' + (esMio ? '16px 16px 4px 16px' : '16px 16px 16px 4px') + '; background:' + (esMio ? 'var(--primary)' : '#f1f5f9') + '; color:' + (esMio ? 'white' : '#1e293b') + ';">' + contenido + '</div>' +
                     '<span style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">' + hora + ticks + '</span>' +
@@ -1962,6 +1963,22 @@
                 if (Object.keys(updates).length > 0) db.ref().update(updates);
             });
         });
+    }
+
+    let _longPressTimer = null;
+
+    function iniciarLongPress(key) {
+        _longPressTimer = setTimeout(() => {
+            if (confirm('¿Borrar este mensaje?')) borrarMensaje(key);
+        }, 600);
+    }
+
+    function cancelarLongPress() {
+        if (_longPressTimer) { clearTimeout(_longPressTimer); _longPressTimer = null; }
+    }
+
+    function borrarMensaje(key) {
+        db.ref(`chats/${grupoActual}/${key}`).remove();
     }
 
     function actualizarBadgeChat() {
