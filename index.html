@@ -597,22 +597,17 @@
         if (listenerMiembros) { listenerMiembros.off(); listenerMiembros = null; }
         listenerMiembros = db.ref(`grupos/${codigo}/miembros`);
         let appIniciada = false;
-        // Timeout — si Firebase no responde en 6s, mostrar login limpio
-        const timeout = setTimeout(() => {
-            if (!appIniciada) {
-                try { localStorage.removeItem('sesion2026'); } catch(e) {}
-                const misGrupos = cargarMisGrupos();
-                if (misGrupos.length > 0) {
-                    mostrarPantallaGrupos();
-                } else {
-                    document.getElementById('login-view').style.display = 'flex';
-                    document.getElementById('main-content').style.display = 'none';
-                    mostrarStep('step-0');
-                }
-            }
-        }, 6000);
+
+        // Entrar inmediatamente con datos guardados si los tenemos
+        const grupoGuardado = cargarMisGrupos().find(g => g.codigo === codigo);
+        if (grupoGuardado && !appIniciada) {
+            appIniciada = true;
+            equipo = [];
+            iniciarApp();
+        }
+
+        // Firebase actualiza en segundo plano
         listenerMiembros.on('value', snap => {
-            clearTimeout(timeout);
             const m = snap.val() || {};
             equipo = Object.values(m);
             if (!appIniciada) {
