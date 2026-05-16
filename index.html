@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -367,10 +367,7 @@
     <div style="background:white; width:95%; max-width:1200px; margin:20px auto; border-radius:20px; padding:15px; position:relative;" id="m-cal-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 id="cal-target-name" style="margin:0; color:var(--primary-dark); font-size:1.2rem;"></h2>
-            <div style="display:flex; gap:8px;">
-                <button onclick="exportarCalendario()" style="background:var(--primary); color:white; border:none; padding:10px 16px; border-radius:10px; font-weight:900;">📥 Guardar</button>
-                <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900;">Cerrar</button>
-            </div>
+            <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900;">Cerrar</button>
         </div>
         <div class="legend-container">
             <div class="legend-item" onclick="mostrarInformeLeyenda('is-free','Días Libres Base')"><div class="legend-box is-free"></div><span>Libre</span></div>
@@ -1980,30 +1977,8 @@
         document.getElementById('btn-silencio').innerText = chatSilenciado ? '🔕' : '🔔';
     }
 
-    function exportarCalendario() {
-        const box = document.getElementById('m-cal-box');
-        const nombre = document.getElementById('cal-target-name').innerText || 'calendario';
-        const btns = box.querySelectorAll('button');
-        const bg = document.body.classList.contains('dark-mode') ? '#2a2d45' : '#ffffff';
-        const doExport = () => {
-            btns.forEach(b => b.style.display = 'none');
-            html2canvas(box, { scale: 2, useCORS: true, backgroundColor: bg }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `turnos_${nombre}_2026.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                btns.forEach(b => b.style.display = '');
-            }).catch(() => { btns.forEach(b => b.style.display = ''); alert('Error al generar la imagen'); });
-        };
-        if (typeof html2canvas !== 'undefined') {
-            doExport();
-        } else {
-            const s = document.createElement('script');
-            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-            s.onload = doExport;
-            document.head.appendChild(s);
-        }
-    }
+    // Splash screen
+    setTimeout(() => {
         const splash = document.getElementById('splash-screen');
         if (splash) splash.remove();
     }, 2000);
@@ -2295,4 +2270,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html>
+</html> 
