@@ -597,16 +597,6 @@
         if (listenerMiembros) { listenerMiembros.off(); listenerMiembros = null; }
         listenerMiembros = db.ref(`grupos/${codigo}/miembros`);
         let appIniciada = false;
-
-        // Entrar inmediatamente con datos guardados si los tenemos
-        const grupoGuardado = cargarMisGrupos().find(g => g.codigo === codigo);
-        if (grupoGuardado && !appIniciada) {
-            appIniciada = true;
-            equipo = [];
-            iniciarApp();
-        }
-
-        // Firebase actualiza en segundo plano
         listenerMiembros.on('value', snap => {
             const m = snap.val() || {};
             equipo = Object.values(m);
@@ -734,13 +724,10 @@
         const lista = cargarMisGrupos();
         const g = lista[parseInt(val)];
         if (!g) return;
-        db.ref(`grupos/${g.codigo}`).once('value').then(snap => {
-            if (!snap.val()) { alert('El grupo ya no existe'); eliminarGrupoGuardado(g.codigo); return; }
-            miID = g.id; miNombreCompleto = g.nombre; modoGrupo = true; grupoActual = g.codigo;
-            miTipoSesion = g.tipo; miGrupoSesion = g.grupoLibres;
-            guardarSesion();
-            cargarMiembrosGrupo(g.codigo);
-        });
+        miID = g.id; miNombreCompleto = g.nombre; modoGrupo = true; grupoActual = g.codigo;
+        miTipoSesion = g.tipo; miGrupoSesion = g.grupoLibres;
+        guardarSesion();
+        cargarMiembrosGrupo(g.codigo);
     }
 
     function restaurarSesion() {
