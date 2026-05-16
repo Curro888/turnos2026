@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1864,6 +1864,8 @@
         db.ref('chats/' + grupoActual).push(msg);
     }
 
+    let _ultimoNoLeidos = 0;
+
     function iniciarListenerChat() {
         if (!grupoActual) return;
         db.ref('chats/' + grupoActual).on('value', snap => {
@@ -1876,9 +1878,9 @@
             if (noLeidos > 0) {
                 badge.style.display = 'block';
                 badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
-                if (!chatSilenciado) {
+                // Solo sonar si llegó un mensaje nuevo (no al abrir la app)
+                if (!chatSilenciado && noLeidos > _ultimoNoLeidos && _ultimoNoLeidos !== -1) {
                     reproducirSonido();
-                    // Notificación si app en segundo plano
                     if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
                         const msgsArr = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto);
                         if (msgsArr.length > 0) {
@@ -1890,7 +1892,11 @@
             } else {
                 badge.style.display = 'none';
             }
+            // Primera vez que carga: guardar noLeidos sin sonar
+            if (_ultimoNoLeidos === -1) _ultimoNoLeidos = noLeidos;
+            else _ultimoNoLeidos = noLeidos;
         });
+        _ultimoNoLeidos = -1; // Marcar que es la primera carga
     }
 
     let chatSilenciado = false;
@@ -2193,4 +2199,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html>
+</html> 
