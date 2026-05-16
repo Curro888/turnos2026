@@ -760,23 +760,23 @@
             }
         } catch(e) {}
 
-        // Si hay grupos guardados, mostrar selector
+        // Entrar directo al último grupo activo sin preguntar
+        try {
+            const raw = localStorage.getItem('sesion2026');
+            if (raw) {
+                const s = JSON.parse(raw);
+                if (s && s.miID) { aplicarSesion(s); return true; }
+            }
+        } catch(e) {}
+
+        // Sin sesión — si hay grupos mostrar selector
         const misGrupos = cargarMisGrupos();
         if (misGrupos.length > 0) {
             mostrarPantallaGrupos();
             return true;
         }
 
-        // Sin grupos — intentar sesión individual
-        try {
-            const raw = localStorage.getItem('sesion2026');
-            if (raw) {
-                const s = JSON.parse(raw);
-                if (s && s.miID && !s.modoGrupo) { aplicarSesion(s); return true; }
-            }
-        } catch(e) {}
-
-        // Intentar IndexedDB (iOS Safari standalone)
+        // Intentar IndexedDB
         idbGet('sesion2026').then(raw => {
             if (raw) {
                 try {
