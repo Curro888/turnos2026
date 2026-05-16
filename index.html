@@ -45,7 +45,8 @@
         body.dark-mode .month-box { background: #2e3250; border-color: #404870; }
         body.dark-mode .member-row .member-sub { color: #a8b8cc; }
         body.dark-mode .user-card { background: #1e3a5f !important; border-color: #2e4a7f; }
-        body.dark-mode .id-black { color: var(--text); }
+        body.dark-mode #m-cal-box { background: #2a2d45 !important; }
+        body.dark-mode #cal-target-name { color: #c4b5fd; }
         body.dark-mode .member-sub { color: var(--text) !important; }
         body.dark-mode [style*="color:#64748b"] { color: var(--text) !important; }
         body.dark-mode [style*="color: #64748b"] { color: var(--text) !important; }
@@ -352,7 +353,7 @@
 </div>
 
 <div id="m-cal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.9); z-index:100; overflow-y:auto; padding-top:env(safe-area-inset-top);">
-    <div style="background:white; width:95%; max-width:1200px; margin:20px auto; border-radius:20px; padding:15px; position:relative;">
+    <div style="background:white; width:95%; max-width:1200px; margin:20px auto; border-radius:20px; padding:15px; position:relative;" id="m-cal-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 id="cal-target-name" style="margin:0; color:var(--primary-dark); font-size:1.2rem;"></h2>
             <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900;">Cerrar</button>
