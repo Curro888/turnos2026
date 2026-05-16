@@ -2204,12 +2204,51 @@
                 '</div>';
         });
 
+        // ===== CONTADOR DE HORAS =====
+        const hoy = new Date();
+        const mHoy2 = hoy.getMonth();
+        const dHoy2 = hoy.getDate();
+        const horasPorDia = tSesion === '80/20' ? 7.5 : 7.5; // ajusta si es diferente
+        const diasAnio = 365;
+
+        // Días trabajados hasta hoy en el año
+        let diasTrabajadosAnio = 0;
+        let diasTrabajadosMes = 0;
+        let diasRestantesMes = 0;
+        for (let m = 0; m <= 11; m++) {
+            const diasDelMes = new Date(2026, m+1, 0).getDate();
+            const libresDelMes = diasLibresPorMes[m] || [];
+            const limDia = (m < mHoy2) ? diasDelMes : (m === mHoy2 ? dHoy2 : 0);
+            for (let d = 1; d <= limDia; d++) {
+                if (!libresDelMes.includes(d)) diasTrabajadosAnio++;
+                if (m === mHoy2 && d <= dHoy2 && !libresDelMes.includes(d)) diasTrabajadosMes++;
+            }
+            if (m === mHoy2) {
+                for (let d = dHoy2+1; d <= diasDelMes; d++) {
+                    if (!libresDelMes.includes(d)) diasRestantesMes++;
+                }
+            }
+        }
+        const horasAnio = diasTrabajadosAnio * horasPorDia;
+        const horasMes = diasTrabajadosMes * horasPorDia;
+        const horasRestantesMes = diasRestantesMes * horasPorDia;
+        const meses2 = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+        const htmlHoras =
+            '<div style="font-weight:700; color:var(--primary-dark); margin:16px 0 8px; font-size:0.85rem;">⏱️ Horas trabajadas:</div>' +
+            '<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px;">' +
+                '<div style="background:#f0f9ff; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.6rem; font-weight:900; color:#0369a1;">' + horasMes.toFixed(1) + 'h</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">' + meses2[mHoy2].toUpperCase() + ' (hasta hoy)</div></div>' +
+                '<div style="background:#f0fdf4; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.6rem; font-weight:900; color:#16a34a;">' + horasRestantesMes.toFixed(1) + 'h</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">QUEDAN EN EL MES</div></div>' +
+            '</div>' +
+            '<div style="background:#faf5ff; border-radius:12px; padding:12px; text-align:center; margin-bottom:8px;"><div style="font-size:1.6rem; font-weight:900; color:var(--primary);">' + horasAnio.toFixed(1) + 'h</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">TOTAL AÑO HASTA HOY</div></div>';
+
         document.getElementById('stats-content').innerHTML =
             '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;">' +
                 '<div style="background:#f5f3ff; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:var(--primary);">' + totalLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">TOTAL LIBRES</div></div>' +
                 '<div style="background:#f0fdf4; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:#16a34a;">' + finesLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">FIN DE SEMANA</div></div>' +
                 '<div style="background:#fef2f2; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:#dc2626;">' + festivosLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">FESTIVOS</div></div>' +
             '</div>' +
+            htmlHoras +
             '<div style="font-weight:700; color:var(--primary-dark); margin-bottom:8px; font-size:0.85rem;">Detalle por mes:</div>' +
             '<div style="display:flex; justify-content:flex-end; gap:16px; margin-bottom:6px; font-size:0.7rem; color:#94a3b8; font-weight:600;"><span>LIBRES</span><span style="color:#16a34a">FDS</span><span style="color:#dc2626">FEST</span></div>' +
             htmlMeses;
