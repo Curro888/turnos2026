@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1864,39 +1864,28 @@
         db.ref('chats/' + grupoActual).push(msg);
     }
 
-    let _ultimoNoLeidos = 0;
-
     function iniciarListenerChat() {
         if (!grupoActual) return;
-        db.ref('chats/' + grupoActual).on('value', snap => {
+        let primeraVez = true;
+        db.ref('chats/' + grupoActual).limitToLast(50).on('value', snap => {
             const msgs = snap.val();
-            if (!msgs) return;
-            if (chatAbierto) return;
+            if (!msgs) { primeraVez = false; return; }
+            if (chatAbierto) { primeraVez = false; return; }
             try { ultimoMensajeVisto = localStorage.getItem('ultimoMsgVisto') || '0'; } catch(e) {}
             const noLeidos = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto).length;
             const badge = document.getElementById('chat-badge');
             if (noLeidos > 0) {
                 badge.style.display = 'block';
                 badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
-                // Solo sonar si llegó un mensaje nuevo (no al abrir la app)
-                if (!chatSilenciado && noLeidos > _ultimoNoLeidos && _ultimoNoLeidos !== -1) {
+                // Sonar solo cuando llega mensaje nuevo, no al abrir
+                if (!chatSilenciado && !primeraVez) {
                     reproducirSonido();
-                    if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
-                        const msgsArr = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto);
-                        if (msgsArr.length > 0) {
-                            const ultimo = msgsArr[msgsArr.length - 1];
-                            try { new Notification('💬 ' + (ultimo.nom || 'Compañero'), { body: ultimo.imagen ? '📷 Imagen' : ultimo.texto, icon: 'https://cdn-icons-png.flaticon.com/512/1827/1827347.png' }); } catch(e) {}
-                        }
-                    }
                 }
             } else {
                 badge.style.display = 'none';
             }
-            // Primera vez que carga: guardar noLeidos sin sonar
-            if (_ultimoNoLeidos === -1) _ultimoNoLeidos = noLeidos;
-            else _ultimoNoLeidos = noLeidos;
+            primeraVez = false;
         });
-        _ultimoNoLeidos = -1; // Marcar que es la primera carga
     }
 
     let chatSilenciado = false;
@@ -2199,4 +2188,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html> 
+</html>
