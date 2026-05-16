@@ -1931,40 +1931,21 @@
         });
     }
 
-    let _audioCtx = null;
-    function getAudioCtx() {
-        if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        return _audioCtx;
+    // Desbloquear audio con primer toque (requerido por móviles)
+    function _unlockAudio() {
+        const audio = document.getElementById('notif-sound');
+        if (audio) {
+            audio.play().then(() => { audio.pause(); audio.currentTime = 0; }).catch(() => {});
+        }
+        document.removeEventListener('touchend', _unlockAudio);
     }
-
-    // Reactivar AudioContext con cada toque del usuario
-    document.addEventListener('touchend', () => {
-        const ctx = getAudioCtx();
-        if (ctx.state === 'suspended') ctx.resume();
-    }, { passive: true });
+    document.addEventListener('touchend', _unlockAudio, { passive: true });
 
     function reproducirSonido() {
         try {
-            const ctx = getAudioCtx();
-            const play = () => {
-                [0, 0.2].forEach(delay => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain); gain.connect(ctx.destination);
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1400, ctx.currentTime + delay);
-                    osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + delay + 0.15);
-                    gain.gain.setValueAtTime(1.0, ctx.currentTime + delay);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.15);
-                    osc.start(ctx.currentTime + delay);
-                    osc.stop(ctx.currentTime + delay + 0.15);
-                });
-            };
-            if (ctx.state === 'suspended') {
-                ctx.resume().then(play);
-            } else {
-                play();
-            }
+            const audio = document.getElementById('notif-sound');
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
         } catch(e) {}
     }
 
@@ -2136,9 +2117,7 @@
 </div>
 
 <!-- SONIDO NOTIFICACION -->
-<audio id="notif-sound" preload="auto">
-    <source src="https://www.soundjay.com/buttons/sounds/button-09.mp3" type="audio/mpeg">
-</audio>
+<audio id="notif-sound" preload="auto" src="https://cdn.freesound.org/previews/536/536108_3797507-lq.mp3"></audio>
 
 <script>
 // ===== BOTÓN ATRÁS MÓVIL (PWA Android) =====
