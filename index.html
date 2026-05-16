@@ -876,7 +876,7 @@
         }
         iniciarListeners();
         renderList();
-        if (modoGrupo) iniciarPresencia();
+        if (modoGrupo) { iniciarPresencia(); iniciarListenerLeidos(); }
     }
 
     function toggleMenu() {
@@ -1937,15 +1937,26 @@
         if (archivoBase64Pendiente) msg.imagen = archivoBase64Pendiente;
         input.value = '';
         cancelarArchivo();
-        const newRef = db.ref('chats/' + grupoActual).push(msg);
-        // Escuchar cuando alguien lo lee
+        db.ref('chats/' + grupoActual).push(msg);
+    }
+
+    // Listener global — cuando alguien abre el chat marca los mensajes no leídos como leídos
+    function iniciarListenerLeidos() {
+        if (!grupoActual) return;
         db.ref(`chatLeidos/${grupoActual}`).on('value', snap => {
             const leidos = snap.val() || {};
-            const hayOtro = Object.entries(leidos).some(([uid, ts]) => uid !== miID && ts >= msg.ts);
-            if (hayOtro) {
-                newRef.update({ leido: true });
-                db.ref(`chatLeidos/${grupoActual}`).off();
-            }
+            const hayOtro = Object.entries(leidos).some(([uid, ts]) => uid !== miID);
+            if (!hayOtro) return;
+            const tsOtro = Math.max(...Object.entries(leidos).filter(([uid]) => uid !== miID).map(([,ts]) => ts));
+            // Marcar como leídos mis mensajes anteriores a tsOtro
+            db.ref('chats/' + grupoActual).once('value').then(snap => {
+                const msgs = snap.val() || {};
+                Object.entries(msgs).forEach(([key, m]) => {
+                    if (m.uid === miID && !m.leido && m.ts <= tsOtro) {
+                        db.ref(`chats/${grupoActual}/${key}/leido`).set(true);
+                    }
+                });
+            });
         });
     }
 
