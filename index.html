@@ -1945,17 +1945,21 @@
         if (!grupoActual) return;
         db.ref(`chatLeidos/${grupoActual}`).on('value', snap => {
             const leidos = snap.val() || {};
-            const hayOtro = Object.entries(leidos).some(([uid, ts]) => uid !== miID);
-            if (!hayOtro) return;
-            const tsOtro = Math.max(...Object.entries(leidos).filter(([uid]) => uid !== miID).map(([,ts]) => ts));
-            // Marcar como leídos mis mensajes anteriores a tsOtro
-            db.ref('chats/' + grupoActual).once('value').then(snap => {
-                const msgs = snap.val() || {};
-                Object.entries(msgs).forEach(([key, m]) => {
-                    if (m.uid === miID && !m.leido && m.ts <= tsOtro) {
-                        db.ref(`chats/${grupoActual}/${key}/leido`).set(true);
+            const otrosTs = Object.entries(leidos)
+                .filter(([uid]) => uid !== miID)
+                .map(([,ts]) => ts);
+            if (otrosTs.length === 0) return;
+            const tsMaxOtro = Math.max(...otrosTs);
+            // Marcar mis mensajes como leídos si el otro abrió el chat después de que los envié
+            db.ref('chats/' + grupoActual).orderByChild('uid').equalTo(miID).once('value').then(snap => {
+                const updates = {};
+                snap.forEach(child => {
+                    const m = child.val();
+                    if (!m.leido && m.ts <= tsMaxOtro) {
+                        updates[`chats/${grupoActual}/${child.key}/leido`] = true;
                     }
                 });
+                if (Object.keys(updates).length > 0) db.ref().update(updates);
             });
         });
     }
