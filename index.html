@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -367,7 +367,10 @@
     <div style="background:white; width:95%; max-width:1200px; margin:20px auto; border-radius:20px; padding:15px; position:relative;" id="m-cal-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 id="cal-target-name" style="margin:0; color:var(--primary-dark); font-size:1.2rem;"></h2>
-            <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900;">Cerrar</button>
+            <div style="display:flex; gap:8px;">
+                <button onclick="exportarCalendario()" style="background:var(--primary); color:white; border:none; padding:10px 16px; border-radius:10px; font-weight:900;">📥 Guardar</button>
+                <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900;">Cerrar</button>
+            </div>
         </div>
         <div class="legend-container">
             <div class="legend-item" onclick="mostrarInformeLeyenda('is-free','Días Libres Base')"><div class="legend-box is-free"></div><span>Libre</span></div>
@@ -1898,12 +1901,19 @@
 
     function verImagenCompleta(src) {
         const overlay = document.createElement('div');
-        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;';
-        overlay.onclick = () => document.body.removeChild(overlay);
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+        overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
         const img = document.createElement('img');
         img.src = src;
-        img.style.cssText = 'max-width:95vw;max-height:90vh;border-radius:10px;';
+        img.style.cssText = 'max-width:95vw;max-height:80vh;border-radius:10px;';
+        const btn = document.createElement('a');
+        btn.href = src;
+        btn.download = 'imagen_chat.jpg';
+        btn.textContent = '📥 Descargar';
+        btn.style.cssText = 'margin-top:16px;background:var(--primary);color:white;padding:10px 24px;border-radius:10px;font-weight:800;text-decoration:none;font-size:0.95rem;';
+        btn.onclick = e => e.stopPropagation();
         overlay.appendChild(img);
+        overlay.appendChild(btn);
         document.body.appendChild(overlay);
     }
 
@@ -1970,8 +1980,35 @@
         document.getElementById('btn-silencio').innerText = chatSilenciado ? '🔕' : '🔔';
     }
 
-    // Splash screen
-    setTimeout(() => {
+    function exportarCalendario() {
+        const box = document.getElementById('m-cal-box');
+        const nombre = document.getElementById('cal-target-name').innerText || 'calendario';
+        const btn = box.querySelector('button[onclick="exportarCalendario()"]');
+        if (btn) btn.style.display = 'none';
+        import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js').then(() => {
+            html2canvas(box, { scale: 2, useCORS: true, backgroundColor: document.body.classList.contains('dark-mode') ? '#2a2d45' : '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `turnos_${nombre}_2026.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                if (btn) btn.style.display = '';
+            });
+        }).catch(() => {
+            // Fallback: cargar script dinámicamente
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            s.onload = () => {
+                html2canvas(box, { scale: 2, useCORS: true, backgroundColor: document.body.classList.contains('dark-mode') ? '#2a2d45' : '#ffffff' }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `turnos_${nombre}_2026.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    if (btn) btn.style.display = '';
+                });
+            };
+            document.head.appendChild(s);
+        });
+    }
         const splash = document.getElementById('splash-screen');
         if (splash) splash.remove();
     }, 2000);
@@ -2263,4 +2300,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html>
+</html> 
