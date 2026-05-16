@@ -874,6 +874,7 @@
         }
         iniciarListeners();
         renderList();
+        if (modoGrupo) iniciarPresencia();
     }
 
     function toggleMenu() {
@@ -1189,6 +1190,31 @@
         return { esLibreReal, data };
     }
 
+    // ===== PRESENCIA =====
+    let presencias = {};
+
+    function iniciarPresencia() {
+        if (!grupoActual || !miID) return;
+        const ref = db.ref(`presencia/${grupoActual}/${miID}`);
+        // Marcar como conectado
+        ref.set({ ts: Date.now(), n: miNombreCompleto });
+        // Actualizar cada 60 segundos
+        setInterval(() => ref.set({ ts: Date.now(), n: miNombreCompleto }), 60000);
+        // Borrar al cerrar
+        ref.onDisconnect().remove();
+        // Escuchar presencias del grupo
+        db.ref(`presencia/${grupoActual}`).on('value', snap => {
+            presencias = snap.val() || {};
+            renderList();
+        });
+    }
+
+    function estaConectado(uid) {
+        const p = presencias[uid];
+        if (!p) return false;
+        return (Date.now() - p.ts) < 120000; // 2 minutos
+    }
+
     function renderList() {
         if (!modoGrupo) { renderListIndividual(); return; }
         const cont = document.getElementById('list-container'); cont.innerHTML = "";
@@ -1196,9 +1222,11 @@
             const { esLibreReal } = checkEstado(e.id, mHoy, dHoy);
             const esNoche = (e.t === '73/27' || e.t === '80/20');
             const tagLabel = `${esNoche ? '🌙N · ' : ''}G${e.g}`;
+            const conectado = estaConectado(e.id);
+            const puntito = conectado ? `<span style="display:inline-block; width:9px; height:9px; background:#22c55e; border-radius:50%; margin-left:6px; box-shadow:0 0 4px #22c55e;" title="En línea"></span>` : '';
             cont.innerHTML += `
             <div class="user-card ${esLibreReal ? 'card-libra' : 'card-trabaja'}">
-                <div><span class="name-big">${e.n}</span><span class="id-black">${e.id}</span></div>
+                <div style="display:flex; align-items:center;"><span class="name-big">${e.n}</span><span class="id-black">${e.id}</span>${puntito}</div>
                 <div style="display:flex; align-items:center;">
                     <div class="info-tag">${tagLabel}</div>
                     <button class="btn-main" onclick="abrirCal('${e.id}')">Calendario</button>
