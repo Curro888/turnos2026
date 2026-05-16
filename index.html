@@ -2037,7 +2037,10 @@
             cont.innerHTML = lista.map(([key, h]) => {
                 const fecha = new Date(h.ts).toLocaleDateString('es', {day:'2-digit', month:'2-digit', year:'numeric'});
                 return `<div style="border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; background:var(--surface2);">
-                    <div style="font-weight:800; color:var(--primary-dark); margin-bottom:4px;">🔄 Cambio con ${h.con}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <div style="font-weight:800; color:var(--primary-dark);">🔄 Cambio con ${h.con}</div>
+                        <button onclick="borrarCambioHistorial('${key}')" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:700;">🗑️</button>
+                    </div>
                     <div style="font-size:0.82rem; color:var(--text2); margin-bottom:8px;">
                         Trabajas el <b>${h.diaTrabaja}</b> · Libras el <b>${h.diaLibra}</b><br>
                         <span style="font-size:0.75rem;">Registrado: ${fecha}</span>
@@ -2068,6 +2071,11 @@
             document.getElementById('form-nuevo-cambio').style.display = 'none';
             abrirHistorial();
         });
+    }
+
+    function borrarCambioHistorial(key) {
+        if (!confirm('¿Borrar este cambio del historial?')) return;
+        db.ref(`historial/${miID}/${key}`).remove().then(() => abrirHistorial());
     }
 
     function guardarNota(key) {
