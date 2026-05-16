@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1930,20 +1930,9 @@
 
     function reproducirSonido() {
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const beep = (freq, start, dur) => {
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.connect(g); g.connect(ctx.destination);
-                o.type = 'sine';
-                o.frequency.value = freq;
-                g.gain.setValueAtTime(0.8, ctx.currentTime + start);
-                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
-                o.start(ctx.currentTime + start);
-                o.stop(ctx.currentTime + start + dur);
-            };
-            beep(1400, 0, 0.12);
-            beep(1100, 0.15, 0.12);
+            const audio = document.getElementById('notif-sound');
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
         } catch(e) {}
     }
 
@@ -2115,7 +2104,7 @@
 </div>
 
 <!-- SONIDO NOTIFICACION -->
-<audio id="notif-sound" preload="auto" src="https://cdn.freesound.org/previews/536/536108_3797507-lq.mp3"></audio>
+<audio id="notif-sound" preload="auto" src="./notif.mp3"></audio>
 
 <script>
 // ===== BOTÓN ATRÁS MÓVIL (PWA Android) =====
