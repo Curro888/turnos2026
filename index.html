@@ -1866,28 +1866,22 @@
 
     function iniciarListenerChat() {
         if (!grupoActual) return;
-        // Badge: escucha todos los mensajes para contar no leídos
+        let primeraVez = true;
         db.ref('chats/' + grupoActual).on('value', snap => {
-            if (chatAbierto) return;
             const msgs = snap.val();
-            if (!msgs) { document.getElementById('chat-badge').style.display = 'none'; return; }
+            const badge = document.getElementById('chat-badge');
+            if (!msgs) { badge.style.display = 'none'; primeraVez = false; return; }
+            if (chatAbierto) { primeraVez = false; return; }
             try { ultimoMensajeVisto = localStorage.getItem('ultimoMsgVisto') || '0'; } catch(e) {}
             const noLeidos = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto).length;
-            const badge = document.getElementById('chat-badge');
             if (noLeidos > 0) {
                 badge.style.display = 'block';
                 badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
+                if (!chatSilenciado && !primeraVez) reproducirSonido();
             } else {
                 badge.style.display = 'none';
             }
-        });
-        // Sonido: solo en mensajes nuevos con child_added
-        let iniciado = false;
-        db.ref('chats/' + grupoActual).limitToLast(1).on('child_added', snap => {
-            if (!iniciado) { iniciado = true; return; } // ignorar el primero al cargar
-            const m = snap.val();
-            if (!m || m.uid === miID || chatAbierto || chatSilenciado) return;
-            reproducirSonido();
+            primeraVez = false;
         });
     }
 
