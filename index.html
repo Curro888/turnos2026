@@ -1881,26 +1881,22 @@
         });
     }
 
+    let _ultimoTsChat = '0';
+
     function iniciarListenerChat() {
         if (!grupoActual) return;
-        // Actualizar badge al abrir
         actualizarBadgeChat();
-        let primeraVez = true;
-        db.ref('chats/' + grupoActual).on('value', snap => {
-            const msgs = snap.val();
-            const badge = document.getElementById('chat-badge');
-            if (!msgs) { badge.style.display = 'none'; primeraVez = false; return; }
-            if (chatAbierto) { primeraVez = false; return; }
-            try { ultimoMensajeVisto = localStorage.getItem('ultimoMsgVisto') || '0'; } catch(e) {}
-            const noLeidos = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto).length;
-            if (noLeidos > 0) {
-                badge.style.display = 'block';
-                badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
-                if (!chatSilenciado && !primeraVez) reproducirSonido();
-            } else {
-                badge.style.display = 'none';
+        // Listener para mensajes nuevos
+        db.ref('chats/' + grupoActual).on('child_added', snap => {
+            const m = snap.val();
+            if (!m) return;
+            // Actualizar badge siempre
+            actualizarBadgeChat();
+            // Sonido solo si es mensaje nuevo de otro usuario
+            if (m.uid !== miID && m.ts.toString() > _ultimoTsChat && _ultimoTsChat !== '0') {
+                if (!chatSilenciado && !chatAbierto) reproducirSonido();
             }
-            primeraVez = false;
+            if (m.ts.toString() > _ultimoTsChat) _ultimoTsChat = m.ts.toString();
         });
     }
 
