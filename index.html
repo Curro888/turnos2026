@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -248,7 +248,7 @@
                     <div id="dmenu-stats" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirEstadisticas();">📊 Estadísticas</div>
                     <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
                     <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
-                    <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:#1e1b4b; border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
+                    <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
                 </div>
             </div>
@@ -2049,6 +2049,27 @@
         });
     }
 
+    function mostrarFormNuevoCambio() {
+        document.getElementById('form-nuevo-cambio').style.display = 'block';
+        document.getElementById('nc-con').value = '';
+        document.getElementById('nc-trabaja').value = '';
+        document.getElementById('nc-libra').value = '';
+        document.getElementById('nc-nota').value = '';
+    }
+
+    function guardarNuevoCambio() {
+        const con = document.getElementById('nc-con').value.trim();
+        const diaTrabaja = document.getElementById('nc-trabaja').value.trim();
+        const diaLibra = document.getElementById('nc-libra').value.trim();
+        const nota = document.getElementById('nc-nota').value.trim();
+        if (!con || !diaTrabaja || !diaLibra) { alert('Rellena el compañero y los dos días'); return; }
+        const ts = Date.now();
+        db.ref(`historial/${miID}/${ts}`).set({ con, diaTrabaja, diaLibra, ts, nota, manual: true }).then(() => {
+            document.getElementById('form-nuevo-cambio').style.display = 'none';
+            abrirHistorial();
+        });
+    }
+
     function guardarNota(key) {
         const nota = document.getElementById(`nota-${key}`)?.value || '';
         db.ref(`historial/${miID}/${key}/nota`).set(nota).then(() => {
@@ -2240,7 +2261,23 @@
     <div style="background:var(--surface); width:100%; max-width:480px; border-radius:20px; padding:20px; margin-top:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <h3 style="margin:0; color:var(--primary-dark);">📋 Mis cambios</h3>
-            <button onclick="cerrarHistorial()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;">✕</button>
+            <div style="display:flex; gap:8px;">
+                <button onclick="mostrarFormNuevoCambio()" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:6px 12px; font-weight:700;">➕ Añadir</button>
+                <button onclick="cerrarHistorial()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;">✕</button>
+            </div>
+        </div>
+        <div id="form-nuevo-cambio" style="display:none; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px;">
+            <div style="font-weight:800; color:var(--primary-dark); margin-bottom:10px;">Nuevo cambio manual</div>
+            <input id="nc-con" type="text" placeholder="Nombre del compañero" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <input id="nc-trabaja" type="text" placeholder="Día que trabajas (ej: 15/3)" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text);">
+                <input id="nc-libra" type="text" placeholder="Día que libras (ej: 20/3)" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text);">
+            </div>
+            <textarea id="nc-nota" placeholder="Nota (opcional)" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box;" rows="2"></textarea>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+                <button onclick="guardarNuevoCambio()" style="flex:1; background:var(--primary); color:white; border:none; border-radius:8px; padding:8px; font-weight:700;">💾 Guardar</button>
+                <button onclick="document.getElementById('form-nuevo-cambio').style.display='none'" style="flex:1; background:#f5f3ff; color:var(--primary); border:none; border-radius:8px; padding:8px; font-weight:700;">Cancelar</button>
+            </div>
         </div>
         <div id="historial-content" style="max-height:70vh; overflow-y:auto;"></div>
         <button onclick="cerrarHistorial()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;">Cerrar</button>
@@ -2325,4 +2362,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html>
+</html> 
