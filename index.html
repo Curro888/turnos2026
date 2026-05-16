@@ -1983,6 +1983,7 @@
     document.addEventListener('click', () => { _audioDesbloqueado = true; }, { passive: true, once: true });
 
     function reproducirSonido() {
+        try { if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]); } catch(e) {}
         try {
             const audio = document.getElementById('notif-sound');
             audio.currentTime = 0;
