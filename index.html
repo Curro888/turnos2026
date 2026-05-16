@@ -210,6 +210,7 @@
                     <div id="dmenu-companeros" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirCompaneros();">👥 Compañeros</div>
                     <div id="dmenu-chat" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirChat();">💬 Chat</div>
                     <div id="dmenu-stats" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirEstadisticas();">📊 Estadísticas</div>
+                    <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
                 </div>
             </div>
@@ -1890,6 +1891,18 @@
         chatSilenciado = !chatSilenciado;
         try { localStorage.setItem('chatSilenciado', chatSilenciado); } catch(e) {}
         document.getElementById('btn-silencio').innerText = chatSilenciado ? '🔕' : '🔔';
+    }
+
+    function activarNotificaciones() {
+        if (!('Notification' in window)) { alert('Tu navegador no soporta notificaciones'); return; }
+        if (Notification.permission === 'granted') { alert('✅ Notificaciones ya activadas'); return; }
+        Notification.requestPermission().then(p => {
+            if (p === 'granted') {
+                new Notification('✅ Notificaciones activadas', { body: 'Recibirás avisos de chat y cambios de turno' });
+            } else {
+                alert('Permiso denegado. Actívalo desde los ajustes del navegador.');
+            }
+        });
     }
 
     function reproducirSonido() {
