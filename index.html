@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -45,6 +45,28 @@
         body.dark-mode .month-box { background: #2e3250; border-color: #404870; }
         body.dark-mode .id-black { color: var(--text) !important; }
         body.dark-mode .member-row .member-sub { color: #a8b8cc; }
+        body.dark-mode .member-row { background: #1e2a3a !important; border-color: #2e4a7f; }
+        body.dark-mode .member-row .member-name { color: var(--text) !important; }
+        /* Stats modal dark mode: card backgrounds and small labels */
+        body.dark-mode #stats-modal [style*="background:#f5f3ff"],
+        body.dark-mode #stats-modal [style*="background:#f0fdf4"],
+        body.dark-mode #stats-modal [style*="background:#f0f9ff"],
+        body.dark-mode #stats-modal [style*="background:#faf5ff"],
+        body.dark-mode #stats-modal [style*="background:#fef2f2"],
+        body.dark-mode #stats-modal [style*="background:#fefce8"],
+        body.dark-mode #stats-modal [style*="background: #f5f3ff"],
+        body.dark-mode #stats-modal [style*="background: #f0fdf4"],
+        body.dark-mode #stats-modal [style*="background: #f0f9ff"],
+        body.dark-mode #stats-modal [style*="background: #faf5ff"],
+        body.dark-mode #stats-modal [style*="background: #fef2f2"] { background: #1e2a3a !important; }
+        body.dark-mode #stats-modal [style*="color:#64748b"],
+        body.dark-mode #stats-modal [style*="color: #64748b"] { color: #a8b8cc !important; }
+        /* Edit group modal inline edit panel */
+        body.dark-mode #edit-group-modal [style*="background:#f5f3ff"] { background: #1e2a3a !important; }
+        body.dark-mode #edit-group-modal [style*="color:#94a3b8"],
+        body.dark-mode #edit-group-modal [style*="color: #94a3b8"] { color: #7a8fa8 !important; }
+        body.dark-mode #edit-group-modal input,
+        body.dark-mode #edit-group-modal select { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; }
         body.dark-mode .user-card { background: #1e3a5f !important; border-color: #2e4a7f; }
         body.dark-mode #m-cal-box { background: #2a2d45 !important; }
         body.dark-mode #cal-target-name { color: #c4b5fd; }
@@ -2437,4 +2459,4 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 </body>
-</html>
+</html> 
