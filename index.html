@@ -2068,6 +2068,43 @@
         if (document.visibilityState === 'visible') actualizarBadgeChat();
     });
 
+    // ===== EMOJI BAR =====
+    const _emojiCats = [
+        ['😄','😂','😊','😍','😢','😡','😱','🤣','😎','🥳'],
+        ['💼','📅','🔄','✅','❌','⏰','📋','🔔','💡','📝'],
+        ['🍺','🎉','🏖️','😴','⚽','🎮','🍕','🎶','🏃','🌴'],
+        ['😤','🤦','👀','🤷','💪','🙏','👍','❤️','🔥','👋']
+    ];
+    let _emojiCatActiva = 0;
+
+    function toggleEmojiBar() {
+        const bar = document.getElementById('emoji-bar');
+        const visible = bar.style.display !== 'none';
+        bar.style.display = visible ? 'none' : 'block';
+        if (!visible) mostrarCatEmoji(0);
+    }
+
+    function mostrarCatEmoji(idx) {
+        _emojiCatActiva = idx;
+        const btns = document.querySelectorAll('.ecat-btn');
+        btns.forEach((b, i) => {
+            b.style.background = i === idx ? 'var(--primary)' : 'white';
+            b.style.color = i === idx ? 'white' : 'var(--primary)';
+            b.style.borderColor = i === idx ? 'var(--primary)' : '#ddd6fe';
+        });
+        const list = document.getElementById('emoji-list');
+        list.innerHTML = _emojiCats[idx].map(e =>
+            `<button onclick="insertarEmoji('${e}')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; padding:2px; border-radius:6px;">${e}</button>`
+        ).join('');
+    }
+
+    function insertarEmoji(emoji) {
+        const input = document.getElementById('chat-input');
+        const pos = input.selectionStart || input.value.length;
+        input.value = input.value.slice(0, pos) + emoji + input.value.slice(pos);
+        input.focus();
+    }
+
     function toggleSilencio() {
         chatSilenciado = !chatSilenciado;
         try { localStorage.setItem('chatSilenciado', chatSilenciado); } catch(e) {}
@@ -2371,9 +2408,19 @@
                 <button onclick="cancelarArchivo()" style="position:absolute; top:-8px; right:-8px; background:var(--danger); color:white; border:none; border-radius:50%; width:22px; height:22px; font-size:0.7rem; font-weight:900; cursor:pointer; line-height:22px; padding:0;">✕</button>
             </div>
         </div>
+        <div id="emoji-bar" style="display:none; padding:6px 12px; border-top:1px solid #e2e8f0; background:var(--surface2);">
+            <div id="emoji-cat-btns" style="display:flex; gap:6px; margin-bottom:6px;">
+                <button onclick="mostrarCatEmoji(0)" class="ecat-btn" style="flex:1; padding:4px; border-radius:8px; border:2px solid var(--primary); background:var(--primary); color:white; font-size:0.85rem; font-weight:700;">😄</button>
+                <button onclick="mostrarCatEmoji(1)" class="ecat-btn" style="flex:1; padding:4px; border-radius:8px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-size:0.85rem; font-weight:700;">💼</button>
+                <button onclick="mostrarCatEmoji(2)" class="ecat-btn" style="flex:1; padding:4px; border-radius:8px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-size:0.85rem; font-weight:700;">🌴</button>
+                <button onclick="mostrarCatEmoji(3)" class="ecat-btn" style="flex:1; padding:4px; border-radius:8px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-size:0.85rem; font-weight:700;">😤</button>
+            </div>
+            <div id="emoji-list" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+        </div>
         <div style="padding:12px 16px; border-top:1px solid #e2e8f0; display:flex; gap:8px; align-items:center;">
             <input id="chat-file-input" type="file" accept="image/*" style="display:none;" onchange="previsualizarArchivo(event)">
             <button onclick="document.getElementById('chat-file-input').click()" style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:50%; width:40px; height:40px; font-size:1.1rem; cursor:pointer; flex-shrink:0;">📎</button>
+            <button onclick="toggleEmojiBar()" id="btn-emoji" style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:50%; width:40px; height:40px; font-size:1.1rem; cursor:pointer; flex-shrink:0;">😊</button>
             <input id="chat-input" type="text" placeholder="Escribe un mensaje..." style="flex:1; padding:10px 14px; border:1px solid #ddd6fe; border-radius:20px; font-size:0.9rem; outline:none;"
                 onkeydown="if(event.key==='Enter') enviarMensaje()">
             <button onclick="enviarMensaje()" style="background:var(--primary); color:white; border:none; border-radius:50%; width:40px; height:40px; font-size:1.1rem; cursor:pointer; flex-shrink:0;">➤</button>
