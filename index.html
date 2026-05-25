@@ -2045,11 +2045,12 @@
     function iniciarListenerChat() {
         if (!grupoActual) return;
         if (chatListenerNotif) { chatListenerNotif.off(); chatListenerNotif = null; }
-        // Escuchar solo mensajes nuevos a partir de ahora
-        chatListenerNotif = db.ref('chats/' + grupoActual).orderByChild('ts').startAt(_ultimoTsChat);
+        const tsInicio = _ultimoTsChat;
+        chatListenerNotif = db.ref('chats/' + grupoActual);
         chatListenerNotif.on('child_added', snap => {
             const m = snap.val();
             if (!m || m.uid === miID) return;
+            if (m.ts <= tsInicio) return; // ignorar mensajes anteriores
             _mensajesNoLeidos++;
             _mostrarBadge(_mensajesNoLeidos);
             if (!chatSilenciado && !chatAbierto) reproducirSonido();
