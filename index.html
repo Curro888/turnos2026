@@ -1721,6 +1721,10 @@
         document.getElementById('side-panel').style.display = 'none';
         panelDiaAbierto = null;
         idCalendarioAbierto = null;
+        // Si grupos-panel sigue abierto, reponer su guardia de historial
+        if (document.getElementById('grupos-panel').style.display !== 'none') {
+            _pushGuard();
+        }
     }
 
     function cerrarTodo() {
