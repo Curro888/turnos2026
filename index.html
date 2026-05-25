@@ -2442,9 +2442,11 @@ window.addEventListener('popstate', function(e) {
     _cerrarModalVisible();
 });
 
-// Llamar esto al abrir cualquier modal NO es necesario con este sistema,
-// pero se mantiene por compatibilidad con código existente
-function _onModalOpen() { /* no-op */ }
+// Cada modal abierto empuja su propia entrada en la pila,
+// así cada atrás cierra exactamente el modal que le corresponde
+function _onModalOpen() {
+    _pushGuard();
+}
 </script>
 <script>
 if ('serviceWorker' in navigator) {
