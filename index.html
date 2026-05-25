@@ -2437,23 +2437,10 @@ function _cerrarModalVisible() {
 function _onModalOpen() {
     _modalCount++;
     history.pushState({ modal: _modalCount }, '');
-    _dbg();
 }
 
 // Entrada base para no salir de la app cuando no hay modales
 history.pushState({ base: true }, '');
-
-// DEBUG: muestra contador en pantalla
-function _dbg() {
-    let el = document.getElementById('_dbg_bar');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = '_dbg_bar';
-        el.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:red;color:white;font-size:1.2rem;font-weight:900;text-align:center;z-index:99999;padding:6px;';
-        document.body.appendChild(el);
-    }
-    el.textContent = 'modalCount=' + _modalCount + ' | histLen=' + history.length;
-}
 
 window.addEventListener('popstate', function(e) {
     if (_modalCount > 0) {
@@ -2465,12 +2452,7 @@ window.addEventListener('popstate', function(e) {
     } else {
         history.pushState({ base: true }, '');
     }
-    _dbg();
 });
-
-// Parchear _onModalOpen para debug
-const _onModalOpenOrig = _onModalOpen;
-window._onModalOpen = _onModalOpen;
 </script>
 <script>
 if ('serviceWorker' in navigator) {
