@@ -2060,8 +2060,10 @@
             db.ref('chats/' + grupoActual).on('child_added', snap => {
                 const m = snap.val();
                 if (!m) return;
-                // Sonido y badge solo si es mensaje nuevo de otro usuario
-                if (m.uid !== miID && m.ts.toString() > _ultimoTsChat) {
+                const esNuevo = m.ts.toString() > _ultimoTsChat;
+                const esOtro = m.uid !== miID;
+                console.log('MSG uid='+m.uid+' miID='+miID+' ts='+m.ts+' ultimo='+_ultimoTsChat+' esNuevo='+esNuevo+' esOtro='+esOtro+' chatAbierto='+chatAbierto);
+                if (esOtro && esNuevo) {
                     actualizarBadgeChat();
                     if (!chatSilenciado && !chatAbierto) reproducirSonido();
                 }
