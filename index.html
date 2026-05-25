@@ -2047,17 +2047,26 @@
     function iniciarListenerChat() {
         if (!grupoActual) return;
         actualizarBadgeChat();
-        // Listener para mensajes nuevos
-        db.ref('chats/' + grupoActual).on('child_added', snap => {
-            const m = snap.val();
-            if (!m) return;
-            // Actualizar badge siempre
-            actualizarBadgeChat();
-            // Sonido solo si es mensaje nuevo de otro usuario
-            if (m.uid !== miID && m.ts.toString() > _ultimoTsChat) {
-                if (!chatSilenciado && !chatAbierto) reproducirSonido();
+        // Primero leer el último mensaje existente para fijar la línea de tiempo
+        db.ref('chats/' + grupoActual).limitToLast(1).once('value', snap => {
+            const msgs = snap.val();
+            if (msgs) {
+                const ultimo = Object.values(msgs)[0];
+                if (ultimo && ultimo.ts.toString() > _ultimoTsChat) {
+                    _ultimoTsChat = ultimo.ts.toString();
+                }
             }
-            if (m.ts.toString() > _ultimoTsChat) _ultimoTsChat = m.ts.toString();
+            // Ahora sí escuchar mensajes nuevos
+            db.ref('chats/' + grupoActual).on('child_added', snap => {
+                const m = snap.val();
+                if (!m) return;
+                // Sonido y badge solo si es mensaje nuevo de otro usuario
+                if (m.uid !== miID && m.ts.toString() > _ultimoTsChat) {
+                    actualizarBadgeChat();
+                    if (!chatSilenciado && !chatAbierto) reproducirSonido();
+                }
+                if (m.ts.toString() > _ultimoTsChat) _ultimoTsChat = m.ts.toString();
+            });
         });
     }
 
