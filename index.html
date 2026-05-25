@@ -1891,7 +1891,10 @@
     function cerrarChat() {
         document.getElementById('chat-modal').style.display = 'none';
         chatAbierto = false;
-        _ultimoTsChat = Date.now().toString();
+        // Guardar el último mensaje visto para el badge
+        const ahora = Date.now().toString();
+        try { localStorage.setItem('ultimoMsgVisto', ahora); } catch(e) {}
+        _ultimoTsChat = ahora;
     }
 
     function cargarMensajes() {
@@ -2041,7 +2044,8 @@
         });
     }
 
-    let _ultimoTsChat = Date.now().toString();
+    let _ultimoTsChat = '0';
+    try { _ultimoTsChat = localStorage.getItem('ultimoMsgVisto') || '0'; } catch(e) {}
 
     function iniciarListenerChat() {
         if (!grupoActual) return;
