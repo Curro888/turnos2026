@@ -1891,6 +1891,7 @@
     function cerrarChat() {
         document.getElementById('chat-modal').style.display = 'none';
         chatAbierto = false;
+        _ultimoTsChat = Date.now().toString();
     }
 
     function cargarMensajes() {
