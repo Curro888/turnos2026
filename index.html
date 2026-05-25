@@ -1722,6 +1722,7 @@
 
     function cerrarCalendario() {
         document.getElementById('m-cal').style.display = 'none';
+        document.getElementById('m-cal').style.zIndex = '100';
         document.getElementById('side-panel').style.display = 'none';
         panelDiaAbierto = null;
         idCalendarioAbierto = null;
@@ -1803,6 +1804,7 @@
         });
 
         document.getElementById('m-cal').style.display = 'block';
+        document.getElementById('m-cal').style.zIndex = '6000';
         _onModalOpen();
     }
 
