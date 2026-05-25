@@ -1891,10 +1891,9 @@
     function cerrarChat() {
         document.getElementById('chat-modal').style.display = 'none';
         chatAbierto = false;
-        // Guardar el último mensaje visto para el badge
-        const ahora = Date.now().toString();
-        try { localStorage.setItem('ultimoMsgVisto', ahora); } catch(e) {}
-        _ultimoTsChat = ahora;
+        // Reset completo: el próximo mensaje siempre sonará y mostrará badge
+        _ultimoTsChat = '0';
+        try { localStorage.setItem('ultimoMsgVisto', '0'); } catch(e) {}
     }
 
     function cargarMensajes() {
@@ -2033,8 +2032,7 @@
             const msgs = snap.val();
             const badge = document.getElementById('chat-badge');
             if (!msgs) { badge.style.display = 'none'; return; }
-            try { ultimoMensajeVisto = localStorage.getItem('ultimoMsgVisto') || '0'; } catch(e) {}
-            const noLeidos = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > ultimoMensajeVisto).length;
+            const noLeidos = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > _ultimoTsChat).length;
             if (noLeidos > 0) {
                 badge.style.display = 'block';
                 badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
@@ -2045,7 +2043,6 @@
     }
 
     let _ultimoTsChat = '0';
-    try { _ultimoTsChat = localStorage.getItem('ultimoMsgVisto') || '0'; } catch(e) {}
 
     function iniciarListenerChat() {
         if (!grupoActual) return;
