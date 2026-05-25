@@ -2142,17 +2142,7 @@
         });
     }
 
-    // Desbloquear audio con primer toque (Android requiere interacción previa)
-    let _audioDesbloqueado = false;
-    function _desbloquearAudio() {
-        if (_audioDesbloqueado) return;
-        _audioDesbloqueado = true;
-        const audio = document.getElementById('notif-sound');
-        audio.volume = 0;
-        audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.volume = 1; }).catch(() => {});
-    }
-    document.addEventListener('touchend', _desbloquearAudio, { passive: true, once: true });
-    document.addEventListener('click', _desbloquearAudio, { passive: true, once: true });
+
 
     // ===== HISTORIAL DE CAMBIOS =====
     function abrirHistorial() {
@@ -2471,7 +2461,7 @@
 </div>
 
 <!-- SONIDO NOTIFICACION -->
-<audio id="notif-sound" preload="auto" src="./notif.mp3"></audio>
+
 
 <script>
 // ===== BOTÓN ATRÁS MÓVIL (PWA Android) =====
@@ -2543,5 +2533,6 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.log('SW error:', err));
 }
 </script>
+<audio id="notif-sound" preload="auto" src="./notif.mp3"></audio>
 </body>
 </html>
