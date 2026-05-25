@@ -1891,9 +1891,16 @@
     function cerrarChat() {
         document.getElementById('chat-modal').style.display = 'none';
         chatAbierto = false;
-        // Resetear contador de no leídos al cerrar
+        // Resetear contador y reiniciar listener para que el próximo mensaje siempre suene
         _mensajesNoLeidos = 0;
         _mostrarBadge(0);
+        _ultimoTsChat = Date.now();
+        // Apagar listener actual y reiniciarlo con el nuevo timestamp
+        if (typeof chatListenerNotif !== 'undefined' && chatListenerNotif) {
+            chatListenerNotif.off();
+            chatListenerNotif = null;
+        }
+        iniciarListenerChat();
     }
 
     function cargarMensajes() {
@@ -2033,13 +2040,16 @@
     let _ultimoTsChat = Date.now();
     let _mensajesNoLeidos = 0;
 
+    let chatListenerNotif = null;
+
     function iniciarListenerChat() {
         if (!grupoActual) return;
+        if (chatListenerNotif) { chatListenerNotif.off(); chatListenerNotif = null; }
         // Escuchar solo mensajes nuevos a partir de ahora
-        db.ref('chats/' + grupoActual).orderByChild('ts').startAt(_ultimoTsChat).on('child_added', snap => {
+        chatListenerNotif = db.ref('chats/' + grupoActual).orderByChild('ts').startAt(_ultimoTsChat);
+        chatListenerNotif.on('child_added', snap => {
             const m = snap.val();
             if (!m || m.uid === miID) return;
-            // Es un mensaje nuevo de otro usuario
             _mensajesNoLeidos++;
             _mostrarBadge(_mensajesNoLeidos);
             if (!chatSilenciado && !chatAbierto) reproducirSonido();
