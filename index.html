@@ -1718,10 +1718,6 @@
     function cerrarDesplegables() { document.getElementById('ctx-menu').style.display = 'none'; }
     function cerrarDiaModal() {
         document.getElementById('dia-modal').style.display = 'none';
-        // Si m-cal sigue abierto, reponer su guardia de historial
-        if (document.getElementById('m-cal').style.display !== 'none') {
-            _pushGuard();
-        }
     }
 
     function cerrarCalendario() {
@@ -1729,10 +1725,6 @@
         document.getElementById('side-panel').style.display = 'none';
         panelDiaAbierto = null;
         idCalendarioAbierto = null;
-        // Si grupos-panel sigue abierto, reponer su guardia de historial
-        if (document.getElementById('grupos-panel').style.display !== 'none') {
-            _pushGuard();
-        }
     }
 
     function cerrarTodo() {
@@ -2400,20 +2392,20 @@
 
 <script>
 // ===== BOTÓN ATRÁS MÓVIL (PWA Android) =====
-// Sistema de guardia única: siempre hay exactamente 1 entrada "guard" en la pila.
-// Cada clic atrás consume esa guardia → popstate → cerramos el modal más reciente
-// → reponemos la guardia inmediatamente. Así cada modal consume exactamente 1 atrás.
+// Estrategia: mantenemos un contador de modales abiertos.
+// Cada vez que se abre un modal incrementamos y hacemos pushState.
+// En popstate cerramos el modal más reciente y decrementamos.
+// Siempre hay al menos 1 entrada base para no salir de la app.
 
-// Orden de cierre: de más reciente/encima a más antiguo
 const _modalCierres = [
     { id: 'ctx-menu',         fn: () => document.getElementById('ctx-menu').style.display = 'none' },
     { id: 'confirm-modal',    fn: () => document.getElementById('confirm-modal').style.display = 'none' },
     { id: 'pending-modal',    fn: () => document.getElementById('pending-modal').style.display = 'none' },
     { id: 'vac-modal',        fn: () => { if(typeof cerrarVacModal==='function') cerrarVacModal(); else document.getElementById('vac-modal').style.display='none'; } },
     { id: 'report-modal',     fn: () => document.getElementById('report-modal').style.display = 'none' },
-    { id: 'dia-modal',        fn: () => cerrarDiaModal() },
+    { id: 'dia-modal',        fn: () => document.getElementById('dia-modal').style.display = 'none' },
     { id: 'side-panel',       fn: () => document.getElementById('side-panel').style.display = 'none' },
-    { id: 'm-cal',            fn: () => { if(typeof cerrarCal==='function') cerrarCal(); else document.getElementById('m-cal').style.display='none'; } },
+    { id: 'm-cal',            fn: () => { document.getElementById('m-cal').style.display='none'; document.getElementById('side-panel').style.display='none'; panelDiaAbierto=null; idCalendarioAbierto=null; } },
     { id: 'companions-modal', fn: () => document.getElementById('companions-modal').style.display = 'none' },
     { id: 'chat-modal',       fn: () => { if(typeof cerrarChat==='function') cerrarChat(); else document.getElementById('chat-modal').style.display='none'; } },
     { id: 'edit-group-modal', fn: () => { if(typeof cerrarEditorGrupo==='function') cerrarEditorGrupo(); else document.getElementById('edit-group-modal').style.display='none'; } },
@@ -2421,6 +2413,8 @@ const _modalCierres = [
     { id: 'historial-modal',  fn: () => cerrarHistorial() },
     { id: 'grupos-panel',     fn: () => document.getElementById('grupos-panel').style.display = 'none' },
 ];
+
+let _modalCount = 0;
 
 function _estaVisible(id) {
     const el = document.getElementById(id);
@@ -2439,26 +2433,28 @@ function _cerrarModalVisible() {
     return false;
 }
 
-// Pone/repone la entrada guardia en la pila
-function _pushGuard() {
-    history.pushState({ guard: true }, '');
+// Llamar al abrir cualquier modal
+function _onModalOpen() {
+    _modalCount++;
+    history.pushState({ modal: _modalCount }, '');
 }
 
-// Al arrancar, ponemos la guardia inicial
-_pushGuard();
+// Entrada base para no salir de la app cuando no hay modales
+history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
-    // Siempre reponemos la guardia primero para el siguiente atrás
-    _pushGuard();
-    // Luego cerramos el modal más reciente visible
-    _cerrarModalVisible();
+    if (_modalCount > 0) {
+        _modalCount--;
+        _cerrarModalVisible();
+        // Reponer entrada base si ya no quedan modales
+        if (_modalCount === 0) {
+            history.pushState({ base: true }, '');
+        }
+    } else {
+        // Sin modales: reponer para no salir de la app
+        history.pushState({ base: true }, '');
+    }
 });
-
-// Cada modal abierto empuja su propia entrada en la pila,
-// así cada atrás cierra exactamente el modal que le corresponde
-function _onModalOpen() {
-    _pushGuard();
-}
 </script>
 <script>
 if ('serviceWorker' in navigator) {
