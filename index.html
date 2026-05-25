@@ -2040,7 +2040,7 @@
         });
     }
 
-    let _ultimoTsChat = '0';
+    let _ultimoTsChat = Date.now().toString();
 
     function iniciarListenerChat() {
         if (!grupoActual) return;
@@ -2052,7 +2052,7 @@
             // Actualizar badge siempre
             actualizarBadgeChat();
             // Sonido solo si es mensaje nuevo de otro usuario
-            if (m.uid !== miID && m.ts.toString() > _ultimoTsChat && _ultimoTsChat !== '0') {
+            if (m.uid !== miID && m.ts.toString() > _ultimoTsChat) {
                 if (!chatSilenciado && !chatAbierto) reproducirSonido();
             }
             if (m.ts.toString() > _ultimoTsChat) _ultimoTsChat = m.ts.toString();
