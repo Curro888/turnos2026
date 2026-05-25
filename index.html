@@ -304,7 +304,7 @@
         <h3 id="dia-modal-titulo" style="margin:0 0 15px 0; color:var(--primary-dark);"></h3>
         <div id="dia-modal-libre" style="margin-bottom:15px;"></div>
         <div id="dia-modal-trabaja"></div>
-        <button onclick="document.getElementById('dia-modal').style.display='none'" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
+        <button onclick="cerrarDiaModal()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
     </div>
 </div>
 
@@ -1716,6 +1716,14 @@
     }
 
     function cerrarDesplegables() { document.getElementById('ctx-menu').style.display = 'none'; }
+    function cerrarDiaModal() {
+        document.getElementById('dia-modal').style.display = 'none';
+        // Si m-cal sigue abierto, reponer su guardia de historial
+        if (document.getElementById('m-cal').style.display !== 'none') {
+            _pushGuard();
+        }
+    }
+
     function cerrarCalendario() {
         document.getElementById('m-cal').style.display = 'none';
         document.getElementById('side-panel').style.display = 'none';
@@ -2403,7 +2411,7 @@ const _modalCierres = [
     { id: 'pending-modal',    fn: () => document.getElementById('pending-modal').style.display = 'none' },
     { id: 'vac-modal',        fn: () => { if(typeof cerrarVacModal==='function') cerrarVacModal(); else document.getElementById('vac-modal').style.display='none'; } },
     { id: 'report-modal',     fn: () => document.getElementById('report-modal').style.display = 'none' },
-    { id: 'dia-modal',        fn: () => document.getElementById('dia-modal').style.display = 'none' },
+    { id: 'dia-modal',        fn: () => cerrarDiaModal() },
     { id: 'side-panel',       fn: () => document.getElementById('side-panel').style.display = 'none' },
     { id: 'm-cal',            fn: () => { if(typeof cerrarCal==='function') cerrarCal(); else document.getElementById('m-cal').style.display='none'; } },
     { id: 'companions-modal', fn: () => document.getElementById('companions-modal').style.display = 'none' },
