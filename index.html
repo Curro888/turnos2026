@@ -2047,28 +2047,15 @@
     function iniciarListenerChat() {
         if (!grupoActual) return;
         actualizarBadgeChat();
-        // Primero leer el último mensaje existente para fijar la línea de tiempo
-        db.ref('chats/' + grupoActual).limitToLast(1).once('value', snap => {
-            const msgs = snap.val();
-            if (msgs) {
-                const ultimo = Object.values(msgs)[0];
-                if (ultimo && ultimo.ts.toString() > _ultimoTsChat) {
-                    _ultimoTsChat = ultimo.ts.toString();
-                }
+        // Usar startAt con el timestamp actual para solo recibir mensajes nuevos
+        const ahora = Date.now();
+        db.ref('chats/' + grupoActual).orderByChild('ts').startAt(ahora).on('child_added', snap => {
+            const m = snap.val();
+            if (!m) return;
+            if (m.uid !== miID) {
+                actualizarBadgeChat();
+                if (!chatSilenciado && !chatAbierto) reproducirSonido();
             }
-            // Ahora sí escuchar mensajes nuevos
-            db.ref('chats/' + grupoActual).on('child_added', snap => {
-                const m = snap.val();
-                if (!m) return;
-                const esNuevo = m.ts.toString() > _ultimoTsChat;
-                const esOtro = m.uid !== miID;
-                console.log('MSG uid='+m.uid+' miID='+miID+' ts='+m.ts+' ultimo='+_ultimoTsChat+' esNuevo='+esNuevo+' esOtro='+esOtro+' chatAbierto='+chatAbierto);
-                if (esOtro && esNuevo) {
-                    actualizarBadgeChat();
-                    if (!chatSilenciado && !chatAbierto) reproducirSonido();
-                }
-                if (m.ts.toString() > _ultimoTsChat) _ultimoTsChat = m.ts.toString();
-            });
         });
     }
 
