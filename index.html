@@ -1891,9 +1891,9 @@
     function cerrarChat() {
         document.getElementById('chat-modal').style.display = 'none';
         chatAbierto = false;
-        // Reset completo: el próximo mensaje siempre sonará y mostrará badge
-        _ultimoTsChat = '0';
-        try { localStorage.setItem('ultimoMsgVisto', '0'); } catch(e) {}
+        // Resetear contador de no leídos al cerrar
+        _mensajesNoLeidos = 0;
+        _mostrarBadge(0);
     }
 
     function cargarMensajes() {
@@ -2027,36 +2027,33 @@
     }
 
     function actualizarBadgeChat() {
-        if (!grupoActual || chatAbierto) return;
-        db.ref('chats/' + grupoActual).once('value').then(snap => {
-            const msgs = snap.val();
-            const badge = document.getElementById('chat-badge');
-            if (!msgs) { badge.style.display = 'none'; return; }
-            const noLeidos = Object.values(msgs).filter(m => m.uid !== miID && m.ts.toString() > _ultimoTsChat).length;
-            if (noLeidos > 0) {
-                badge.style.display = 'block';
-                badge.textContent = noLeidos > 9 ? '9+' : noLeidos;
-            } else {
-                badge.style.display = 'none';
-            }
-        });
+        _mostrarBadge(_mensajesNoLeidos);
     }
 
-    let _ultimoTsChat = '0';
+    let _ultimoTsChat = Date.now();
+    let _mensajesNoLeidos = 0;
 
     function iniciarListenerChat() {
         if (!grupoActual) return;
-        actualizarBadgeChat();
-        // Usar startAt con el timestamp actual para solo recibir mensajes nuevos
-        const ahora = Date.now();
-        db.ref('chats/' + grupoActual).orderByChild('ts').startAt(ahora).on('child_added', snap => {
+        // Escuchar solo mensajes nuevos a partir de ahora
+        db.ref('chats/' + grupoActual).orderByChild('ts').startAt(_ultimoTsChat).on('child_added', snap => {
             const m = snap.val();
-            if (!m) return;
-            if (m.uid !== miID) {
-                actualizarBadgeChat();
-                if (!chatSilenciado && !chatAbierto) reproducirSonido();
-            }
+            if (!m || m.uid === miID) return;
+            // Es un mensaje nuevo de otro usuario
+            _mensajesNoLeidos++;
+            _mostrarBadge(_mensajesNoLeidos);
+            if (!chatSilenciado && !chatAbierto) reproducirSonido();
         });
+    }
+
+    function _mostrarBadge(n) {
+        const badge = document.getElementById('chat-badge');
+        if (n > 0) {
+            badge.style.display = 'block';
+            badge.textContent = n > 9 ? '9+' : n;
+        } else {
+            badge.style.display = 'none';
+        }
     }
 
     let chatSilenciado = false;
@@ -2145,10 +2142,17 @@
         });
     }
 
-    // Desbloquear audio con primer toque
+    // Desbloquear audio con primer toque (Android requiere interacción previa)
     let _audioDesbloqueado = false;
-    document.addEventListener('touchend', () => { _audioDesbloqueado = true; }, { passive: true, once: true });
-    document.addEventListener('click', () => { _audioDesbloqueado = true; }, { passive: true, once: true });
+    function _desbloquearAudio() {
+        if (_audioDesbloqueado) return;
+        _audioDesbloqueado = true;
+        const audio = document.getElementById('notif-sound');
+        audio.volume = 0;
+        audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.volume = 1; }).catch(() => {});
+    }
+    document.addEventListener('touchend', _desbloquearAudio, { passive: true, once: true });
+    document.addEventListener('click', _desbloquearAudio, { passive: true, once: true });
 
     // ===== HISTORIAL DE CAMBIOS =====
     function abrirHistorial() {
