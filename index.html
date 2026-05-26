@@ -418,7 +418,7 @@
 <!-- Menú contextual arrastrable -->
 <!-- Modal panel todos los grupos -->
 <div id="grupos-panel" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:5000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
-    <div style="background:white; padding:20px; border-radius:20px; width:100%; max-width:480px; margin-top:10px; border:1px solid var(--primary);">
+    <div style="background:var(--surface); padding:20px; border-radius:20px; width:100%; max-width:480px; margin-top:10px; border:1px solid var(--primary);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <h3 style="margin:0; color:var(--primary-dark); font-size:1rem;">📅 Todos los grupos de libres</h3>
             <button onclick="cerrarPanelGrupos()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;">✕</button>
@@ -426,17 +426,17 @@
         <!-- Pestañas turno -->
         <div style="display:flex; gap:8px; margin-bottom:12px;">
             <button id="pg-tab-7327" onclick="setPanelTurno('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
-            <button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:white; color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
+            <button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
         </div>
         <!-- Navegación mes -->
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; background:#f5f3ff; border-radius:12px; padding:8px 14px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; background:var(--surface2); border-radius:12px; padding:8px 14px;">
             <button onclick="cambiarMesPanel(-1)" style="background:none; border:none; font-size:1.4rem; color:var(--primary); cursor:pointer; font-weight:900;">‹</button>
             <span id="pg-mes-label" style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;"></span>
             <button onclick="cambiarMesPanel(1)" style="background:none; border:none; font-size:1.4rem; color:var(--primary); cursor:pointer; font-weight:900;">›</button>
         </div>
         <!-- Lista grupos -->
         <div id="pg-grupos-lista"></div>
-        <button onclick="cerrarPanelGrupos()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;">Cerrar</button>
+        <button onclick="cerrarPanelGrupos()" style="width:100%; padding:12px; background:var(--surface2); border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;">Cerrar</button>
     </div>
 </div>
 
@@ -2489,7 +2489,7 @@ const _modalCierres = [
     { id: 'report-modal',     fn: () => document.getElementById('report-modal').style.display = 'none' },
     { id: 'dia-modal',        fn: () => document.getElementById('dia-modal').style.display = 'none' },
     { id: 'side-panel',       fn: () => document.getElementById('side-panel').style.display = 'none' },
-    { id: 'm-cal',            fn: () => { document.getElementById('m-cal').style.display='none'; document.getElementById('side-panel').style.display='none'; panelDiaAbierto=null; idCalendarioAbierto=null; } },
+    { id: 'm-cal',            fn: () => { document.getElementById('m-cal').style.display='none'; document.getElementById('m-cal').style.zIndex='100'; document.getElementById('side-panel').style.display='none'; panelDiaAbierto=null; idCalendarioAbierto=null; } },
     { id: 'companions-modal', fn: () => document.getElementById('companions-modal').style.display = 'none' },
     { id: 'chat-modal',       fn: () => { if(typeof cerrarChat==='function') cerrarChat(); else document.getElementById('chat-modal').style.display='none'; } },
     { id: 'edit-group-modal', fn: () => { if(typeof cerrarEditorGrupo==='function') cerrarEditorGrupo(); else document.getElementById('edit-group-modal').style.display='none'; } },
@@ -2530,7 +2530,12 @@ window.addEventListener('popstate', function(e) {
     if (_modalCount > 0) {
         _modalCount--;
         _cerrarModalVisible();
-        if (_modalCount === 0) {
+        // Verificar si realmente quedan modales abiertos y sincronizar
+        const hayModales = _modalCierres.some(({id}) => _estaVisible(id));
+        if (!hayModales) {
+            _modalCount = 0;
+            history.pushState({ base: true }, '');
+        } else if (_modalCount === 0) {
             history.pushState({ base: true }, '');
         }
     } else {
