@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turnos2026-v5';
+const CACHE_NAME = 'turnos2026-v6';
 const SHELL = [
     './',
     './index.html',
@@ -39,4 +39,57 @@ self.addEventListener('fetch', e => {
             return response;
         }).catch(() => caches.match(e.request))
     );
+});
+
+// ===== NOTIFICACIONES PUSH =====
+self.addEventListener('push', e => {
+    let data = { title: 'Turnos 2026', body: 'Tienes una nueva notificación', icon: './Bulldog.png' };
+    if (e.data) {
+        try { data = { ...data, ...e.data.json() }; } catch { data.body = e.data.text(); }
+    }
+    e.waitUntil(
+        self.registration.showNotification(data.title, {
+            body: data.body,
+            icon: data.icon || './Bulldog.png',
+            badge: './Bulldog.png',
+            vibrate: [200, 100, 200],
+            data: { url: data.url || './' }
+        })
+    );
+});
+
+self.addEventListener('notificationclick', e => {
+    e.notification.close();
+    e.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+            if (list.length > 0) return list[0].focus();
+            return clients.openWindow(e.notification.data.url || './');
+        })
+    );
+});
+
+// ===== FIREBASE MESSAGING BACKGROUND =====
+importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
+
+firebase.initializeApp({
+    apiKey: "AIzaSyBJ1WtRyZxxLtJnrZZtaKxgIO3JgJwo_Ik",
+    authDomain: "calendarioturnos-6d35c.firebaseapp.com",
+    databaseURL: "https://calendarioturnos-6d35c-default-rtdb.firebaseio.com",
+    projectId: "calendarioturnos-6d35c",
+    storageBucket: "calendarioturnos-6d35c.firebasestorage.app",
+    messagingSenderId: "892183334973",
+    appId: "1:892183334973:web:837233c49e8b1249369a54"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(payload => {
+    const { title = 'Turnos 2026', body = 'Nueva notificación' } = payload.notification || {};
+    self.registration.showNotification(title, {
+        body,
+        icon: './Bulldog.png',
+        badge: './Bulldog.png',
+        vibrate: [200, 100, 200]
+    });
 });
