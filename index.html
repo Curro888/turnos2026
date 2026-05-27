@@ -8,6 +8,35 @@
     <title>Planificación 2026</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- OneSignal Push Notifications -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "ab2f2ca9-9696-4082-a442-39b1517334c5",
+          notifyButton: { enable: false },
+          allowLocalhostAsSecureOrigin: true,
+          serviceWorkerParam: { scope: '/' },
+          serviceWorkerPath: '/OneSignalSDKWorker.js'
+        });
+        OneSignal.User.PushSubscription.addEventListener('change', async function(event) {
+          if (event.current.id && typeof miID !== 'undefined' && miID) {
+            try {
+              firebase.database().ref('onesignal_tokens/' + miID).set({
+                playerId: event.current.id, fecha: new Date().toISOString()
+              });
+            } catch(e) {}
+          }
+        });
+        const subId = OneSignal.User.PushSubscription.id;
+        if (subId && typeof miID !== 'undefined' && miID) {
+          firebase.database().ref('onesignal_tokens/' + miID).set({
+            playerId: subId, fecha: new Date().toISOString()
+          });
+        }
+      });
+    </script>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="Bulldog.png">
     <style>
@@ -2139,16 +2168,36 @@
         }
     } catch(e) {}
 
-    function activarNotificaciones() {
+    async function activarNotificaciones() {
         if (!('Notification' in window)) { alert('Tu navegador no soporta notificaciones'); return; }
-        if (Notification.permission === 'granted') { alert('✅ Notificaciones ya activadas'); return; }
-        Notification.requestPermission().then(p => {
-            if (p === 'granted') {
-                new Notification('✅ Notificaciones activadas', { body: 'Recibirás avisos de chat y cambios de turno' });
+        try {
+            if (typeof OneSignal !== 'undefined') {
+                const permission = OneSignal.Notifications.permission;
+                if (permission) {
+                    const subId = OneSignal.User.PushSubscription.id;
+                    if (subId && miID) {
+                        firebase.database().ref('onesignal_tokens/' + miID).set({
+                            playerId: subId, fecha: new Date().toISOString()
+                        });
+                    }
+                    alert('✅ Notificaciones ya activadas');
+                    return;
+                }
+                await OneSignal.Notifications.requestPermission();
+                const playerId = OneSignal.User.PushSubscription.id;
+                if (playerId && miID) {
+                    firebase.database().ref('onesignal_tokens/' + miID).set({
+                        playerId, fecha: new Date().toISOString()
+                    });
+                }
+                alert('✅ Notificaciones activadas correctamente');
             } else {
-                alert('Permiso denegado. Actívalo desde los ajustes del navegador.');
+                alert('Cargando sistema de notificaciones, inténtalo en unos segundos.');
             }
-        });
+        } catch(e) {
+            console.error('Error:', e);
+            alert('Error al activar notificaciones. Inténtalo de nuevo.');
+        }
     }
 
 
