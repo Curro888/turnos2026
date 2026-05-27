@@ -20,21 +20,6 @@
           serviceWorkerParam: { scope: '/' },
           serviceWorkerPath: '/OneSignalSDKWorker.js'
         });
-        OneSignal.User.PushSubscription.addEventListener('change', async function(event) {
-          if (event.current.id && typeof miID !== 'undefined' && miID) {
-            try {
-              firebase.database().ref('onesignal_tokens/' + miID).set({
-                playerId: event.current.id, fecha: new Date().toISOString()
-              });
-            } catch(e) {}
-          }
-        });
-        const subId = OneSignal.User.PushSubscription.id;
-        if (subId && typeof miID !== 'undefined' && miID) {
-          firebase.database().ref('onesignal_tokens/' + miID).set({
-            playerId: subId, fecha: new Date().toISOString()
-          });
-        }
       });
     </script>
     <link rel="manifest" href="manifest.json">
@@ -928,6 +913,8 @@
         iniciarListeners();
         renderList();
         if (modoGrupo) { iniciarPresencia(); iniciarListenerLeidos(); }
+        // Guardar token OneSignal ahora que miID está definido
+        setTimeout(guardarTokenOneSignal, 2000);
     }
 
     function toggleMenu() {
@@ -2168,28 +2155,31 @@
         }
     } catch(e) {}
 
+    async function guardarTokenOneSignal() {
+        try {
+            if (typeof OneSignal === 'undefined' || !miID) return;
+            const subId = OneSignal.User.PushSubscription.id;
+            if (subId) {
+                await firebase.database().ref('onesignal_tokens/' + miID).set({
+                    playerId: subId, fecha: new Date().toISOString()
+                });
+                console.log('Token OneSignal guardado:', subId);
+            }
+        } catch(e) { console.error('Error guardando token:', e); }
+    }
+
     async function activarNotificaciones() {
         if (!('Notification' in window)) { alert('Tu navegador no soporta notificaciones'); return; }
         try {
             if (typeof OneSignal !== 'undefined') {
                 const permission = OneSignal.Notifications.permission;
                 if (permission) {
-                    const subId = OneSignal.User.PushSubscription.id;
-                    if (subId && miID) {
-                        firebase.database().ref('onesignal_tokens/' + miID).set({
-                            playerId: subId, fecha: new Date().toISOString()
-                        });
-                    }
+                    await guardarTokenOneSignal();
                     alert('✅ Notificaciones ya activadas');
                     return;
                 }
                 await OneSignal.Notifications.requestPermission();
-                const playerId = OneSignal.User.PushSubscription.id;
-                if (playerId && miID) {
-                    firebase.database().ref('onesignal_tokens/' + miID).set({
-                        playerId, fecha: new Date().toISOString()
-                    });
-                }
+                await guardarTokenOneSignal();
                 alert('✅ Notificaciones activadas correctamente');
             } else {
                 alert('Cargando sistema de notificaciones, inténtalo en unos segundos.');
