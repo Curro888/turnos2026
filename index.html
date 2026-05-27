@@ -16,8 +16,35 @@
         await OneSignal.init({
           appId: "ab2f2ca9-9696-4082-a442-39b1517334c5",
           notifyButton: { enable: false },
-          allowLocalhostAsSecureOrigin: true
+          allowLocalhostAsSecureOrigin: true,
+          serviceWorkerParam: { scope: '/turnos2026/' },
+          serviceWorkerPath: '/turnos2026/OneSignalSDKWorker.js'
         });
+
+        // Guardar Player ID en Firebase cuando esté disponible
+        OneSignal.User.PushSubscription.addEventListener('change', async function(event) {
+          if (event.current.token && typeof miID !== 'undefined' && miID) {
+            try {
+              firebase.database().ref('onesignal_tokens/' + miID).set({
+                playerId: event.current.id,
+                token: event.current.token,
+                fecha: new Date().toISOString()
+              });
+              console.log('Token guardado en Firebase:', event.current.id);
+            } catch(e) {
+              console.error('Error guardando token:', e);
+            }
+          }
+        });
+
+        // Si ya está suscrito, guardar el ID
+        const subId = OneSignal.User.PushSubscription.id;
+        if (subId && typeof miID !== 'undefined' && miID) {
+          firebase.database().ref('onesignal_tokens/' + miID).set({
+            playerId: subId,
+            fecha: new Date().toISOString()
+          });
+        }
       });
     </script>
     <link rel="manifest" href="manifest.json">
