@@ -1,7 +1,7 @@
-// Importar OneSignal Service Worker
+// Importar OneSignal Service Worker - DEBE SER LA PRIMERA LÍNEA
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'turnos2026-v7';
+const CACHE_NAME = 'turnos2026-v8';
 const SHELL = [
     './',
     './index.html',
@@ -37,15 +37,5 @@ self.addEventListener('fetch', e => {
             }
             return response;
         }).catch(() => caches.match(e.request))
-    );
-});
-
-self.addEventListener('notificationclick', e => {
-    e.notification.close();
-    e.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-            if (list.length > 0) return list[0].focus();
-            return clients.openWindow('./');
-        })
     );
 });
