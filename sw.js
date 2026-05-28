@@ -1,7 +1,4 @@
-// Importar OneSignal Service Worker - DEBE SER LA PRIMERA LÍNEA
-importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
-
-const CACHE_NAME = 'turnos2026-v8';
+const CACHE_NAME = 'turnos2026-v5';
 const SHELL = [
     './',
     './index.html',
@@ -26,9 +23,13 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
     const url = e.request.url;
-    if (url.includes('firebase') || url.includes('gstatic') || url.includes('googleapis') || url.includes('onesignal')) {
+
+    // Firebase y externos: solo red, nunca cachear
+    if (url.includes('firebase') || url.includes('gstatic') || url.includes('googleapis')) {
         return;
     }
+
+    // Recursos propios: Network-first, fallback a caché
     e.respondWith(
         fetch(e.request).then(response => {
             if (response && response.status === 200) {
