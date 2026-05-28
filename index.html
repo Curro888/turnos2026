@@ -2153,68 +2153,298 @@
 
 
 
-    // ===== HISTORIAL DE CAMBIOS =====
+    // ===== HISTORIAL DE CAMBIOS (nuevo sistema 4 categorías) =====
+    let _hmCategoriaActiva = null;
+    let _hmPendienteKey = null;
+    let _hmPendienteResolucion = null;
+
     function abrirHistorial() {
         document.getElementById('historial-modal').style.display = 'flex'; _onModalOpen();
-        const cont = document.getElementById('historial-content');
+        _mostrarVistaPortada();
+        _cargarBadges();
+    }
+
+    function _mostrarVistaPortada() {
+        document.getElementById('hm-portada').style.display = 'block';
+        document.getElementById('hm-detalle').style.display = 'none';
+        document.getElementById('hm-pendiente-accion').style.display = 'none';
+        document.getElementById('hm-form-añadir').style.display = 'none';
+    }
+
+    function _cargarBadges() {
+        db.ref(`historial2/${miID}`).once('value').then(snap => {
+            const items = snap.val() || {};
+            const contadores = { generado: 0, pendiente: 0, comp: 0, propio: 0 };
+            Object.values(items).forEach(h => { if (contadores[h.cat] !== undefined) contadores[h.cat]++; });
+            ['generado','pendiente','comp','propio'].forEach(cat => {
+                const badge = document.getElementById('badge-' + cat);
+                if (badge) {
+                    if (contadores[cat] > 0) { badge.style.display = 'block'; badge.textContent = contadores[cat]; }
+                    else badge.style.display = 'none';
+                }
+            });
+        });
+        // También contar los históricos del sistema antiguo como "comp"
+        db.ref(`historial/${miID}`).once('value').then(snap => {
+            const items = snap.val() || {};
+            const n = Object.keys(items).length;
+            if (n > 0) {
+                const badge = document.getElementById('badge-comp');
+                if (badge) { badge.style.display = 'block'; badge.textContent = (parseInt(badge.textContent)||0) + n; }
+            }
+        });
+    }
+
+    function abrirCategoria(cat) {
+        _hmCategoriaActiva = cat;
+        document.getElementById('hm-portada').style.display = 'none';
+        document.getElementById('hm-detalle').style.display = 'block';
+        document.getElementById('hm-pendiente-accion').style.display = 'none';
+        document.getElementById('hm-form-añadir').style.display = 'none';
+        const titulos = { generado: '✨ Generado', pendiente: '⏳ Pendiente', comp: '🤝 Con compañero', propio: '🔄 Cambio propio' };
+        document.getElementById('hm-detalle-titulo').textContent = titulos[cat] || cat;
+        _cargarItemsCategoria(cat);
+    }
+
+    function volverPortada() {
+        _mostrarVistaPortada();
+        _cargarBadges();
+    }
+
+    function volverDetalle() {
+        document.getElementById('hm-pendiente-accion').style.display = 'none';
+        document.getElementById('hm-detalle').style.display = 'block';
+        _hmPendienteKey = null;
+        _hmPendienteResolucion = null;
+        document.getElementById('hm-pend-compensacion').style.display = 'none';
+    }
+
+    function _cargarItemsCategoria(cat) {
+        const cont = document.getElementById('hm-lista-items');
         cont.innerHTML = '<div style="text-align:center; color:var(--text2); padding:20px;">Cargando...</div>';
-        db.ref(`historial/${miID}`).orderByChild('ts').once('value').then(snap => {
-            const items = snap.val();
-            if (!items) { cont.innerHTML = '<div style="text-align:center; color:var(--text2); padding:20px;">No tienes cambios registrados aún</div>'; return; }
-            const lista = Object.entries(items).sort((a,b) => b[1].ts - a[1].ts);
-            cont.innerHTML = lista.map(([key, h]) => {
-                const fecha = new Date(h.ts).toLocaleDateString('es', {day:'2-digit', month:'2-digit', year:'numeric'});
-                return `<div style="border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; background:var(--surface2);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                        <div style="font-weight:800; color:var(--primary-dark);">🔄 Cambio con ${h.con}</div>
-                        <button onclick="borrarCambioHistorial('${key}')" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:700;">🗑️</button>
+
+        if (cat === 'comp') {
+            // Combina historial nuevo + historial antiguo
+            Promise.all([
+                db.ref(`historial2/${miID}`).orderByChild('cat').equalTo('comp').once('value'),
+                db.ref(`historial/${miID}`).orderByChild('ts').once('value')
+            ]).then(([snap2, snap1]) => {
+                let items = [];
+                if (snap2.val()) Object.entries(snap2.val()).forEach(([k,v]) => items.push([k,v,'nuevo']));
+                if (snap1.val()) Object.entries(snap1.val()).forEach(([k,v]) => items.push([k,v,'antiguo']));
+                items.sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+                _renderItemsComp(cont, items);
+            });
+        } else {
+            db.ref(`historial2/${miID}`).once('value').then(snap => {
+                const todos = snap.val() || {};
+                const items = Object.entries(todos).filter(([,v]) => v.cat === cat).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+                if (items.length === 0) { cont.innerHTML = '<div style="text-align:center; color:var(--text2); padding:20px;">No hay entradas aún.<br>Pulsa ➕ para añadir.</div>'; return; }
+                cont.innerHTML = items.map(([key, h]) => _renderItemHtml(key, h, cat)).join('');
+            });
+        }
+    }
+
+    function _renderItemsComp(cont, items) {
+        if (items.length === 0) { cont.innerHTML = '<div style="text-align:center; color:var(--text2); padding:20px;">No hay cambios con compañeros aún.</div>'; return; }
+        cont.innerHTML = items.map(([key, h, origen]) => {
+            const fecha = h.ts ? new Date(h.ts).toLocaleDateString('es', {day:'2-digit', month:'2-digit', year:'numeric'}) : '';
+            const db_ref = origen === 'antiguo' ? `historial/${miID}/${key}` : `historial2/${miID}/${key}`;
+            return `<div style="border:1px solid #fde68a; border-radius:12px; padding:14px; margin-bottom:10px; background:#fefce8; position:relative;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                    <div>
+                        <div style="font-weight:800; color:#854d0e; font-size:0.9rem;">🤝 ${h.con || 'Compañero'}</div>
+                        <div style="font-size:0.78rem; color:#92400e; margin-top:2px;">${fecha}</div>
                     </div>
-                    <div style="font-size:0.82rem; color:var(--text2); margin-bottom:8px;">
-                        Trabajas el <b>${h.diaTrabaja}</b> · Libras el <b>${h.diaLibra}</b><br>
-                        <span style="font-size:0.75rem;">Registrado: ${fecha}</span>
+                    <button onclick="_borrarItemHistorial('${db_ref}')" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:700; flex-shrink:0;">🗑️</button>
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <div style="flex:1; background:white; border-radius:10px; padding:8px; text-align:center; border:1px solid #fde68a;">
+                        <div style="font-size:1.1rem;">⭕</div>
+                        <div style="font-size:0.7rem; font-weight:700; color:#854d0e;">TRABAJAS</div>
+                        <div style="font-size:0.82rem; font-weight:800; color:#1e1b4b;">${h.diaTrabaja || '—'}</div>
                     </div>
-                    <textarea id="nota-${key}" placeholder="Añadir nota..." style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.82rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box;" rows="2">${h.nota || ''}</textarea>
-                    <button onclick="guardarNota('${key}')" style="margin-top:6px; background:var(--primary); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:0.82rem; font-weight:700;">💾 Guardar nota</button>
-                </div>`;
-            }).join('');
+                    <div style="flex:1; background:white; border-radius:10px; padding:8px; text-align:center; border:1px solid #fde68a;">
+                        <div style="font-size:1.1rem;">⬜</div>
+                        <div style="font-size:0.7rem; font-weight:700; color:#854d0e;">LIBRAS</div>
+                        <div style="font-size:0.82rem; font-weight:800; color:#1e1b4b;">${h.diaLibra || '—'}</div>
+                    </div>
+                </div>
+                ${h.nota ? `<div style="font-size:0.78rem; color:#92400e; background:white; border-radius:8px; padding:6px 10px; border:1px solid #fde68a;">📝 ${h.nota}</div>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    function _renderItemHtml(key, h, cat) {
+        const fecha = h.ts ? new Date(h.ts).toLocaleDateString('es', {day:'2-digit', month:'2-digit', year:'numeric'}) : '';
+        const esLibre = h.esLibre;
+        const forma = esLibre ? '⬜' : '⭕';
+        const formaLabel = esLibre ? 'LIBRE' : 'TRABAJA';
+
+        const estilos = {
+            generado: { borde: 'var(--pink)', bg: '#fdf2f8', color: '#be185d', bgItem: '#fdf2f8' },
+            pendiente: { borde: 'var(--primary)', bg: '#f5f3ff', color: 'var(--primary-dark)', bgItem: '#f5f3ff' },
+            propio: { borde: 'var(--danger)', bg: '#fff1f2', color: 'var(--danger)', bgItem: '#fff1f2' }
+        };
+        const e = estilos[cat] || estilos.generado;
+
+        if (cat === 'pendiente') {
+            const resuelto = h.resuelto;
+            return `<div style="border:1px solid ${e.borde}; border-radius:12px; padding:14px; margin-bottom:10px; background:${e.bgItem};">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                    <div>
+                        <div style="font-weight:800; color:${e.color}; font-size:0.9rem;">${forma} ${h.fecha || '—'}</div>
+                        <div style="font-size:0.75rem; color:${e.color}; opacity:0.7; margin-top:2px;">${fecha}</div>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-shrink:0;">
+                        ${!resuelto ? `<button onclick="abrirResolverPendiente('${key}',\`${h.fecha||''}\`)" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:700;">Resolver</button>` : `<span style="font-size:0.75rem; background:#f0fdf4; color:#166534; border-radius:8px; padding:4px 10px; font-weight:700; border:1px solid var(--success);">✅ Resuelto</span>`}
+                        <button onclick="_borrarItemHistorial('historial2/${miID}/${key}')" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:700;">🗑️</button>
+                    </div>
+                </div>
+                ${resuelto ? `<div style="font-size:0.78rem; color:#166534; background:#f0fdf4; border-radius:8px; padding:6px 10px; border:1px solid var(--success); margin-bottom:6px;">
+                    ${resuelto.accion === 'libre' ? `⬜ Libras · compensa el <b>${resuelto.diaComp}</b> ⭕` : '⭕ Trabajas'}
+                </div>` : ''}
+                ${h.nota ? `<div style="font-size:0.78rem; color:${e.color}; opacity:0.8; margin-top:4px;">📝 ${h.nota}</div>` : ''}
+            </div>`;
+        }
+
+        if (cat === 'propio') {
+            return `<div style="border:1px solid ${e.borde}; border-radius:12px; padding:14px; margin-bottom:10px; background:${e.bgItem};">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                    <div style="font-weight:800; color:${e.color}; font-size:0.9rem;">🔄 Cambio propio</div>
+                    <button onclick="_borrarItemHistorial('historial2/${miID}/${key}')" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:700;">🗑️</button>
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                    <div style="flex:1; background:white; border-radius:10px; padding:8px; text-align:center; border:1px solid ${e.borde};">
+                        <div style="font-size:1.1rem;">⭕</div>
+                        <div style="font-size:0.7rem; font-weight:700; color:${e.color};">TRABAJAS</div>
+                        <div style="font-size:0.82rem; font-weight:800; color:#1e1b4b;">${h.diaTrabaja || '—'}</div>
+                    </div>
+                    <div style="flex:1; background:white; border-radius:10px; padding:8px; text-align:center; border:1px solid ${e.borde};">
+                        <div style="font-size:1.1rem;">⬜</div>
+                        <div style="font-size:0.7rem; font-weight:700; color:${e.color};">LIBRAS</div>
+                        <div style="font-size:0.82rem; font-weight:800; color:#1e1b4b;">${h.diaLibra || '—'}</div>
+                    </div>
+                </div>
+                ${h.nota ? `<div style="font-size:0.78rem; color:${e.color}; background:white; border-radius:8px; padding:6px 10px; border:1px solid ${e.borde};">📝 ${h.nota}</div>` : ''}
+            </div>`;
+        }
+
+        // generado
+        return `<div style="border:1px solid ${e.borde}; border-radius:12px; padding:14px; margin-bottom:10px; background:${e.bgItem};">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <div>
+                    <div style="font-weight:800; color:${e.color}; font-size:0.9rem;">${forma} ${h.fecha || '—'}</div>
+                    <div style="font-size:0.72rem; color:${e.color}; opacity:0.7;">${formaLabel} · ${fecha}</div>
+                </div>
+                <button onclick="_borrarItemHistorial('historial2/${miID}/${key}')" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:4px 10px; font-size:0.75rem; font-weight:700;">🗑️</button>
+            </div>
+            ${h.nota ? `<div style="font-size:0.78rem; color:${e.color}; opacity:0.8; margin-top:4px;">📝 ${h.nota}</div>` : ''}
+        </div>`;
+    }
+
+    function _borrarItemHistorial(dbPath) {
+        if (!confirm('¿Borrar esta entrada?')) return;
+        db.ref(dbPath).remove().then(() => _cargarItemsCategoria(_hmCategoriaActiva));
+    }
+
+    // ===== AÑADIR ITEM =====
+    function mostrarFormAñadir() {
+        const form = document.getElementById('hm-form-añadir');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        ['generado','pendiente','comp','propio'].forEach(c => {
+            document.getElementById('hm-form-' + c).style.display = c === _hmCategoriaActiva ? 'block' : 'none';
         });
     }
 
-    function mostrarFormNuevoCambio() {
-        document.getElementById('form-nuevo-cambio').style.display = 'block';
-        document.getElementById('nc-con').value = '';
-        document.getElementById('nc-trabaja').value = '';
-        document.getElementById('nc-libra').value = '';
-        document.getElementById('nc-nota').value = '';
-    }
-
-    function guardarNuevoCambio() {
-        const con = document.getElementById('nc-con').value.trim();
-        const diaTrabaja = document.getElementById('nc-trabaja').value.trim();
-        const diaLibra = document.getElementById('nc-libra').value.trim();
-        const nota = document.getElementById('nc-nota').value.trim();
-        if (!con || !diaTrabaja || !diaLibra) { alert('Rellena el compañero y los dos días'); return; }
+    function guardarItemCategoria() {
+        const cat = _hmCategoriaActiva;
         const ts = Date.now();
-        db.ref(`historial/${miID}/${ts}`).set({ con, diaTrabaja, diaLibra, ts, nota, manual: true }).then(() => {
-            document.getElementById('form-nuevo-cambio').style.display = 'none';
-            abrirHistorial();
+        let datos = { cat, ts };
+
+        if (cat === 'generado') {
+            const fecha = document.getElementById('fa-gen-fecha').value.trim();
+            const tipo = document.getElementById('fa-gen-tipo').value;
+            const nota = document.getElementById('fa-gen-nota').value.trim();
+            if (!fecha) { alert('Introduce la fecha'); return; }
+            datos = { ...datos, fecha, esLibre: tipo === 'libre', nota };
+        } else if (cat === 'pendiente') {
+            const fecha = document.getElementById('fa-pend-fecha').value.trim();
+            const nota = document.getElementById('fa-pend-nota').value.trim();
+            if (!fecha) { alert('Introduce la fecha del día pendiente'); return; }
+            datos = { ...datos, fecha, nota, resuelto: null };
+        } else if (cat === 'comp') {
+            const con = document.getElementById('fa-comp-con').value.trim();
+            const diaTrabaja = document.getElementById('fa-comp-trabaja').value.trim();
+            const diaLibra = document.getElementById('fa-comp-libra').value.trim();
+            const nota = document.getElementById('fa-comp-nota').value.trim();
+            if (!con || !diaTrabaja || !diaLibra) { alert('Rellena compañero y los dos días'); return; }
+            datos = { ...datos, con, diaTrabaja, diaLibra, nota };
+        } else if (cat === 'propio') {
+            const diaTrabaja = document.getElementById('fa-prop-trabaja').value.trim();
+            const diaLibra = document.getElementById('fa-prop-libra').value.trim();
+            const nota = document.getElementById('fa-prop-nota').value.trim();
+            if (!diaTrabaja || !diaLibra) { alert('Introduce los dos días'); return; }
+            datos = { ...datos, diaTrabaja, diaLibra, nota };
+        }
+
+        db.ref(`historial2/${miID}/${ts}`).set(datos).then(() => {
+            document.getElementById('hm-form-añadir').style.display = 'none';
+            _cargarItemsCategoria(cat);
+            _cargarBadges();
         });
     }
 
-    function borrarCambioHistorial(key) {
-        if (!confirm('¿Borrar este cambio del historial?')) return;
-        db.ref(`historial/${miID}/${key}`).remove().then(() => abrirHistorial());
+    // ===== RESOLVER PENDIENTE =====
+    function abrirResolverPendiente(key, fechaTexto) {
+        _hmPendienteKey = key;
+        document.getElementById('hm-detalle').style.display = 'none';
+        document.getElementById('hm-pendiente-accion').style.display = 'block';
+        document.getElementById('hm-pend-info').textContent = '📅 Día pendiente: ' + fechaTexto;
+        document.getElementById('hm-pend-compensacion').style.display = 'none';
+        document.getElementById('hm-pend-dia-comp').value = '';
+        _hmPendienteResolucion = null;
     }
 
+    function resolverPendiente(accion) {
+        _hmPendienteResolucion = accion;
+        if (accion === 'trabajo') {
+            // Resuelto directamente: trabaja ese día ⭕
+            db.ref(`historial2/${miID}/${_hmPendienteKey}/resuelto`).set({ accion: 'trabajo' }).then(() => {
+                alert('✅ Marcado como día trabajado ⭕');
+                volverDetalle();
+                _cargarItemsCategoria('pendiente');
+            });
+        } else {
+            // Libre: pedir día de compensación
+            document.getElementById('hm-pend-compensacion').style.display = 'block';
+        }
+    }
+
+    function confirmarCompensacion() {
+        const diaComp = document.getElementById('hm-pend-dia-comp').value.trim();
+        if (!diaComp) { alert('Introduce el día que compensas trabajando'); return; }
+        db.ref(`historial2/${miID}/${_hmPendienteKey}/resuelto`).set({ accion: 'libre', diaComp }).then(() => {
+            alert('✅ Resuelto: libras este día y compensas trabajando el ' + diaComp);
+            volverDetalle();
+            _cargarItemsCategoria('pendiente');
+            _cargarBadges();
+        });
+    }
+
+    // Compatibilidad hacia atrás: mantener funciones antiguas por si algo las llama
+    function mostrarFormNuevoCambio() { _hmCategoriaActiva = 'comp'; mostrarFormAñadir(); }
+    function guardarNuevoCambio() { guardarItemCategoria(); }
+    function borrarCambioHistorial(key) { _borrarItemHistorial('historial/' + miID + '/' + key); }
     function guardarNota(key) {
-        const nota = document.getElementById(`nota-${key}`)?.value || '';
-        db.ref(`historial/${miID}/${key}/nota`).set(nota).then(() => {
-            alert('✅ Nota guardada');
-        });
+        const nota = document.getElementById('nota-' + key)?.value || '';
+        db.ref('historial/' + miID + '/' + key + '/nota').set(nota).then(() => alert('✅ Nota guardada'));
     }
 
     function cerrarHistorial() {
         document.getElementById('historial-modal').style.display = 'none';
+        _hmCategoriaActiva = null;
+        _hmPendienteKey = null;
     }
 
     function reproducirSonido() {
@@ -2444,28 +2674,117 @@
 
 <div id="historial-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.85); z-index:6000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
     <div style="background:var(--surface); width:100%; max-width:480px; border-radius:20px; padding:20px; margin-top:10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3 style="margin:0; color:var(--primary-dark);">📋 Mis cambios</h3>
-            <div style="display:flex; gap:8px;">
-                <button onclick="mostrarFormNuevoCambio()" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:6px 12px; font-weight:700;">➕ Añadir</button>
+
+        <!-- PORTADA: 4 tarjetas -->
+        <div id="hm-portada">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                <h3 style="margin:0; color:var(--primary-dark);">📋 Mis cambios</h3>
                 <button onclick="cerrarHistorial()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;">✕</button>
             </div>
-        </div>
-        <div id="form-nuevo-cambio" style="display:none; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px;">
-            <div style="font-weight:800; color:var(--primary-dark); margin-bottom:10px;">Nuevo cambio manual</div>
-            <input id="nc-con" type="text" placeholder="Nombre del compañero" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
-            <div style="display:flex; gap:8px; margin-bottom:8px;">
-                <input id="nc-trabaja" type="text" placeholder="Día que trabajas (ej: 15/3)" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text);">
-                <input id="nc-libra" type="text" placeholder="Día que libras (ej: 20/3)" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text);">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+                <div onclick="abrirCategoria('generado')" style="border:2px solid var(--pink); background:#fdf2f8; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
+                    <div style="font-size:1.8rem; margin-bottom:6px;">✨</div>
+                    <div style="font-weight:800; color:#be185d; font-size:0.95rem;">Generado</div>
+                    <div style="font-size:0.72rem; color:#be185d; opacity:0.7; margin-top:3px;">Días asignados</div>
+                    <div id="badge-generado" style="display:none; position:absolute; top:8px; right:10px; background:var(--pink); color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
+                </div>
+                <div onclick="abrirCategoria('pendiente')" style="border:2px solid var(--primary); background:#f5f3ff; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
+                    <div style="font-size:1.8rem; margin-bottom:6px;">⏳</div>
+                    <div style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;">Pendiente</div>
+                    <div style="font-size:0.72rem; color:var(--primary-dark); opacity:0.7; margin-top:3px;">Por resolver</div>
+                    <div id="badge-pendiente" style="display:none; position:absolute; top:8px; right:10px; background:var(--primary); color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
+                </div>
+                <div onclick="abrirCategoria('comp')" style="border:2px solid var(--yellow); background:#fefce8; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
+                    <div style="font-size:1.8rem; margin-bottom:6px;">🤝</div>
+                    <div style="font-weight:800; color:#854d0e; font-size:0.95rem;">Con compañero</div>
+                    <div style="font-size:0.72rem; color:#854d0e; opacity:0.7; margin-top:3px;">Cambios acordados</div>
+                    <div id="badge-comp" style="display:none; position:absolute; top:8px; right:10px; background:var(--yellow); color:#854d0e; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
+                </div>
+                <div onclick="abrirCategoria('propio')" style="border:2px solid var(--danger); background:#fff1f2; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
+                    <div style="font-size:1.8rem; margin-bottom:6px;">🔄</div>
+                    <div style="font-weight:800; color:var(--danger); font-size:0.95rem;">Cambio propio</div>
+                    <div style="font-size:0.72rem; color:var(--danger); opacity:0.7; margin-top:3px;">Tus permutas</div>
+                    <div id="badge-propio" style="display:none; position:absolute; top:8px; right:10px; background:var(--danger); color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
+                </div>
             </div>
-            <textarea id="nc-nota" placeholder="Nota (opcional)" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box;" rows="2"></textarea>
-            <div style="display:flex; gap:8px; margin-top:8px;">
-                <button onclick="guardarNuevoCambio()" style="flex:1; background:var(--primary); color:white; border:none; border-radius:8px; padding:8px; font-weight:700;">💾 Guardar</button>
-                <button onclick="document.getElementById('form-nuevo-cambio').style.display='none'" style="flex:1; background:#f5f3ff; color:var(--primary); border:none; border-radius:8px; padding:8px; font-weight:700;">Cancelar</button>
+            <button onclick="cerrarHistorial()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
+        </div>
+
+        <!-- DETALLE CATEGORÍA -->
+        <div id="hm-detalle" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button onclick="volverPortada()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
+                    <span id="hm-detalle-titulo" style="font-weight:800; color:var(--primary-dark); font-size:1rem;"></span>
+                </div>
+                <button onclick="mostrarFormAñadir()" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:7px 12px; font-weight:700;">➕</button>
+            </div>
+
+            <!-- Formulario añadir -->
+            <div id="hm-form-añadir" style="display:none; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px;">
+                <div id="hm-form-generado" style="display:none;">
+                    <div style="font-weight:700; color:#be185d; margin-bottom:8px; font-size:0.85rem;">✨ Añadir día generado</div>
+                    <input id="fa-gen-fecha" type="text" placeholder="Fecha (ej: 15/3/2025)" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
+                    <select id="fa-gen-tipo" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
+                        <option value="libre">⬜ Libre (cuadrado)</option>
+                        <option value="trabajo">⭕ Trabajo (círculo)</option>
+                    </select>
+                    <textarea id="fa-gen-nota" placeholder="Nota (opcional)" rows="2" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box; margin-bottom:8px;"></textarea>
+                </div>
+                <div id="hm-form-pendiente" style="display:none;">
+                    <div style="font-weight:700; color:var(--primary-dark); margin-bottom:8px; font-size:0.85rem;">⏳ Añadir día pendiente</div>
+                    <input id="fa-pend-fecha" type="text" placeholder="Fecha del día pendiente (ej: 15/3/2025)" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
+                    <textarea id="fa-pend-nota" placeholder="Nota (opcional)" rows="2" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box; margin-bottom:8px;"></textarea>
+                </div>
+                <div id="hm-form-comp" style="display:none;">
+                    <div style="font-weight:700; color:#854d0e; margin-bottom:8px; font-size:0.85rem;">🤝 Añadir cambio con compañero</div>
+                    <input id="fa-comp-con" type="text" placeholder="Nombre del compañero" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
+                    <div style="display:flex; gap:8px; margin-bottom:8px;">
+                        <input id="fa-comp-trabaja" type="text" placeholder="Día que TRABAJAS" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text);">
+                        <input id="fa-comp-libra" type="text" placeholder="Día que LIBRAS" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text);">
+                    </div>
+                    <textarea id="fa-comp-nota" placeholder="Nota (opcional)" rows="2" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box; margin-bottom:8px;"></textarea>
+                </div>
+                <div id="hm-form-propio" style="display:none;">
+                    <div style="font-weight:700; color:var(--danger); margin-bottom:8px; font-size:0.85rem;">🔄 Añadir cambio propio</div>
+                    <div style="display:flex; gap:8px; margin-bottom:8px;">
+                        <input id="fa-prop-trabaja" type="text" placeholder="Día que TRABAJAS" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text);">
+                        <input id="fa-prop-libra" type="text" placeholder="Día que LIBRAS" style="flex:1; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text);">
+                    </div>
+                    <textarea id="fa-prop-nota" placeholder="Nota (opcional)" rows="2" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box; margin-bottom:8px;"></textarea>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="guardarItemCategoria()" style="flex:1; background:var(--primary); color:white; border:none; border-radius:8px; padding:8px; font-weight:700;">💾 Guardar</button>
+                    <button onclick="document.getElementById('hm-form-añadir').style.display='none'" style="flex:1; background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:8px; font-weight:700;">Cancelar</button>
+                </div>
+            </div>
+
+            <div id="hm-lista-items" style="max-height:62vh; overflow-y:auto;"></div>
+        </div>
+
+        <!-- RESOLVER PENDIENTE -->
+        <div id="hm-pendiente-accion" style="display:none;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <button onclick="volverDetalle()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
+                <span style="font-weight:800; color:var(--primary-dark); font-size:1rem;">⏳ Resolver pendiente</span>
+            </div>
+            <div id="hm-pend-info" style="background:#f5f3ff; border:1px solid var(--primary); border-radius:12px; padding:12px; margin-bottom:16px; font-size:0.9rem; color:var(--primary-dark); font-weight:700;"></div>
+            <p style="font-size:0.88rem; color:var(--text); margin:0 0 12px 0; font-weight:600;">¿Cómo se resuelve este día?</p>
+            <div style="display:flex; gap:10px; margin-bottom:16px;">
+                <button onclick="resolverPendiente('libre')" style="flex:1; padding:16px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; font-size:0.88rem; cursor:pointer; line-height:1.4;">
+                    ⬜ Libras<br><span style="font-size:0.72rem; font-weight:500; opacity:0.8;">Tienes el día libre</span>
+                </button>
+                <button onclick="resolverPendiente('trabajo')" style="flex:1; padding:16px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; font-size:0.88rem; cursor:pointer; line-height:1.4;">
+                    ⭕ Trabajas<br><span style="font-size:0.72rem; font-weight:500; opacity:0.8;">Vienes a trabajar</span>
+                </button>
+            </div>
+            <div id="hm-pend-compensacion" style="display:none; background:#f0fdf4; border:1px solid var(--success); border-radius:12px; padding:14px; margin-bottom:12px;">
+                <div style="font-size:0.85rem; font-weight:800; color:#166534; margin-bottom:10px;">📅 ¿Qué día lo compensas trabajando?</div>
+                <input id="hm-pend-dia-comp" type="text" placeholder="Fecha (ej: 20/4/2026)" style="width:100%; padding:10px; border:1px solid var(--success); border-radius:8px; font-size:0.9rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:10px;">
+                <button onclick="confirmarCompensacion()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:10px; font-weight:800; font-size:0.9rem;">✅ Confirmar compensación</button>
             </div>
         </div>
-        <div id="historial-content" style="max-height:70vh; overflow-y:auto;"></div>
-        <button onclick="cerrarHistorial()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;">Cerrar</button>
+
     </div>
 </div>
 
