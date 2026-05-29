@@ -2158,7 +2158,7 @@
 
     function abrirHistorial() {
         document.getElementById('historial-modal').style.display = 'flex';
-        _onModalOpen();
+        _onModalOpen(); // solo una vez al abrir el modal
         _hmMostrarPortada();
         _hmBadges();
     }
@@ -2184,9 +2184,8 @@
 
     function _hmBadges() {
         db.ref('historial2/' + miID).once('value').then(snap => {
-            const items = snap.val() || {};
             const c = { generado:0, pendiente:0, comp:0, propio:0 };
-            Object.values(items).forEach(h => { if(c[h.cat]!==undefined) c[h.cat]++; });
+            Object.values(snap.val()||{}).forEach(h => { if(c[h.cat]!==undefined) c[h.cat]++; });
             Object.keys(c).forEach(cat => {
                 const b = document.getElementById('badge-' + cat);
                 if (!b) return;
@@ -2273,7 +2272,7 @@
                                 '<div><div style="font-weight:800;color:'+e.color+';">'+(h.esLibre?'⬜':'⭕')+' '+(h.fecha||'—')+'</div>' +
                                 '<div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">'+fecha+'</div></div>' +
                                 '<div style="display:flex;gap:6px;">' +
-                                    (!res ? '<button onclick="hmAbrirResolver(''+k+'',''+( h.fecha||'')+'''+')" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>' :
+                                    (!res ? '<button onclick="hmAbrirResolver(''+k+'',''+( h.fecha||'')+'')" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>' :
                                             '<span style="font-size:0.72rem;background:#f0fdf4;color:#166534;border-radius:8px;padding:4px 8px;font-weight:700;border:1px solid var(--success);">✅ Resuelto</span>') +
                                     '<button onclick="_hmBorrar('historial2/'+miID+'/'+k+'')" style="background:#fee2e2;color:var(--danger);border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">🗑️</button>' +
                                 '</div>' +
@@ -2357,8 +2356,7 @@
         document.getElementById('hm-pend-info').textContent = '📅 Día pendiente: ' + fechaTxt;
         document.getElementById('hm-pend-comp').style.display = 'none';
         document.getElementById('hm-pend-dia').value = '';
-        _hmMostrarResolver();
-        _onModalOpen();
+        _hmMostrarResolver(); // sin _onModalOpen() — ya está abierto el modal
     }
 
     function hmResolver(accion) {
@@ -2381,7 +2379,7 @@
         });
     }
 
-    // compatibilidad antigua
+    // compatibilidad funciones antiguas
     function mostrarFormNuevoCambio() { _hmCat='comp'; hmMostrarForm(); }
     function guardarNuevoCambio() { hmGuardar(); }
     function borrarCambioHistorial(key) { _hmBorrar('historial/'+miID+'/'+key); }
@@ -2630,7 +2628,7 @@
                 <button onclick="cerrarHistorial()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;">✕</button>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-                <div onclick="abrirCategoria('generado')" style="border:2px solid var(--pink); background:#fdf2f8; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent; active:opacity:0.8;">
+                <div onclick="abrirCategoria('generado')" style="border:2px solid var(--pink); background:#fdf2f8; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
                     <div style="font-size:1.8rem; margin-bottom:6px;">✨</div>
                     <div style="font-weight:800; color:#be185d;">Generado</div>
                     <div style="font-size:0.72rem; color:#be185d; opacity:0.7; margin-top:3px;">Días asignados</div>
@@ -2662,12 +2660,11 @@
         <div id="hm-detalle" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <button onclick="hmVolverPortada()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800; font-size:0.9rem;">← Atrás</button>
+                    <button onclick="hmVolverPortada()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
                     <span id="hm-titulo" style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;"></span>
                 </div>
                 <button onclick="hmMostrarForm()" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:7px 13px; font-weight:700;">➕</button>
             </div>
-            <!-- Formulario añadir -->
             <div id="hm-form-wrap" style="display:none; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px;">
                 <div id="hm-form-generado" style="display:none;">
                     <div style="font-weight:700; color:#be185d; margin-bottom:8px; font-size:0.85rem;">✨ Día generado</div>
@@ -2711,7 +2708,7 @@
         <!-- VISTA 3: Resolver pendiente -->
         <div id="hm-resolver" style="display:none;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-                <button onclick="hmVolverDetalle()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800; font-size:0.9rem;">← Atrás</button>
+                <button onclick="hmVolverDetalle()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
                 <span style="font-weight:800; color:var(--primary-dark);">⏳ Resolver pendiente</span>
             </div>
             <div id="hm-pend-info" style="background:#f5f3ff; border:1px solid var(--primary); border-radius:12px; padding:12px; margin-bottom:16px; font-size:0.9rem; color:var(--primary-dark); font-weight:700;"></div>
