@@ -3098,14 +3098,20 @@ function _onModalOpen() {
 history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
-    // Navegación interna del historial: si hay vistas en la pila, ir atrás dentro del modal
-    if (_estaVisible('historial-modal') && _hmNav && _hmNav.length > 0) {
-        window._hmPopstate();
-        // Re-empujar estado base para que el próximo atrás funcione
+    // Historial modal visible
+    if (_estaVisible('historial-modal')) {
+        if (_hmNav && _hmNav.length > 0) {
+            // Hay vistas internas — navegar atrás dentro del modal
+            window._hmPopstate();
+        } else {
+            // Ya estamos en la portada — absorber el atrás, no cerrar
+            hmVolverPortada();
+        }
+        // Siempre re-empujar para que el siguiente atrás también llegue aquí
         history.pushState({ modal: _modalCount }, '');
         return;
     }
-    // Cierre normal de modales
+    // Cierre normal de otros modales
     if (_modalCount > 0) {
         _modalCount--;
         _cerrarModalVisible();
