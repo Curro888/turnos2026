@@ -2156,9 +2156,18 @@
     // ===== HISTORIAL DE CAMBIOS (4 categorías) =====
     let _hmCat = null, _hmPendKey = null;
 
+    // Helpers globales para onclick en HTML generado dinámicamente
+    window._hmDel = function(path) {
+        if (!confirm('\u00bfBorrar esta entrada?')) return;
+        db.ref(path).remove().then(function() { _hmCargar(_hmCat); });
+    };
+    window._hmRes = function(key, fecha) {
+        hmAbrirResolver(key, fecha);
+    };
+
     function abrirHistorial() {
         document.getElementById('historial-modal').style.display = 'flex';
-        _onModalOpen(); // solo una vez al abrir el modal
+        _onModalOpen();
         _hmMostrarPortada();
         _hmBadges();
     }
@@ -2183,28 +2192,29 @@
     }
 
     function _hmBadges() {
-        db.ref('historial2/' + miID).once('value').then(snap => {
-            const c = { generado:0, pendiente:0, comp:0, propio:0 };
-            Object.values(snap.val()||{}).forEach(h => { if(c[h.cat]!==undefined) c[h.cat]++; });
-            Object.keys(c).forEach(cat => {
-                const b = document.getElementById('badge-' + cat);
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            var c = { generado:0, pendiente:0, comp:0, propio:0 };
+            var vals = snap.val() || {};
+            Object.values(vals).forEach(function(h) { if (c[h.cat] !== undefined) c[h.cat]++; });
+            Object.keys(c).forEach(function(cat) {
+                var b = document.getElementById('badge-' + cat);
                 if (!b) return;
-                if (c[cat] > 0) { b.style.display='block'; b.textContent=c[cat]; }
-                else b.style.display='none';
+                if (c[cat] > 0) { b.style.display = 'block'; b.textContent = c[cat]; }
+                else b.style.display = 'none';
             });
         });
-        db.ref('historial/' + miID).once('value').then(snap => {
-            const n = Object.keys(snap.val()||{}).length;
+        db.ref('historial/' + miID).once('value').then(function(snap) {
+            var n = Object.keys(snap.val() || {}).length;
             if (n > 0) {
-                const b = document.getElementById('badge-comp');
-                if (b) { b.style.display='block'; b.textContent=(parseInt(b.textContent)||0)+n; }
+                var b = document.getElementById('badge-comp');
+                if (b) { b.style.display = 'block'; b.textContent = (parseInt(b.textContent) || 0) + n; }
             }
         });
     }
 
     function abrirCategoria(cat) {
         _hmCat = cat;
-        const titulos = { generado:'✨ Generado', pendiente:'⏳ Pendiente', comp:'🤝 Con compañero', propio:'🔄 Cambio propio' };
+        var titulos = { generado:'\u2728 Generado', pendiente:'\u23f3 Pendiente', comp:'\ud83e\udd1d Con compa\u00f1ero', propio:'\ud83d\udd04 Cambio propio' };
         document.getElementById('hm-titulo').textContent = titulos[cat] || cat;
         document.getElementById('hm-form-wrap').style.display = 'none';
         _hmMostrarDetalle();
@@ -2223,141 +2233,146 @@
         _hmCargar(_hmCat);
     }
 
+    function _hmBtnBorrar(path) {
+        return '<button onclick="_hmDel(this.dataset.path)" data-path="' + path + '" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">\ud83d\uddd1\ufe0f</button>';
+    }
+
     function _hmCargar(cat) {
-        const cont = document.getElementById('hm-items');
-        cont.innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px;">Cargando...</div>';
+        var cont = document.getElementById('hm-items');
+        cont.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Cargando...</div>';
+
         if (cat === 'comp') {
             Promise.all([
                 db.ref('historial2/' + miID).once('value'),
                 db.ref('historial/' + miID).once('value')
-            ]).then(([s2, s1]) => {
-                let items = [];
-                if (s2.val()) Object.entries(s2.val()).filter(([,v])=>v.cat==='comp').forEach(([k,v])=>items.push([k,v,'nuevo']));
-                if (s1.val()) Object.entries(s1.val()).forEach(([k,v])=>items.push([k,v,'antiguo']));
-                items.sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
-                if (!items.length) { cont.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;">Sin cambios aún. Pulsa ➕</div>'; return; }
-                cont.innerHTML = items.map(([k,h,origen]) => {
-                    const path = origen==='antiguo' ? 'historial/'+miID+'/'+k : 'historial2/'+miID+'/'+k;
-                    const fecha = h.ts ? new Date(h.ts).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+            ]).then(function(results) {
+                var s2 = results[0], s1 = results[1];
+                var items = [];
+                var v2 = s2.val() || {};
+                var v1 = s1.val() || {};
+                Object.entries(v2).filter(function(e) { return e[1].cat === 'comp'; }).forEach(function(e) { items.push([e[0], e[1], 'nuevo']); });
+                Object.entries(v1).forEach(function(e) { items.push([e[0], e[1], 'antiguo']); });
+                items.sort(function(a,b) { return (b[1].ts||0) - (a[1].ts||0); });
+                if (!items.length) { cont.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Sin cambios a\u00fan. Pulsa \u2795</div>'; return; }
+                cont.innerHTML = items.map(function(item) {
+                    var k = item[0], h = item[1], origen = item[2];
+                    var path = origen === 'antiguo' ? 'historial/' + miID + '/' + k : 'historial2/' + miID + '/' + k;
+                    var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es', {day:'2-digit',month:'2-digit',year:'numeric'}) : '';
                     return '<div style="border:1px solid #fde68a;border-radius:12px;padding:14px;margin-bottom:10px;background:#fefce8;">' +
                         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-                            '<div><div style="font-weight:800;color:#854d0e;">🤝 '+(h.con||'Compañero')+'</div>' +
-                            '<div style="font-size:0.75rem;color:#92400e;">'+fecha+'</div></div>' +
-                            '<button data-path="'+path+'" onclick="window._hmBorrarPath(this)" style="background:#fee2e2;color:var(--danger);border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">🗑️</button>' +
+                            '<div><div style="font-weight:800;color:#854d0e;">\ud83e\udd1d ' + (h.con || 'Compa\u00f1ero') + '</div>' +
+                            '<div style="font-size:0.75rem;color:#92400e;">' + fecha + '</div></div>' +
+                            _hmBtnBorrar(path) +
                         '</div>' +
                         '<div style="display:flex;gap:8px;">' +
-                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>⭕</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaTrabaja||'—')+'</div></div>' +
-                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>⬜</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaLibra||'—')+'</div></div>' +
+                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>\u26aa</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">' + (h.diaTrabaja || '\u2014') + '</div></div>' +
+                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>\u25fb</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">' + (h.diaLibra || '\u2014') + '</div></div>' +
                         '</div>' +
-                        (h.nota?'<div style="font-size:0.78rem;color:#92400e;margin-top:6px;">📝 '+h.nota+'</div>':'') +
+                        (h.nota ? '<div style="font-size:0.78rem;color:#92400e;margin-top:6px;">\ud83d\udcdd ' + h.nota + '</div>' : '') +
                     '</div>';
                 }).join('');
             });
         } else {
-            db.ref('historial2/' + miID).once('value').then(snap => {
-                const items = Object.entries(snap.val()||{}).filter(([,v])=>v.cat===cat).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
-                if (!items.length) { cont.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;">Sin entradas aún. Pulsa ➕</div>'; return; }
-                const estilos = {
-                    generado: {borde:'var(--pink)',bg:'#fdf2f8',color:'#be185d'},
-                    pendiente:{borde:'var(--primary)',bg:'#f5f3ff',color:'var(--primary-dark)'},
-                    propio:   {borde:'var(--danger)',bg:'#fff1f2',color:'var(--danger)'}
+            db.ref('historial2/' + miID).once('value').then(function(snap) {
+                var todos = snap.val() || {};
+                var items = Object.entries(todos).filter(function(e) { return e[1].cat === cat; }).sort(function(a,b) { return (b[1].ts||0) - (a[1].ts||0); });
+                if (!items.length) { cont.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Sin entradas a\u00fan. Pulsa \u2795</div>'; return; }
+                var estilos = {
+                    generado:  { borde:'#f472b6', bg:'#fdf2f8', color:'#be185d' },
+                    pendiente: { borde:'#8b5cf6', bg:'#f5f3ff', color:'#6d28d9' },
+                    propio:    { borde:'#ef4444', bg:'#fff1f2', color:'#ef4444' }
                 };
-                const e = estilos[cat]||estilos.generado;
-                cont.innerHTML = items.map(([k,h]) => {
-                    const fecha = h.ts?new Date(h.ts).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
-                    if (cat==='pendiente') {
-                        const res = h.resuelto;
-                        return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">' +
+                var e = estilos[cat] || estilos.generado;
+                cont.innerHTML = items.map(function(item) {
+                    var k = item[0], h = item[1];
+                    var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es', {day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+                    var path = 'historial2/' + miID + '/' + k;
+                    var btnBorrar = _hmBtnBorrar(path);
+
+                    if (cat === 'pendiente') {
+                        var res = h.resuelto;
+                        var btnResolver = res
+                            ? '<span style="font-size:0.72rem;background:#f0fdf4;color:#166534;border-radius:8px;padding:4px 8px;font-weight:700;border:1px solid #22c55e;">\u2705 Resuelto</span>'
+                            : '<button onclick="_hmRes(this.dataset.key, this.dataset.fecha)" data-key="' + k + '" data-fecha="' + (h.fecha||'') + '" style="background:#8b5cf6;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>';
+                        var resInfo = res
+                            ? '<div style="font-size:0.78rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:6px 10px;border:1px solid #22c55e;margin-bottom:4px;">' + (res.accion === 'libre' ? '\u25fb Libras \u00b7 compensa el <b>' + res.diaComp + '</b> \u26aa' : '\u26aa Trabajas') + '</div>'
+                            : '';
+                        return '<div style="border:1px solid ' + e.borde + ';border-radius:12px;padding:14px;margin-bottom:10px;background:' + e.bg + ';">' +
                             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-                                '<div><div style="font-weight:800;color:'+e.color+';">'+(h.esLibre?'⬜':'⭕')+' '+(h.fecha||'—')+'</div>' +
-                                '<div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">'+fecha+'</div></div>' +
-                                '<div style="display:flex;gap:6px;">' +
-                                    (!res ? '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="window._hmResolverBtn(this)" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>' :
-                                            '<span style="font-size:0.72rem;background:#f0fdf4;color:#166534;border-radius:8px;padding:4px 8px;font-weight:700;border:1px solid var(--success);">✅ Resuelto</span>') +
-                                    '<button data-path="historial2/'+miID+'/'+k+'" onclick="window._hmBorrarPath(this)" style="background:#fee2e2;color:var(--danger);border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">🗑️</button>' +
-                                '</div>' +
-                            '</div>' +
-                            (res ? '<div style="font-size:0.78rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:6px 10px;border:1px solid var(--success);margin-bottom:4px;">'+(res.accion==='libre'?'⬜ Libras · compensa el <b>'+res.diaComp+'</b> ⭕':'⭕ Trabajas')+'</div>' : '') +
-                            (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';opacity:0.8;">📝 '+h.nota+'</div>':'') +
+                                '<div><div style="font-weight:800;color:' + e.color + ';">' + (h.esLibre?'\u25fb':'\u26aa') + ' ' + (h.fecha||'\u2014') + '</div>' +
+                                '<div style="font-size:0.72rem;color:' + e.color + ';opacity:0.7;">' + fecha + '</div></div>' +
+                                '<div style="display:flex;gap:6px;">' + btnResolver + btnBorrar + '</div>' +
+                            '</div>' + resInfo +
+                            (h.nota ? '<div style="font-size:0.78rem;color:' + e.color + ';opacity:0.8;">\ud83d\udcdd ' + h.nota + '</div>' : '') +
                         '</div>';
                     }
-                    if (cat==='propio') {
-                        return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">' +
+
+                    if (cat === 'propio') {
+                        return '<div style="border:1px solid ' + e.borde + ';border-radius:12px;padding:14px;margin-bottom:10px;background:' + e.bg + ';">' +
                             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-                                '<div style="font-weight:800;color:'+e.color+';">🔄 Cambio propio <span style="font-size:0.72rem;opacity:0.7;">'+fecha+'</span></div>' +
-                                '<button data-path="historial2/'+miID+'/'+k+'" onclick="window._hmBorrarPath(this)" style="background:#fee2e2;color:var(--danger);border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">🗑️</button>' +
+                                '<div style="font-weight:800;color:' + e.color + ';">\ud83d\udd04 Cambio propio <span style="font-size:0.72rem;opacity:0.7;">' + fecha + '</span></div>' +
+                                btnBorrar +
                             '</div>' +
                             '<div style="display:flex;gap:8px;margin-bottom:6px;">' +
-                                '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid '+e.borde+';"><div>⭕</div><div style="font-size:0.68rem;font-weight:700;color:'+e.color+';">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaTrabaja||'—')+'</div></div>' +
-                                '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid '+e.borde+';"><div>⬜</div><div style="font-size:0.68rem;font-weight:700;color:'+e.color+';">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaLibra||'—')+'</div></div>' +
+                                '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid ' + e.borde + ';"><div>\u26aa</div><div style="font-size:0.68rem;font-weight:700;color:' + e.color + ';">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">' + (h.diaTrabaja||'\u2014') + '</div></div>' +
+                                '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid ' + e.borde + ';"><div>\u25fb</div><div style="font-size:0.68rem;font-weight:700;color:' + e.color + ';">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">' + (h.diaLibra||'\u2014') + '</div></div>' +
                             '</div>' +
-                            (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';">📝 '+h.nota+'</div>':'') +
+                            (h.nota ? '<div style="font-size:0.78rem;color:' + e.color + ';">\ud83d\udcdd ' + h.nota + '</div>' : '') +
                         '</div>';
                     }
+
                     // generado
-                    return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">' +
+                    return '<div style="border:1px solid ' + e.borde + ';border-radius:12px;padding:14px;margin-bottom:10px;background:' + e.bg + ';">' +
                         '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                            '<div><div style="font-weight:800;color:'+e.color+';">'+(h.esLibre?'⬜':'⭕')+' '+(h.fecha||'—')+'</div>' +
-                            '<div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">'+(h.esLibre?'LIBRE':'TRABAJA')+' · '+fecha+'</div></div>' +
-                            '<button data-path="historial2/'+miID+'/'+k+'" onclick="window._hmBorrarPath(this)" style="background:#fee2e2;color:var(--danger);border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">🗑️</button>' +
+                            '<div><div style="font-weight:800;color:' + e.color + ';">' + (h.esLibre?'\u25fb':'\u26aa') + ' ' + (h.fecha||'\u2014') + '</div>' +
+                            '<div style="font-size:0.72rem;color:' + e.color + ';opacity:0.7;">' + (h.esLibre?'LIBRE':'TRABAJA') + ' \u00b7 ' + fecha + '</div></div>' +
+                            btnBorrar +
                         '</div>' +
-                        (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';margin-top:4px;">📝 '+h.nota+'</div>':'') +
+                        (h.nota ? '<div style="font-size:0.78rem;color:' + e.color + ';margin-top:4px;">\ud83d\udcdd ' + h.nota + '</div>' : '') +
                     '</div>';
                 }).join('');
             });
         }
     }
 
-    function _hmBorrar(path) {
-        if (!confirm('¿Borrar esta entrada?')) return;
-        db.ref(path).remove().then(()=>_hmCargar(_hmCat));
-    }
-
-    window._hmBorrarPath = function(btn) {
-        const path = btn.getAttribute('data-path');
-        if (!path) return;
-        _hmBorrar(path);
-    };
-
-    window._hmResolverBtn = function(btn) {
-        const key = btn.getAttribute('data-key');
-        const fecha = btn.getAttribute('data-fecha');
-        hmAbrirResolver(key, fecha);
-    };
-
     function hmMostrarForm() {
-        const w = document.getElementById('hm-form-wrap');
-        w.style.display = w.style.display==='none' ? 'block' : 'none';
-        ['generado','pendiente','comp','propio'].forEach(c => {
-            document.getElementById('hm-form-'+c).style.display = c===_hmCat ? 'block' : 'none';
+        var w = document.getElementById('hm-form-wrap');
+        w.style.display = w.style.display === 'none' ? 'block' : 'none';
+        ['generado','pendiente','comp','propio'].forEach(function(c) {
+            document.getElementById('hm-form-' + c).style.display = c === _hmCat ? 'block' : 'none';
         });
     }
 
     function hmGuardar() {
-        const cat = _hmCat, ts = Date.now();
-        let d = { cat, ts };
-        if (cat==='generado') {
-            const fecha=document.getElementById('fa-gen-fecha').value.trim();
-            if (!fecha){alert('Introduce la fecha');return;}
-            d = {...d, fecha, esLibre: document.getElementById('fa-gen-tipo').value==='libre', nota:document.getElementById('fa-gen-nota').value.trim()};
-        } else if (cat==='pendiente') {
-            const fecha=document.getElementById('fa-pend-fecha').value.trim();
-            if (!fecha){alert('Introduce la fecha');return;}
-            d = {...d, fecha, nota:document.getElementById('fa-pend-nota').value.trim(), resuelto:null};
-        } else if (cat==='comp') {
-            const con=document.getElementById('fa-comp-con').value.trim();
-            const dt=document.getElementById('fa-comp-trabaja').value.trim();
-            const dl=document.getElementById('fa-comp-libra').value.trim();
-            if (!con||!dt||!dl){alert('Rellena todos los campos');return;}
-            d = {...d, con, diaTrabaja:dt, diaLibra:dl, nota:document.getElementById('fa-comp-nota').value.trim()};
-        } else if (cat==='propio') {
-            const dt=document.getElementById('fa-prop-trabaja').value.trim();
-            const dl=document.getElementById('fa-prop-libra').value.trim();
-            if (!dt||!dl){alert('Introduce los dos días');return;}
-            d = {...d, diaTrabaja:dt, diaLibra:dl, nota:document.getElementById('fa-prop-nota').value.trim()};
+        var cat = _hmCat, ts = Date.now(), d = { cat: cat, ts: ts };
+        if (cat === 'generado') {
+            var fecha = document.getElementById('fa-gen-fecha').value.trim();
+            if (!fecha) { alert('Introduce la fecha'); return; }
+            d.fecha = fecha;
+            d.esLibre = document.getElementById('fa-gen-tipo').value === 'libre';
+            d.nota = document.getElementById('fa-gen-nota').value.trim();
+        } else if (cat === 'pendiente') {
+            var fecha = document.getElementById('fa-pend-fecha').value.trim();
+            if (!fecha) { alert('Introduce la fecha'); return; }
+            d.fecha = fecha;
+            d.nota = document.getElementById('fa-pend-nota').value.trim();
+            d.resuelto = null;
+        } else if (cat === 'comp') {
+            var con = document.getElementById('fa-comp-con').value.trim();
+            var dt = document.getElementById('fa-comp-trabaja').value.trim();
+            var dl = document.getElementById('fa-comp-libra').value.trim();
+            if (!con || !dt || !dl) { alert('Rellena todos los campos'); return; }
+            d.con = con; d.diaTrabaja = dt; d.diaLibra = dl;
+            d.nota = document.getElementById('fa-comp-nota').value.trim();
+        } else if (cat === 'propio') {
+            var dt = document.getElementById('fa-prop-trabaja').value.trim();
+            var dl = document.getElementById('fa-prop-libra').value.trim();
+            if (!dt || !dl) { alert('Introduce los dos d\u00edas'); return; }
+            d.diaTrabaja = dt; d.diaLibra = dl;
+            d.nota = document.getElementById('fa-prop-nota').value.trim();
         }
-        db.ref('historial2/'+miID+'/'+ts).set(d).then(()=>{
-            document.getElementById('hm-form-wrap').style.display='none';
+        db.ref('historial2/' + miID + '/' + ts).set(d).then(function() {
+            document.getElementById('hm-form-wrap').style.display = 'none';
             _hmCargar(cat);
             _hmBadges();
         });
@@ -2365,16 +2380,16 @@
 
     function hmAbrirResolver(key, fechaTxt) {
         _hmPendKey = key;
-        document.getElementById('hm-pend-info').textContent = '📅 Día pendiente: ' + fechaTxt;
+        document.getElementById('hm-pend-info').textContent = '\ud83d\udcc5 D\u00eda pendiente: ' + fechaTxt;
         document.getElementById('hm-pend-comp').style.display = 'none';
         document.getElementById('hm-pend-dia').value = '';
-        _hmMostrarResolver(); // sin _onModalOpen() — ya está abierto el modal
+        _hmMostrarResolver();
     }
 
     function hmResolver(accion) {
-        if (accion==='trabajo') {
-            db.ref('historial2/'+miID+'/'+_hmPendKey+'/resuelto').set({accion:'trabajo'}).then(()=>{
-                alert('✅ Marcado como ⭕ trabajas');
+        if (accion === 'trabajo') {
+            db.ref('historial2/' + miID + '/' + _hmPendKey + '/resuelto').set({ accion: 'trabajo' }).then(function() {
+                alert('\u2705 Marcado como \u26aa trabajas');
                 hmVolverDetalle();
             });
         } else {
@@ -2383,21 +2398,21 @@
     }
 
     function hmConfirmarComp() {
-        const dia = document.getElementById('hm-pend-dia').value.trim();
-        if (!dia){alert('Introduce el día de compensación');return;}
-        db.ref('historial2/'+miID+'/'+_hmPendKey+'/resuelto').set({accion:'libre', diaComp:dia}).then(()=>{
-            alert('✅ Resuelto: libras y compensas el '+dia);
+        var dia = document.getElementById('hm-pend-dia').value.trim();
+        if (!dia) { alert('Introduce el d\u00eda de compensaci\u00f3n'); return; }
+        db.ref('historial2/' + miID + '/' + _hmPendKey + '/resuelto').set({ accion: 'libre', diaComp: dia }).then(function() {
+            alert('\u2705 Resuelto: libras y compensas el ' + dia);
             hmVolverDetalle();
         });
     }
 
     // compatibilidad funciones antiguas
-    function mostrarFormNuevoCambio() { _hmCat='comp'; hmMostrarForm(); }
+    function mostrarFormNuevoCambio() { _hmCat = 'comp'; hmMostrarForm(); }
     function guardarNuevoCambio() { hmGuardar(); }
-    function borrarCambioHistorial(key) { _hmBorrar('historial/'+miID+'/'+key); }
+    function borrarCambioHistorial(key) { window._hmDel('historial/' + miID + '/' + key); }
     function guardarNota(key) {
-        const v = document.getElementById('nota-'+key)?.value||'';
-        db.ref('historial/'+miID+'/'+key+'/nota').set(v).then(()=>alert('✅ Nota guardada'));
+        var v = (document.getElementById('nota-' + key) || {}).value || '';
+        db.ref('historial/' + miID + '/' + key + '/nota').set(v).then(function() { alert('\u2705 Nota guardada'); });
     }
 
     function cerrarHistorial() {
@@ -2633,7 +2648,7 @@
 <div id="historial-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.85); z-index:6000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
     <div style="background:var(--surface); width:100%; max-width:480px; border-radius:20px; padding:20px; margin-top:10px;">
 
-        <!-- VISTA 1: Portada 4 tarjetas -->
+        <!-- PORTADA: 4 tarjetas -->
         <div id="hm-portada">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
                 <h3 style="margin:0; color:var(--primary-dark);">📋 Mis cambios</h3>
@@ -2668,7 +2683,7 @@
             <button onclick="cerrarHistorial()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
         </div>
 
-        <!-- VISTA 2: Detalle categoría -->
+        <!-- DETALLE CATEGORÍA -->
         <div id="hm-detalle" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -2682,8 +2697,8 @@
                     <div style="font-weight:700; color:#be185d; margin-bottom:8px; font-size:0.85rem;">✨ Día generado</div>
                     <input id="fa-gen-fecha" type="text" placeholder="Fecha (ej: 15/3/2025)" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
                     <select id="fa-gen-tipo" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
-                        <option value="libre">⬜ Libre (cuadrado)</option>
-                        <option value="trabajo">⭕ Trabajo (círculo)</option>
+                        <option value="libre">⬜ Libre</option>
+                        <option value="trabajo">⭕ Trabajo</option>
                     </select>
                     <textarea id="fa-gen-nota" placeholder="Nota (opcional)" rows="2" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); resize:none; box-sizing:border-box; margin-bottom:8px;"></textarea>
                 </div>
@@ -2717,7 +2732,7 @@
             <div id="hm-items" style="max-height:62vh; overflow-y:auto;"></div>
         </div>
 
-        <!-- VISTA 3: Resolver pendiente -->
+        <!-- RESOLVER PENDIENTE -->
         <div id="hm-resolver" style="display:none;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
                 <button onclick="hmVolverDetalle()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
@@ -2726,12 +2741,8 @@
             <div id="hm-pend-info" style="background:#f5f3ff; border:1px solid var(--primary); border-radius:12px; padding:12px; margin-bottom:16px; font-size:0.9rem; color:var(--primary-dark); font-weight:700;"></div>
             <p style="font-size:0.88rem; color:var(--text); margin:0 0 12px 0; font-weight:600;">¿Cómo se resuelve este día?</p>
             <div style="display:flex; gap:10px; margin-bottom:16px;">
-                <button onclick="hmResolver('libre')" style="flex:1; padding:16px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; line-height:1.5; cursor:pointer;">
-                    ⬜ Libras<br><span style="font-size:0.72rem; font-weight:500;">Día libre</span>
-                </button>
-                <button onclick="hmResolver('trabajo')" style="flex:1; padding:16px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; line-height:1.5; cursor:pointer;">
-                    ⭕ Trabajas<br><span style="font-size:0.72rem; font-weight:500;">Vienes a trabajar</span>
-                </button>
+                <button onclick="hmResolver('libre')" style="flex:1; padding:16px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; line-height:1.5; cursor:pointer;">⬜ Libras<br><span style="font-size:0.72rem; font-weight:500;">Día libre</span></button>
+                <button onclick="hmResolver('trabajo')" style="flex:1; padding:16px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; line-height:1.5; cursor:pointer;">⭕ Trabajas<br><span style="font-size:0.72rem; font-weight:500;">Vienes a trabajar</span></button>
             </div>
             <div id="hm-pend-comp" style="display:none; background:#f0fdf4; border:1px solid var(--success); border-radius:12px; padding:14px;">
                 <div style="font-size:0.85rem; font-weight:800; color:#166534; margin-bottom:10px;">📅 ¿Qué día compensas trabajando?</div>
