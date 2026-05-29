@@ -2172,7 +2172,7 @@
 
     function _hmPush(vista) {
         _hmNav.push(vista);
-        history.pushState({ hmVista: vista }, '');
+        history.pushState({ hmVista: vista, modal: ++_modalCount }, '');
     }
 
     function _hmIr(vista) {
@@ -2238,9 +2238,10 @@
     // Botón atrás del navegador dentro del historial
     window._hmPopstate = function() {
         var vista = _hmNav.pop();
-        if (!vista || vista === 'portada') { hmVolverPortada(); return; }
+        if (!vista) { cerrarHistorial(); return; }
+        if (vista === 'editar' || vista === 'resolver') { hmVolverDetalle(); return; }
         if (vista === 'detalle') { hmVolverPortada(); return; }
-        if (vista === 'resolver' || vista === 'editar') { hmVolverDetalle(); return; }
+        hmVolverPortada();
     };
 
     function _hmBtnBorrar(path) {
@@ -2463,14 +2464,27 @@
     }
 
     // ===== SYNC CALENDARIO -> HISTORIAL2 =====
+    // b-inter = "Haces (x compañero)" = día que TRABAJAS
+    // b-cambio-libre = "Libras (x compañero)" = día que LIBRAS
     function _hmSyncCalendario(uid, mIdx, d, texto, clase) {
         if (uid !== miID) return;
         var fecha = d + '/' + (mIdx+1);
+        // Extraer nombre del compañero del texto si viene informado
+        var con = '?';
+        var matchCon = texto ? texto.match(/x\s+([^\s(]+)/) : null;
+        if (matchCon) con = matchCon[1];
         var cat = null, extra = {};
-        if (clase === 'b-generado') { cat = 'generado'; extra.fecha = fecha; extra.esLibre = false; }
-        else if (clase === 'b-pend')  { cat = 'pendiente'; extra.fecha = fecha; extra.resuelto = null; }
-        else if (clase === 'b-inter') { cat = 'comp'; extra.diaTrabaja = fecha; extra.diaLibra = '?'; extra.con = '?'; }
-        else if (clase === 'b-cambio-libre') { cat = 'comp'; extra.diaLibra = fecha; extra.diaTrabaja = '?'; extra.con = '?'; }
+        if (clase === 'b-generado') {
+            cat = 'generado'; extra.fecha = fecha; extra.esLibre = false;
+        } else if (clase === 'b-pend') {
+            cat = 'pendiente'; extra.fecha = fecha; extra.resuelto = null;
+        } else if (clase === 'b-inter') {
+            // Haces = trabajas ese día
+            cat = 'comp'; extra.diaTrabaja = fecha; extra.diaLibra = '?'; extra.con = con;
+        } else if (clase === 'b-cambio-libre') {
+            // Libras = libre ese día
+            cat = 'comp'; extra.diaLibra = fecha; extra.diaTrabaja = '?'; extra.con = con;
+        }
         if (!cat) return;
         var ts = Date.now();
         var dato = Object.assign({ cat:cat, ts:ts, nota:'' }, extra);
@@ -2906,10 +2920,14 @@ function _onModalOpen() {
 history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
+    // Si hay navegación interna del historial, gestionarla primero
+    if (e.state && e.state.hmVista && _estaVisible('historial-modal')) {
+        window._hmPopstate();
+        return;
+    }
     if (_modalCount > 0) {
         _modalCount--;
         _cerrarModalVisible();
-        // Verificar si realmente quedan modales abiertos y sincronizar
         const hayModales = _modalCierres.some(({id}) => _estaVisible(id));
         if (!hayModales) {
             _modalCount = 0;
