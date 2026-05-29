@@ -918,6 +918,103 @@
         }
     });
 
+    // ===== MODAL CAMBIO PROPIO =====
+    var _cpTipoPrimerDia = null;
+
+    function _abrirModalCambioPropio() {
+        cerrarDesplegables();
+        var d = diaSeleccionado.d, m = diaSeleccionado.mIdx;
+        document.getElementById('mtp-fecha').textContent = 'Día seleccionado: ' + d + '/' + (m+1);
+        _cpTipoPrimerDia = null;
+        document.getElementById('modal-tipo-propio').style.display = 'flex';
+        _onModalOpen();
+    }
+
+    function _elegirTipoPropioD1(tipo) {
+        _cpTipoPrimerDia = tipo;
+        document.getElementById('modal-tipo-propio').style.display = 'none';
+        // Preparar el cambio propio con el tipo elegido
+        tipoCambio = 'AUTO';
+        modoSeleccionActivo = true;
+        primerDiaCambio = { ...diaSeleccionado };
+        document.getElementById('selection-notice').style.display = 'block';
+        if (tipo === 'trabaja') {
+            document.getElementById('selection-notice').innerText = '⭕ DÍA QUE TRABAJAS — ELIGE AHORA EL DÍA QUE LIBRAS';
+        } else {
+            document.getElementById('selection-notice').innerText = '⬜ DÍA QUE LIBRAS — ELIGE AHORA EL DÍA QUE TRABAJAS';
+        }
+    }
+
+    // Sobrescribir aplicarCambioPropio para usar el tipo elegido
+    var _aplicarCambioPropioOrig = null;
+    function aplicarCambioPropio(d1, m1, d2, m2) {
+        const f1 = d1 + '/' + (m1+1), f2 = d2 + '/' + (m2+1);
+        var dTrabaja, mTrabaja, fTrabaja, dLibra, mLibra, fLibra;
+        if (_cpTipoPrimerDia === 'libra') {
+            dLibra=d1; mLibra=m1; fLibra=f1;
+            dTrabaja=d2; mTrabaja=m2; fTrabaja=f2;
+        } else {
+            dTrabaja=d1; mTrabaja=m1; fTrabaja=f1;
+            dLibra=d2; mLibra=m2; fLibra=f2;
+        }
+        const updates = {
+            [`cambios/${miID}/${mTrabaja}_${dTrabaja}`]: { texto: `Haces (x ${fLibra})`, clase: 'b-inter' },
+            [`cambios/${miID}/${mLibra}_${dLibra}`]: { texto: `Libras (x ${fTrabaja})`, clase: 'b-cambio-libre' }
+        };
+        db.ref().update(updates).then(() => {
+            modoSeleccionActivo = false;
+            _cpTipoPrimerDia = null;
+            document.getElementById('selection-notice').style.display = 'none';
+        });
+    }
+
+    // ===== MODAL PENDIENTE =====
+    var _pendDia = null, _pendMes = null;
+
+    function _abrirModalPendiente() {
+        cerrarDesplegables();
+        _pendDia = diaSeleccionado.d;
+        _pendMes = diaSeleccionado.mIdx;
+        document.getElementById('mpt-fecha').textContent = 'Día: ' + _pendDia + '/' + (_pendMes+1);
+        document.getElementById('mpt-dia-comp').value = '';
+        document.getElementById('mpt-comp-wrap').style.display = 'none';
+        document.getElementById('modal-pendiente-tipo').style.display = 'flex';
+        _onModalOpen();
+    }
+
+    function _elegirTipoPendiente(tipo) {
+        var d = _pendDia, mIdx = _pendMes;
+        if (tipo === 'trabaja') {
+            db.ref(`cambios/${miID}/${mIdx}_${d}`).set({
+                texto: 'Pendiente (trabaja — libra por acordar)',
+                clase: 'b-pend'
+            }).then(function() {
+                document.getElementById('modal-pendiente-tipo').style.display = 'none';
+            });
+        } else {
+            document.getElementById('mpt-comp-wrap').style.display = 'block';
+        }
+    }
+
+    function _confirmarPendienteLibra() {
+        var diaComp = document.getElementById('mpt-dia-comp').value.trim();
+        if (!diaComp) { alert('Introduce el día que trabajaste'); return; }
+        var d = _pendDia, mIdx = _pendMes;
+        var fecha = d + '/' + (mIdx+1);
+        var updates = {};
+        updates[`cambios/${miID}/${mIdx}_${d}`] = { texto: 'Libras (por ' + diaComp + ')', clase: 'b-cambio-libre' };
+        var partes = diaComp.split('/');
+        if (partes.length >= 2) {
+            var dc = parseInt(partes[0]), mc = parseInt(partes[1]) - 1;
+            if (!isNaN(dc) && !isNaN(mc) && mc >= 0 && mc <= 11) {
+                updates[`cambios/${miID}/${mc}_${dc}`] = { texto: 'Haces (librado el ' + fecha + ')', clase: 'b-inter' };
+            }
+        }
+        db.ref().update(updates).then(function() {
+            document.getElementById('modal-pendiente-tipo').style.display = 'none';
+        });
+    }
+
     function cerrarSesion() {
         if (listenerCambios) { listenerCambios.off(); listenerCambios = null; }
         if (listenerSolicitudes) { listenerSolicitudes.off(); listenerSolicitudes = null; }
@@ -1392,10 +1489,10 @@
 
         const accionesMenu = {
             'generado': () => setCambio('Generado', 'b-generado'),
-            'pendiente': () => setCambio('Pendiente', 'b-pend'),
+            'pendiente': () => _abrirModalPendiente(),
             'vacaciones': () => abrirVacModal(),
             'comp': () => prepararCambio('COMP'),
-            'auto': () => prepararCambio('AUTO'),
+            'auto': () => _abrirModalCambioPropio(),
             'borrar': () => borrarCambio()
         };
 
@@ -1476,33 +1573,8 @@
             document.getElementById('selection-notice').innerText = "PASO 1: ABRE EL CALENDARIO DEL COMPAÑERO";
             cerrarCalendario();
         } else {
-            // Preguntar si el primer día es para trabajar o librar
-            var d = diaSeleccionado.d, m = diaSeleccionado.mIdx;
-            var fecha = d + '/' + (m+1);
-            _prepCambioPropio_tipoPrimerDia = null;
-            document.getElementById('ctx-menu').style.display = 'none';
-            // Mostrar mini modal de selección
-            _mostrarModalTipoCambioPropio(fecha);
-        }
-    }
-
-    var _prepCambioPropio_tipoPrimerDia = null;
-
-    function _mostrarModalTipoCambioPropio(fecha) {
-        var modal = document.getElementById('modal-tipo-propio');
-        document.getElementById('mtp-fecha').textContent = 'Día seleccionado: ' + fecha;
-        modal.style.display = 'flex';
-        _onModalOpen();
-    }
-
-    function _elegirTipoPropioD1(tipo) {
-        _prepCambioPropio_tipoPrimerDia = tipo;
-        document.getElementById('modal-tipo-propio').style.display = 'none';
-        // tipo: 'trabaja' o 'libra'
-        if (tipo === 'trabaja') {
-            document.getElementById('selection-notice').innerText = "⭕ DÍA QUE TRABAJAS GUARDADO — ELIGE EL DÍA QUE LIBRAS";
-        } else {
-            document.getElementById('selection-notice').innerText = "⬜ DÍA QUE LIBRAS GUARDADO — ELIGE EL DÍA QUE TRABAJAS";
+            document.getElementById('selection-notice').innerText = "✅ DÍA 1 GUARDADO — ELIGE EL SEGUNDO DÍA EN TU CALENDARIO";
+            // No cerrar el calendario — el usuario necesita elegir el segundo día aquí mismo
         }
     }
 
@@ -1655,24 +1727,12 @@
 
     function aplicarCambioPropio(d1, m1, d2, m2) {
         const f1 = `${d1}/${m1+1}`, f2 = `${d2}/${m2+1}`;
-        // Si el primer día es para trabajar: d1=trabaja, d2=libra
-        // Si el primer día es para librar: d1=libra, d2=trabaja
-        var dTrabaja, mTrabaja, fTrabaja, dLibra, mLibra, fLibra;
-        if (_prepCambioPropio_tipoPrimerDia === 'libra') {
-            dLibra=d1; mLibra=m1; fLibra=f1;
-            dTrabaja=d2; mTrabaja=m2; fTrabaja=f2;
-        } else {
-            // por defecto o 'trabaja': primer día = trabaja
-            dTrabaja=d1; mTrabaja=m1; fTrabaja=f1;
-            dLibra=d2; mLibra=m2; fLibra=f2;
-        }
         const updates = {
-            [`cambios/${miID}/${mTrabaja}_${dTrabaja}`]: { texto: `Haces (x ${fLibra})`, clase: 'b-inter' },
-            [`cambios/${miID}/${mLibra}_${dLibra}`]: { texto: `Libras (x ${fTrabaja})`, clase: 'b-cambio-libre' }
+            [`cambios/${miID}/${m1}_${d1}`]: { texto: `Haces (x ${f2})`, clase: 'b-inter' },
+            [`cambios/${miID}/${m2}_${d2}`]: { texto: `Libras (x ${f1})`, clase: 'b-cambio-libre' }
         };
         db.ref().update(updates).then(() => {
             modoSeleccionActivo = false;
-            _prepCambioPropio_tipoPrimerDia = null;
             document.getElementById('selection-notice').style.display = 'none';
         });
     }
@@ -1680,73 +1740,7 @@
     // ===== GESTIÓN DE DÍAS =====
     function setCambio(texto, clase) {
         const { d, mIdx, uid } = diaSeleccionado;
-        // Si es pendiente, preguntar si es a trabajar o a librar
-        if (clase === 'b-pend' && uid === miID) {
-            cerrarDesplegables();
-            _mostrarModalPendiente(d, mIdx);
-            return;
-        }
         db.ref(`cambios/${uid}/${mIdx}_${d}`).set({ texto, clase }).then(cerrarDesplegables);
-    }
-
-    var _pendDia = null, _pendMes = null;
-
-    function _mostrarModalPendiente(d, mIdx) {
-        _pendDia = d; _pendMes = mIdx;
-        var fecha = d + '/' + (mIdx+1);
-        document.getElementById('modal-pendiente-tipo').style.display = 'flex';
-        document.getElementById('mpt-fecha').textContent = 'Día: ' + fecha;
-        document.getElementById('mpt-dia-comp').value = '';
-        document.getElementById('mpt-comp-wrap').style.display = 'none';
-        _onModalOpen();
-    }
-
-    function _elegirTipoPendiente(tipo) {
-        var d = _pendDia, mIdx = _pendMes;
-        var fecha = d + '/' + (mIdx+1);
-        if (tipo === 'trabaja') {
-            // Marca como pendiente de librar
-            db.ref(`cambios/${miID}/${mIdx}_${d}`).set({
-                texto: 'Pendiente (trabaja — libra por acordar)',
-                clase: 'b-pend'
-            }).then(function() {
-                document.getElementById('modal-pendiente-tipo').style.display = 'none';
-                cerrarDesplegables();
-            });
-        } else {
-            // Libra — pedir qué día trabajado compensa
-            document.getElementById('mpt-comp-wrap').style.display = 'block';
-        }
-    }
-
-    function _confirmarPendienteLibra() {
-        var diaComp = document.getElementById('mpt-dia-comp').value.trim();
-        if (!diaComp) { alert('Introduce el día que trabajaste'); return; }
-        var d = _pendDia, mIdx = _pendMes;
-        var fecha = d + '/' + (mIdx+1);
-        // Marcar el día libre como "Libras por [diaComp]"
-        var updates = {};
-        updates[`cambios/${miID}/${mIdx}_${d}`] = {
-            texto: 'Libras (por ' + diaComp + ')',
-            clase: 'b-cambio-libre'
-        };
-        // Buscar si el día trabajado está ya marcado como pendiente y actualizarlo
-        // Parsear diaComp "d/m" o "d/m/yyyy"
-        var partes = diaComp.split('/');
-        if (partes.length >= 2) {
-            var dc = parseInt(partes[0]);
-            var mc = parseInt(partes[1]) - 1;
-            if (!isNaN(dc) && !isNaN(mc) && mc >= 0 && mc <= 11) {
-                updates[`cambios/${miID}/${mc}_${dc}`] = {
-                    texto: 'Haces (librado el ' + fecha + ')',
-                    clase: 'b-inter'
-                };
-            }
-        }
-        db.ref().update(updates).then(function() {
-            document.getElementById('modal-pendiente-tipo').style.display = 'none';
-            cerrarDesplegables();
-        });
     }
 
     function borrarCambio() {
@@ -2275,8 +2269,6 @@
 
     function _hmPush(vista) {
         _hmNav.push(vista);
-        // pushState con hmVista para que popstate lo identifique
-        // NO tocamos _modalCount — ese lo gestiona _onModalOpen al abrir el modal
         history.pushState({ hmVista: vista }, '');
     }
 
@@ -2991,12 +2983,12 @@ const _modalCierres = [
     { id: 'chat-modal',       fn: () => { if(typeof cerrarChat==='function') cerrarChat(); else document.getElementById('chat-modal').style.display='none'; } },
     { id: 'edit-group-modal', fn: () => { if(typeof cerrarEditorGrupo==='function') cerrarEditorGrupo(); else document.getElementById('edit-group-modal').style.display='none'; } },
     { id: 'stats-modal',      fn: () => { if(typeof cerrarEstadisticas==='function') cerrarEstadisticas(); else document.getElementById('stats-modal').style.display='none'; } },
-    { id: 'modal-tipo-propio',  fn: () => document.getElementById('modal-tipo-propio').style.display = 'none' },
-    { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display = 'none' },
-    { id: 'historial-modal',  fn: () => cerrarHistorial() },
-    { id: 'modal-tipo-propio',  fn: () => document.getElementById('modal-tipo-propio').style.display = 'none' },
-    { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display = 'none' },
-    { id: 'historial-modal',  fn: () => cerrarHistorial() },
+    { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
+    { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
+    { id: 'historial-modal',      fn: () => cerrarHistorial() },
+    { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
+    { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
+    { id: 'historial-modal',      fn: () => cerrarHistorial() },
     { id: 'grupos-panel',     fn: () => document.getElementById('grupos-panel').style.display = 'none' },
 ];
 
@@ -3029,12 +3021,11 @@ function _onModalOpen() {
 history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
-    // Navegación interna del historial — NO tocar _modalCount
+    // Si hay navegación interna del historial, gestionarla primero
     if (e.state && e.state.hmVista && _estaVisible('historial-modal')) {
         window._hmPopstate();
         return;
     }
-    // Cierre normal de modales
     if (_modalCount > 0) {
         _modalCount--;
         _cerrarModalVisible();
@@ -3058,33 +3049,32 @@ if ('serviceWorker' in navigator) {
 </script>
 <audio id="notif-sound" preload="auto" src="./notif.mp3"></audio>
 
-<!-- Modal: tipo cambio propio (trabaja o libra primero) -->
+<!-- Modal: cambio propio trabaja/libra -->
 <div id="modal-tipo-propio" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.75); z-index:7000; align-items:center; justify-content:center; padding:20px;">
     <div style="background:var(--surface); padding:24px; border-radius:20px; width:100%; max-width:320px; border:1px solid var(--primary); text-align:center;">
         <div style="font-size:1.6rem; margin-bottom:8px;">🔄</div>
         <h3 style="margin:0 0 6px 0; color:var(--primary-dark);">Cambio propio</h3>
         <div id="mtp-fecha" style="font-size:0.85rem; color:var(--text2); margin-bottom:18px;"></div>
         <p style="font-size:0.88rem; color:var(--text); margin:0 0 14px 0; font-weight:600;">Este día, ¿vas a trabajar o a librar?</p>
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
             <button onclick="_elegirTipoPropioD1('trabaja')" style="flex:1; padding:14px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; cursor:pointer; line-height:1.5;">⭕ Trabajas<br><span style="font-size:0.72rem; font-weight:500;">Día trabajado</span></button>
             <button onclick="_elegirTipoPropioD1('libra')" style="flex:1; padding:14px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; cursor:pointer; line-height:1.5;">⬜ Libras<br><span style="font-size:0.72rem; font-weight:500;">Día libre</span></button>
         </div>
-        <button onclick="document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none';" style="width:100%; margin-top:12px; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
+        <button onclick="document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none';" style="width:100%; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
     </div>
 </div>
 
-<!-- Modal: tipo pendiente (trabaja o libra) -->
+<!-- Modal: pendiente trabaja/libra -->
 <div id="modal-pendiente-tipo" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.75); z-index:7000; align-items:center; justify-content:center; padding:20px;">
     <div style="background:var(--surface); padding:24px; border-radius:20px; width:100%; max-width:320px; border:1px solid var(--primary);">
-        <div style="font-size:1.6rem; margin-bottom:8px; text-align:center;">⏳</div>
+        <div style="font-size:1.6rem; text-align:center; margin-bottom:8px;">⏳</div>
         <h3 style="margin:0 0 6px 0; color:var(--primary-dark); text-align:center;">Día pendiente</h3>
         <div id="mpt-fecha" style="font-size:0.85rem; color:var(--text2); margin-bottom:16px; text-align:center;"></div>
         <p style="font-size:0.88rem; color:var(--text); margin:0 0 14px 0; font-weight:600; text-align:center;">¿Este día vas a trabajar o a librar?</p>
-        <div style="display:flex; gap:10px; margin-bottom:14px;">
-            <button onclick="_elegirTipoPendiente('trabaja')" style="flex:1; padding:14px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; cursor:pointer; line-height:1.5;">⭕ Trabajas<br><span style="font-size:0.72rem; font-weight:500;">Pendiente de librar</span></button>
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
+            <button onclick="_elegirTipoPendiente('trabaja')" style="flex:1; padding:14px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166634; cursor:pointer; line-height:1.5;">⭕ Trabajas<br><span style="font-size:0.72rem; font-weight:500;">Pendiente de librar</span></button>
             <button onclick="_elegirTipoPendiente('libra')" style="flex:1; padding:14px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; cursor:pointer; line-height:1.5;">⬜ Libras<br><span style="font-size:0.72rem; font-weight:500;">Por día trabajado</span></button>
         </div>
-        <!-- Solo si elige librar: pedir el día trabajado -->
         <div id="mpt-comp-wrap" style="display:none; background:#f0fdf4; border:1px solid var(--success); border-radius:12px; padding:14px; margin-bottom:12px;">
             <div style="font-size:0.85rem; font-weight:800; color:#166534; margin-bottom:10px;">📅 ¿Qué día trabajaste para compensar?</div>
             <input id="mpt-dia-comp" type="text" placeholder="Fecha (ej: 15/3/2026)" style="width:100%; padding:10px; border:1px solid var(--success); border-radius:8px; font-size:0.9rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:10px;">
