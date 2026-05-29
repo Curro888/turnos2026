@@ -2154,62 +2154,52 @@
 
 
     // ===== HISTORIAL DE CAMBIOS (4 categorías) =====
-    let _hmCat = null, _hmPendKey = null;
+    var _hmCat = null, _hmPendKey = null, _hmEditKey = null;
+    var _hmNav = []; // pila de navegación: 'portada' | 'detalle' | 'resolver' | 'editar'
 
-    // Helpers globales para onclick en HTML generado dinámicamente
-    window._hmDel = function(path) {
+    // Helpers globales para onclick en HTML dinámico
+    window._hmDel = function(btn) {
+        var path = btn.dataset.path;
         if (!confirm('\u00bfBorrar esta entrada?')) return;
         db.ref(path).remove().then(function() { _hmCargar(_hmCat); });
     };
-    window._hmRes = function(key, fecha) {
-        hmAbrirResolver(key, fecha);
+    window._hmRes = function(btn) {
+        hmAbrirResolver(btn.dataset.key, btn.dataset.fecha);
+    };
+    window._hmEdit = function(btn) {
+        hmAbrirEditar(btn.dataset.key, btn.dataset.cat);
     };
 
+    function _hmPush(vista) {
+        _hmNav.push(vista);
+        history.pushState({ hmVista: vista }, '');
+    }
+
+    function _hmIr(vista) {
+        document.getElementById('hm-portada').style.display  = vista === 'portada'  ? 'block' : 'none';
+        document.getElementById('hm-detalle').style.display  = vista === 'detalle'  ? 'block' : 'none';
+        document.getElementById('hm-resolver').style.display = vista === 'resolver' ? 'block' : 'none';
+        document.getElementById('hm-editar').style.display   = vista === 'editar'   ? 'block' : 'none';
+    }
+
     function abrirHistorial() {
-        // Reset completo de estado
-        _hmCat = null;
-        _hmPendKey = null;
-        // Forzar vistas al estado correcto ANTES de mostrar el modal
-        document.getElementById('hm-portada').style.display = 'block';
-        document.getElementById('hm-detalle').style.display = 'none';
-        document.getElementById('hm-resolver').style.display = 'none';
-        if (document.getElementById('hm-form-wrap')) {
-            document.getElementById('hm-form-wrap').style.display = 'none';
-        }
+        _hmCat = null; _hmPendKey = null; _hmEditKey = null; _hmNav = [];
+        _hmIr('portada');
+        document.getElementById('hm-form-wrap').style.display = 'none';
         document.getElementById('historial-modal').style.display = 'flex';
         _onModalOpen();
         _hmBadges();
     }
 
-    function _hmMostrarPortada() {
-        _hmCat = null;
-        document.getElementById('hm-portada').style.display = 'block';
-        document.getElementById('hm-detalle').style.display = 'none';
-        document.getElementById('hm-resolver').style.display = 'none';
-    }
-
-    function _hmMostrarDetalle() {
-        document.getElementById('hm-portada').style.display = 'none';
-        document.getElementById('hm-detalle').style.display = 'block';
-        document.getElementById('hm-resolver').style.display = 'none';
-    }
-
-    function _hmMostrarResolver() {
-        document.getElementById('hm-portada').style.display = 'none';
-        document.getElementById('hm-detalle').style.display = 'none';
-        document.getElementById('hm-resolver').style.display = 'block';
-    }
-
     function _hmBadges() {
         db.ref('historial2/' + miID).once('value').then(function(snap) {
             var c = { generado:0, pendiente:0, comp:0, propio:0 };
-            var vals = snap.val() || {};
-            Object.values(vals).forEach(function(h) { if (c[h.cat] !== undefined) c[h.cat]++; });
+            Object.values(snap.val() || {}).forEach(function(h) { if (c[h.cat] !== undefined) c[h.cat]++; });
             Object.keys(c).forEach(function(cat) {
                 var b = document.getElementById('badge-' + cat);
                 if (!b) return;
-                if (c[cat] > 0) { b.style.display = 'block'; b.textContent = c[cat]; }
-                else b.style.display = 'none';
+                b.style.display = c[cat] > 0 ? 'block' : 'none';
+                b.textContent = c[cat];
             });
         });
         db.ref('historial/' + miID).once('value').then(function(snap) {
@@ -2226,24 +2216,38 @@
         var titulos = { generado:'\u2728 Generado', pendiente:'\u23f3 Pendiente', comp:'\ud83e\udd1d Con compa\u00f1ero', propio:'\ud83d\udd04 Cambio propio' };
         document.getElementById('hm-titulo').textContent = titulos[cat] || cat;
         document.getElementById('hm-form-wrap').style.display = 'none';
-        _hmMostrarDetalle();
+        _hmIr('detalle');
+        _hmPush('detalle');
         _hmCargar(cat);
     }
 
     function hmVolverPortada() {
-        _hmMostrarPortada();
+        _hmNav = [];
+        _hmIr('portada');
         _hmBadges();
     }
 
     function hmVolverDetalle() {
-        _hmPendKey = null;
+        _hmPendKey = null; _hmEditKey = null;
         document.getElementById('hm-pend-comp').style.display = 'none';
-        _hmMostrarDetalle();
+        _hmIr('detalle');
+        _hmNav = _hmNav.filter(function(v) { return v === 'detalle'; });
         _hmCargar(_hmCat);
     }
 
+    // Botón atrás del navegador dentro del historial
+    window._hmPopstate = function() {
+        var vista = _hmNav.pop();
+        if (!vista || vista === 'portada') { hmVolverPortada(); return; }
+        if (vista === 'detalle') { hmVolverPortada(); return; }
+        if (vista === 'resolver' || vista === 'editar') { hmVolverDetalle(); return; }
+    };
+
     function _hmBtnBorrar(path) {
-        return '<button onclick="_hmDel(this.dataset.path)" data-path="' + path + '" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">\ud83d\uddd1\ufe0f</button>';
+        return '<button data-path="' + path + '" onclick="_hmDel(this)" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">\ud83d\uddd1\ufe0f</button>';
+    }
+    function _hmBtnEditar(key, cat) {
+        return '<button data-key="' + key + '" data-cat="' + cat + '" onclick="_hmEdit(this)" style="background:#ede9fe;color:#7c3aed;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">\u270f\ufe0f</button>';
     }
 
     function _hmCargar(cat) {
@@ -2254,152 +2258,196 @@
             Promise.all([
                 db.ref('historial2/' + miID).once('value'),
                 db.ref('historial/' + miID).once('value')
-            ]).then(function(results) {
-                var s2 = results[0], s1 = results[1];
+            ]).then(function(res) {
                 var items = [];
-                var v2 = s2.val() || {};
-                var v1 = s1.val() || {};
-                Object.entries(v2).filter(function(e) { return e[1].cat === 'comp'; }).forEach(function(e) { items.push([e[0], e[1], 'nuevo']); });
-                Object.entries(v1).forEach(function(e) { items.push([e[0], e[1], 'antiguo']); });
-                items.sort(function(a,b) { return (b[1].ts||0) - (a[1].ts||0); });
+                Object.entries(res[0].val() || {}).filter(function(e) { return e[1].cat === 'comp'; }).forEach(function(e) { items.push([e[0], e[1], 'nuevo']); });
+                Object.entries(res[1].val() || {}).forEach(function(e) { items.push([e[0], e[1], 'antiguo']); });
+                items.sort(function(a,b) { return (b[1].ts||0)-(a[1].ts||0); });
                 if (!items.length) { cont.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Sin cambios a\u00fan. Pulsa \u2795</div>'; return; }
                 cont.innerHTML = items.map(function(item) {
-                    var k = item[0], h = item[1], origen = item[2];
-                    var path = origen === 'antiguo' ? 'historial/' + miID + '/' + k : 'historial2/' + miID + '/' + k;
-                    var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es', {day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+                    var k=item[0], h=item[1], origen=item[2];
+                    var path = origen==='antiguo' ? 'historial/'+miID+'/'+k : 'historial2/'+miID+'/'+k;
+                    var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+                    var esNuevo = origen === 'nuevo';
                     return '<div style="border:1px solid #fde68a;border-radius:12px;padding:14px;margin-bottom:10px;background:#fefce8;">' +
                         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-                            '<div><div style="font-weight:800;color:#854d0e;">\ud83e\udd1d ' + (h.con || 'Compa\u00f1ero') + '</div>' +
-                            '<div style="font-size:0.75rem;color:#92400e;">' + fecha + '</div></div>' +
-                            _hmBtnBorrar(path) +
+                            '<div><div style="font-weight:800;color:#854d0e;">\ud83e\udd1d '+(h.con||'Compa\u00f1ero')+'</div><div style="font-size:0.75rem;color:#92400e;">'+fecha+'</div></div>' +
+                            '<div style="display:flex;gap:4px;">' + (esNuevo ? _hmBtnEditar(k,'comp') : '') + _hmBtnBorrar(path) + '</div>' +
                         '</div>' +
                         '<div style="display:flex;gap:8px;">' +
-                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>\u26aa</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">' + (h.diaTrabaja || '\u2014') + '</div></div>' +
-                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>\u25fb</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">' + (h.diaLibra || '\u2014') + '</div></div>' +
+                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>\u26aa</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaTrabaja||'\u2014')+'</div></div>' +
+                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>\u25fb</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaLibra||'\u2014')+'</div></div>' +
                         '</div>' +
-                        (h.nota ? '<div style="font-size:0.78rem;color:#92400e;margin-top:6px;">\ud83d\udcdd ' + h.nota + '</div>' : '') +
+                        (h.nota?'<div style="font-size:0.78rem;color:#92400e;margin-top:6px;">\ud83d\udcdd '+h.nota+'</div>':'') +
                     '</div>';
                 }).join('');
             });
-        } else {
-            db.ref('historial2/' + miID).once('value').then(function(snap) {
-                var todos = snap.val() || {};
-                var items = Object.entries(todos).filter(function(e) { return e[1].cat === cat; }).sort(function(a,b) { return (b[1].ts||0) - (a[1].ts||0); });
-                if (!items.length) { cont.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Sin entradas a\u00fan. Pulsa \u2795</div>'; return; }
-                var estilos = {
-                    generado:  { borde:'#f472b6', bg:'#fdf2f8', color:'#be185d' },
-                    pendiente: { borde:'#8b5cf6', bg:'#f5f3ff', color:'#6d28d9' },
-                    propio:    { borde:'#ef4444', bg:'#fff1f2', color:'#ef4444' }
-                };
-                var e = estilos[cat] || estilos.generado;
-                cont.innerHTML = items.map(function(item) {
-                    var k = item[0], h = item[1];
-                    var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es', {day:'2-digit',month:'2-digit',year:'numeric'}) : '';
-                    var path = 'historial2/' + miID + '/' + k;
-                    var btnBorrar = _hmBtnBorrar(path);
-
-                    if (cat === 'pendiente') {
-                        var res = h.resuelto;
-                        var btnResolver = res
-                            ? '<span style="font-size:0.72rem;background:#f0fdf4;color:#166534;border-radius:8px;padding:4px 8px;font-weight:700;border:1px solid #22c55e;">\u2705 Resuelto</span>'
-                            : '<button onclick="_hmRes(this.dataset.key, this.dataset.fecha)" data-key="' + k + '" data-fecha="' + (h.fecha||'') + '" style="background:#8b5cf6;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>';
-                        var resInfo = res
-                            ? '<div style="font-size:0.78rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:6px 10px;border:1px solid #22c55e;margin-bottom:4px;">' + (res.accion === 'libre' ? '\u25fb Libras \u00b7 compensa el <b>' + res.diaComp + '</b> \u26aa' : '\u26aa Trabajas') + '</div>'
-                            : '';
-                        return '<div style="border:1px solid ' + e.borde + ';border-radius:12px;padding:14px;margin-bottom:10px;background:' + e.bg + ';">' +
-                            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-                                '<div><div style="font-weight:800;color:' + e.color + ';">' + (h.esLibre?'\u25fb':'\u26aa') + ' ' + (h.fecha||'\u2014') + '</div>' +
-                                '<div style="font-size:0.72rem;color:' + e.color + ';opacity:0.7;">' + fecha + '</div></div>' +
-                                '<div style="display:flex;gap:6px;">' + btnResolver + btnBorrar + '</div>' +
-                            '</div>' + resInfo +
-                            (h.nota ? '<div style="font-size:0.78rem;color:' + e.color + ';opacity:0.8;">\ud83d\udcdd ' + h.nota + '</div>' : '') +
-                        '</div>';
-                    }
-
-                    if (cat === 'propio') {
-                        return '<div style="border:1px solid ' + e.borde + ';border-radius:12px;padding:14px;margin-bottom:10px;background:' + e.bg + ';">' +
-                            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
-                                '<div style="font-weight:800;color:' + e.color + ';">\ud83d\udd04 Cambio propio <span style="font-size:0.72rem;opacity:0.7;">' + fecha + '</span></div>' +
-                                btnBorrar +
-                            '</div>' +
-                            '<div style="display:flex;gap:8px;margin-bottom:6px;">' +
-                                '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid ' + e.borde + ';"><div>\u26aa</div><div style="font-size:0.68rem;font-weight:700;color:' + e.color + ';">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">' + (h.diaTrabaja||'\u2014') + '</div></div>' +
-                                '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid ' + e.borde + ';"><div>\u25fb</div><div style="font-size:0.68rem;font-weight:700;color:' + e.color + ';">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">' + (h.diaLibra||'\u2014') + '</div></div>' +
-                            '</div>' +
-                            (h.nota ? '<div style="font-size:0.78rem;color:' + e.color + ';">\ud83d\udcdd ' + h.nota + '</div>' : '') +
-                        '</div>';
-                    }
-
-                    // generado
-                    return '<div style="border:1px solid ' + e.borde + ';border-radius:12px;padding:14px;margin-bottom:10px;background:' + e.bg + ';">' +
-                        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                            '<div><div style="font-weight:800;color:' + e.color + ';">' + (h.esLibre?'\u25fb':'\u26aa') + ' ' + (h.fecha||'\u2014') + '</div>' +
-                            '<div style="font-size:0.72rem;color:' + e.color + ';opacity:0.7;">' + (h.esLibre?'LIBRE':'TRABAJA') + ' \u00b7 ' + fecha + '</div></div>' +
-                            btnBorrar +
-                        '</div>' +
-                        (h.nota ? '<div style="font-size:0.78rem;color:' + e.color + ';margin-top:4px;">\ud83d\udcdd ' + h.nota + '</div>' : '') +
-                    '</div>';
-                }).join('');
-            });
+            return;
         }
+
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            var items = Object.entries(snap.val()||{}).filter(function(e){ return e[1].cat===cat; }).sort(function(a,b){ return (b[1].ts||0)-(a[1].ts||0); });
+            if (!items.length) { cont.innerHTML='<div style="text-align:center;color:#64748b;padding:20px;">Sin entradas a\u00fan. Pulsa \u2795</div>'; return; }
+            var E = { generado:{borde:'#f472b6',bg:'#fdf2f8',color:'#be185d'}, pendiente:{borde:'#8b5cf6',bg:'#f5f3ff',color:'#6d28d9'}, propio:{borde:'#ef4444',bg:'#fff1f2',color:'#ef4444'} };
+            var e = E[cat] || E.generado;
+            cont.innerHTML = items.map(function(item) {
+                var k=item[0], h=item[1];
+                var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+                var path = 'historial2/'+miID+'/'+k;
+                var btnBar = '<div style="display:flex;gap:4px;">' + _hmBtnEditar(k,cat) + _hmBtnBorrar(path) + '</div>';
+
+                if (cat === 'pendiente') {
+                    var res = h.resuelto;
+                    var btnRes = res
+                        ? '<span style="font-size:0.72rem;background:#f0fdf4;color:#166534;border-radius:8px;padding:4px 8px;font-weight:700;border:1px solid #22c55e;">\u2705 Resuelto</span>'
+                        : '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_hmRes(this)" style="background:#8b5cf6;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>';
+                    var resInfo = res
+                        ? '<div style="font-size:0.78rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:6px 10px;border:1px solid #22c55e;margin-bottom:4px;">'+(res.accion==='libre'?'\u25fb Libras \u00b7 compensa el <b>'+res.diaComp+'</b> \u26aa':'\u26aa Trabajas')+'</div>'
+                        : '';
+                    return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                            '<div><div style="font-weight:800;color:'+e.color+';">'+(h.esLibre?'\u25fb':'\u26aa')+' '+(h.fecha||'\u2014')+'</div><div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">'+fecha+'</div></div>' +
+                            '<div style="display:flex;gap:4px;">' + btnRes + _hmBtnEditar(k,cat) + _hmBtnBorrar(path) + '</div>' +
+                        '</div>' + resInfo +
+                        (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';opacity:0.8;">\ud83d\udcdd '+h.nota+'</div>':'') +
+                    '</div>';
+                }
+
+                if (cat === 'propio') {
+                    return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+                            '<div style="font-weight:800;color:'+e.color+';">\ud83d\udd04 Cambio propio <span style="font-size:0.72rem;opacity:0.7;">'+fecha+'</span></div>' + btnBar +
+                        '</div>' +
+                        '<div style="display:flex;gap:8px;margin-bottom:6px;">' +
+                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid '+e.borde+';"><div>\u26aa</div><div style="font-size:0.68rem;font-weight:700;color:'+e.color+';">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaTrabaja||'\u2014')+'</div></div>' +
+                            '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid '+e.borde+';"><div>\u25fb</div><div style="font-size:0.68rem;font-weight:700;color:'+e.color+';">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaLibra||'\u2014')+'</div></div>' +
+                        '</div>' +
+                        (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';">\ud83d\udcdd '+h.nota+'</div>':'') +
+                    '</div>';
+                }
+
+                // generado
+                return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                        '<div><div style="font-weight:800;color:'+e.color+';">'+(h.esLibre?'\u25fb':'\u26aa')+' '+(h.fecha||'\u2014')+'</div><div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">'+(h.esLibre?'LIBRE':'TRABAJA')+' \u00b7 '+fecha+'</div></div>' +
+                        btnBar +
+                    '</div>' +
+                    (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';margin-top:4px;">\ud83d\udcdd '+h.nota+'</div>':'') +
+                '</div>';
+            }).join('');
+        });
     }
 
     function hmMostrarForm() {
         var w = document.getElementById('hm-form-wrap');
         w.style.display = w.style.display === 'none' ? 'block' : 'none';
         ['generado','pendiente','comp','propio'].forEach(function(c) {
-            document.getElementById('hm-form-' + c).style.display = c === _hmCat ? 'block' : 'none';
+            document.getElementById('hm-form-'+c).style.display = c === _hmCat ? 'block' : 'none';
         });
     }
 
     function hmGuardar() {
-        var cat = _hmCat, ts = Date.now(), d = { cat: cat, ts: ts };
-        if (cat === 'generado') {
-            var fecha = document.getElementById('fa-gen-fecha').value.trim();
-            if (!fecha) { alert('Introduce la fecha'); return; }
-            d.fecha = fecha;
-            d.esLibre = document.getElementById('fa-gen-tipo').value === 'libre';
-            d.nota = document.getElementById('fa-gen-nota').value.trim();
-        } else if (cat === 'pendiente') {
-            var fecha = document.getElementById('fa-pend-fecha').value.trim();
-            if (!fecha) { alert('Introduce la fecha'); return; }
-            d.fecha = fecha;
-            d.nota = document.getElementById('fa-pend-nota').value.trim();
-            d.resuelto = null;
-        } else if (cat === 'comp') {
-            var con = document.getElementById('fa-comp-con').value.trim();
-            var dt = document.getElementById('fa-comp-trabaja').value.trim();
-            var dl = document.getElementById('fa-comp-libra').value.trim();
-            if (!con || !dt || !dl) { alert('Rellena todos los campos'); return; }
-            d.con = con; d.diaTrabaja = dt; d.diaLibra = dl;
-            d.nota = document.getElementById('fa-comp-nota').value.trim();
-        } else if (cat === 'propio') {
-            var dt = document.getElementById('fa-prop-trabaja').value.trim();
-            var dl = document.getElementById('fa-prop-libra').value.trim();
-            if (!dt || !dl) { alert('Introduce los dos d\u00edas'); return; }
-            d.diaTrabaja = dt; d.diaLibra = dl;
-            d.nota = document.getElementById('fa-prop-nota').value.trim();
+        var cat=_hmCat, ts=Date.now(), d={ cat:cat, ts:ts };
+        if (cat==='generado') {
+            var f=document.getElementById('fa-gen-fecha').value.trim(); if(!f){alert('Introduce la fecha');return;}
+            d.fecha=f; d.esLibre=document.getElementById('fa-gen-tipo').value==='libre'; d.nota=document.getElementById('fa-gen-nota').value.trim();
+        } else if (cat==='pendiente') {
+            var f=document.getElementById('fa-pend-fecha').value.trim(); if(!f){alert('Introduce la fecha');return;}
+            d.fecha=f; d.nota=document.getElementById('fa-pend-nota').value.trim(); d.resuelto=null;
+        } else if (cat==='comp') {
+            var con=document.getElementById('fa-comp-con').value.trim();
+            var dt=document.getElementById('fa-comp-trabaja').value.trim();
+            var dl=document.getElementById('fa-comp-libra').value.trim();
+            if(!con||!dt||!dl){alert('Rellena todos los campos');return;}
+            d.con=con; d.diaTrabaja=dt; d.diaLibra=dl; d.nota=document.getElementById('fa-comp-nota').value.trim();
+        } else if (cat==='propio') {
+            var dt=document.getElementById('fa-prop-trabaja').value.trim();
+            var dl=document.getElementById('fa-prop-libra').value.trim();
+            if(!dt||!dl){alert('Introduce los dos d\u00edas');return;}
+            d.diaTrabaja=dt; d.diaLibra=dl; d.nota=document.getElementById('fa-prop-nota').value.trim();
         }
-        db.ref('historial2/' + miID + '/' + ts).set(d).then(function() {
-            document.getElementById('hm-form-wrap').style.display = 'none';
-            _hmCargar(cat);
-            _hmBadges();
+        db.ref('historial2/'+miID+'/'+ts).set(d).then(function() {
+            document.getElementById('hm-form-wrap').style.display='none';
+            _hmCargar(cat); _hmBadges();
         });
     }
 
+    // ===== EDITAR =====
+    function hmAbrirEditar(key, cat) {
+        _hmEditKey = key;
+        db.ref('historial2/'+miID+'/'+key).once('value').then(function(snap) {
+            var h = snap.val() || {};
+            var titulo = { generado:'\u2728 Editar generado', pendiente:'\u23f3 Editar pendiente', comp:'\ud83e\udd1d Editar compa\u00f1ero', propio:'\ud83d\udd04 Editar cambio propio' };
+            document.getElementById('hm-edit-titulo').textContent = titulo[cat] || 'Editar';
+            var body = document.getElementById('hm-edit-body');
+            if (cat==='generado') {
+                body.innerHTML =
+                    '<input id="ed-fecha" type="text" value="'+(h.fecha||'')+'" placeholder="Fecha" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:8px;">' +
+                    '<select id="ed-tipo" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:8px;"><option value="libre"'+(h.esLibre?' selected':'')+'>\u25fb Libre</option><option value="trabajo"'+(!h.esLibre?' selected':'')+'>\u26aa Trabajo</option></select>' +
+                    '<textarea id="ed-nota" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);resize:none;box-sizing:border-box;">'+(h.nota||'')+'</textarea>';
+            } else if (cat==='pendiente') {
+                body.innerHTML =
+                    '<input id="ed-fecha" type="text" value="'+(h.fecha||'')+'" placeholder="Fecha" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:8px;">' +
+                    '<textarea id="ed-nota" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);resize:none;box-sizing:border-box;">'+(h.nota||'')+'</textarea>';
+            } else if (cat==='comp') {
+                body.innerHTML =
+                    '<input id="ed-con" type="text" value="'+(h.con||'')+'" placeholder="Nombre compa\u00f1ero" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:8px;">' +
+                    '<div style="display:flex;gap:8px;margin-bottom:8px;"><input id="ed-trabaja" type="text" value="'+(h.diaTrabaja||'')+'" placeholder="D\u00eda TRABAJAS" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);">' +
+                    '<input id="ed-libra" type="text" value="'+(h.diaLibra||'')+'" placeholder="D\u00eda LIBRAS" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);"></div>' +
+                    '<textarea id="ed-nota" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);resize:none;box-sizing:border-box;">'+(h.nota||'')+'</textarea>';
+            } else if (cat==='propio') {
+                body.innerHTML =
+                    '<div style="display:flex;gap:8px;margin-bottom:8px;"><input id="ed-trabaja" type="text" value="'+(h.diaTrabaja||'')+'" placeholder="D\u00eda TRABAJAS" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);">' +
+                    '<input id="ed-libra" type="text" value="'+(h.diaLibra||'')+'" placeholder="D\u00eda LIBRAS" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);"></div>' +
+                    '<textarea id="ed-nota" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);resize:none;box-sizing:border-box;">'+(h.nota||'')+'</textarea>';
+            }
+            document.getElementById('hm-edit-cat').value = cat;
+            _hmIr('editar');
+            _hmPush('editar');
+        });
+    }
+
+    function hmGuardarEdicion() {
+        var cat = document.getElementById('hm-edit-cat').value;
+        var key = _hmEditKey;
+        var upd = {};
+        if (cat==='generado') {
+            upd.fecha = document.getElementById('ed-fecha').value.trim();
+            upd.esLibre = document.getElementById('ed-tipo').value === 'libre';
+            upd.nota = document.getElementById('ed-nota').value.trim();
+        } else if (cat==='pendiente') {
+            upd.fecha = document.getElementById('ed-fecha').value.trim();
+            upd.nota = document.getElementById('ed-nota').value.trim();
+        } else if (cat==='comp') {
+            upd.con = document.getElementById('ed-con').value.trim();
+            upd.diaTrabaja = document.getElementById('ed-trabaja').value.trim();
+            upd.diaLibra = document.getElementById('ed-libra').value.trim();
+            upd.nota = document.getElementById('ed-nota').value.trim();
+        } else if (cat==='propio') {
+            upd.diaTrabaja = document.getElementById('ed-trabaja').value.trim();
+            upd.diaLibra = document.getElementById('ed-libra').value.trim();
+            upd.nota = document.getElementById('ed-nota').value.trim();
+        }
+        db.ref('historial2/'+miID+'/'+key).update(upd).then(function() {
+            alert('\u2705 Guardado');
+            hmVolverDetalle();
+        });
+    }
+
+    // ===== RESOLVER PENDIENTE =====
     function hmAbrirResolver(key, fechaTxt) {
         _hmPendKey = key;
         document.getElementById('hm-pend-info').textContent = '\ud83d\udcc5 D\u00eda pendiente: ' + fechaTxt;
         document.getElementById('hm-pend-comp').style.display = 'none';
         document.getElementById('hm-pend-dia').value = '';
-        _hmMostrarResolver();
+        _hmIr('resolver');
+        _hmPush('resolver');
     }
 
     function hmResolver(accion) {
-        if (accion === 'trabajo') {
-            db.ref('historial2/' + miID + '/' + _hmPendKey + '/resuelto').set({ accion: 'trabajo' }).then(function() {
-                alert('\u2705 Marcado como \u26aa trabajas');
-                hmVolverDetalle();
+        if (accion==='trabajo') {
+            db.ref('historial2/'+miID+'/'+_hmPendKey+'/resuelto').set({accion:'trabajo'}).then(function() {
+                alert('\u2705 Marcado como \u26aa trabajas'); hmVolverDetalle();
             });
         } else {
             document.getElementById('hm-pend-comp').style.display = 'block';
@@ -2408,25 +2456,49 @@
 
     function hmConfirmarComp() {
         var dia = document.getElementById('hm-pend-dia').value.trim();
-        if (!dia) { alert('Introduce el d\u00eda de compensaci\u00f3n'); return; }
-        db.ref('historial2/' + miID + '/' + _hmPendKey + '/resuelto').set({ accion: 'libre', diaComp: dia }).then(function() {
-            alert('\u2705 Resuelto: libras y compensas el ' + dia);
-            hmVolverDetalle();
+        if (!dia) { alert('Introduce el d\u00eda'); return; }
+        db.ref('historial2/'+miID+'/'+_hmPendKey+'/resuelto').set({accion:'libre',diaComp:dia}).then(function() {
+            alert('\u2705 Resuelto: libras y compensas el '+dia); hmVolverDetalle();
         });
     }
 
-    // compatibilidad funciones antiguas
-    function mostrarFormNuevoCambio() { _hmCat = 'comp'; hmMostrarForm(); }
+    // ===== SYNC CALENDARIO -> HISTORIAL2 =====
+    function _hmSyncCalendario(uid, mIdx, d, texto, clase) {
+        if (uid !== miID) return;
+        var fecha = d + '/' + (mIdx+1);
+        var cat = null, extra = {};
+        if (clase === 'b-generado') { cat = 'generado'; extra.fecha = fecha; extra.esLibre = false; }
+        else if (clase === 'b-pend')  { cat = 'pendiente'; extra.fecha = fecha; extra.resuelto = null; }
+        else if (clase === 'b-inter') { cat = 'comp'; extra.diaTrabaja = fecha; extra.diaLibra = '?'; extra.con = '?'; }
+        else if (clase === 'b-cambio-libre') { cat = 'comp'; extra.diaLibra = fecha; extra.diaTrabaja = '?'; extra.con = '?'; }
+        if (!cat) return;
+        var ts = Date.now();
+        var dato = Object.assign({ cat:cat, ts:ts, nota:'' }, extra);
+        db.ref('historial2/'+miID+'/'+ts).set(dato);
+    }
+
+    // Interceptar setCambio para sincronizar
+    var _setCambioOrig = window.setCambio;
+
+    // ===== POPSTATE dentro del historial =====
+    // El popstate global ya existe; añadimos hook para historial
+    var _hmModalAbierto = false;
+
+    // Compatibilidad antigua
+    function mostrarFormNuevoCambio() { _hmCat='comp'; hmMostrarForm(); }
     function guardarNuevoCambio() { hmGuardar(); }
-    function borrarCambioHistorial(key) { window._hmDel('historial/' + miID + '/' + key); }
+    function borrarCambioHistorial(key) {
+        if (!confirm('\u00bfBorrar?')) return;
+        db.ref('historial/'+miID+'/'+key).remove().then(function(){ _hmCargar(_hmCat); });
+    }
     function guardarNota(key) {
-        var v = (document.getElementById('nota-' + key) || {}).value || '';
-        db.ref('historial/' + miID + '/' + key + '/nota').set(v).then(function() { alert('\u2705 Nota guardada'); });
+        var v = (document.getElementById('nota-'+key)||{}).value||'';
+        db.ref('historial/'+miID+'/'+key+'/nota').set(v).then(function(){ alert('\u2705 Nota guardada'); });
     }
 
     function cerrarHistorial() {
         document.getElementById('historial-modal').style.display = 'none';
-        _hmCat = null; _hmPendKey = null;
+        _hmCat=null; _hmPendKey=null; _hmEditKey=null; _hmNav=[];
     }
 
     function reproducirSonido() {
@@ -2657,7 +2729,7 @@
 <div id="historial-modal" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.85); z-index:6000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
     <div style="background:var(--surface); width:100%; max-width:480px; border-radius:20px; padding:20px; margin-top:10px;">
 
-        <!-- PORTADA: 4 tarjetas -->
+        <!-- PORTADA 4 tarjetas -->
         <div id="hm-portada">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
                 <h3 style="margin:0; color:var(--primary-dark);">📋 Mis cambios</h3>
@@ -2738,7 +2810,21 @@
                     <button onclick="document.getElementById('hm-form-wrap').style.display='none'" style="flex:1; background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:8px; font-weight:700;">Cancelar</button>
                 </div>
             </div>
-            <div id="hm-items" style="max-height:62vh; overflow-y:auto;"></div>
+            <div id="hm-items" style="max-height:55vh; overflow-y:auto;"></div>
+        </div>
+
+        <!-- EDITAR ENTRADA -->
+        <div id="hm-editar" style="display:none;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <button onclick="hmVolverDetalle()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
+                <span id="hm-edit-titulo" style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;"></span>
+            </div>
+            <input type="hidden" id="hm-edit-cat">
+            <div id="hm-edit-body" style="margin-bottom:12px;"></div>
+            <div style="display:flex; gap:8px;">
+                <button onclick="hmGuardarEdicion()" style="flex:1; background:var(--primary); color:white; border:none; border-radius:8px; padding:12px; font-weight:700;">💾 Guardar cambios</button>
+                <button onclick="hmVolverDetalle()" style="flex:1; background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:12px; font-weight:700;">Cancelar</button>
+            </div>
         </div>
 
         <!-- RESOLVER PENDIENTE -->
