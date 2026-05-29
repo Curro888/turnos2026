@@ -269,7 +269,7 @@
                     <div id="dmenu-chat" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirChat();">💬 Chat</div>
                     <div id="dmenu-stats" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirEstadisticas();">📊 Estadísticas</div>
                     <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
-                    <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
+                    <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
                     <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
                 </div>
@@ -2166,9 +2166,18 @@
     };
 
     function abrirHistorial() {
+        // Reset completo de estado
+        _hmCat = null;
+        _hmPendKey = null;
+        // Forzar vistas al estado correcto ANTES de mostrar el modal
+        document.getElementById('hm-portada').style.display = 'block';
+        document.getElementById('hm-detalle').style.display = 'none';
+        document.getElementById('hm-resolver').style.display = 'none';
+        if (document.getElementById('hm-form-wrap')) {
+            document.getElementById('hm-form-wrap').style.display = 'none';
+        }
         document.getElementById('historial-modal').style.display = 'flex';
         _onModalOpen();
-        _hmMostrarPortada();
         _hmBadges();
     }
 
