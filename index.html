@@ -2393,7 +2393,10 @@
         document.getElementById('hm-editar').style.display   = vista === 'editar'   ? 'block' : 'none';
     }
 
+    var _hmAbierto = false;
+
     function abrirHistorial() {
+        _hmAbierto = true;
         _hmCat = null; _hmPendKey = null; _hmEditKey = null; _hmNav = [];
         _hmIr('portada');
         document.getElementById('hm-form-wrap').style.display = 'none';
@@ -2722,6 +2725,7 @@
     }
 
     function cerrarHistorial() {
+        _hmAbierto = false;
         document.getElementById('historial-modal').style.display = 'none';
         _hmCat=null; _hmPendKey=null; _hmEditKey=null; _hmNav=[];
     }
@@ -3136,7 +3140,7 @@ history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
     // Si el historial-modal está abierto, gestionar navegación interna
-    if (_estaVisible('historial-modal')) {
+    if (_hmAbierto) {
         if (_hmNav && _hmNav.length > 0) {
             window._hmPopstate();
         }
