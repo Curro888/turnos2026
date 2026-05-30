@@ -1868,6 +1868,22 @@
         });
     }
 
+    // Borra entradas de historial2 que coincidan con una fecha dada
+    function _hmBorrarPorFecha(fecha) {
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            var todos = snap.val() || {};
+            var updates = {};
+            Object.entries(todos).forEach(function(e) {
+                var k = e[0], h = e[1];
+                // Borrar si coincide con fecha como diaTrabaja, diaLibra o fecha
+                if (h.fecha === fecha || h.diaTrabaja === fecha || h.diaLibra === fecha) {
+                    updates['historial2/' + miID + '/' + k] = null;
+                }
+            });
+            if (Object.keys(updates).length > 0) db.ref().update(updates);
+        });
+    }
+
     function borrarCambio() {
         const { d, mIdx, uid } = diaSeleccionado;
         const data = dbCambios[uid]?.[`${mIdx}_${d}`];
@@ -1889,7 +1905,17 @@
                     updates[`cambios/${uid}/${linkedData.linkedKey}`] = null;
                     updates[`cambios/${linkedUid}/${linkedData.linkedUid === uid ? linkedKey : linkedData.linkedKey}`] = null;
                 }
-                db.ref().update(updates).then(cerrarDesplegables);
+                db.ref().update(updates).then(function() {
+                    cerrarDesplegables();
+                    var fecha1 = d + '/' + (mIdx+1);
+                    _hmBorrarPorFecha(fecha1);
+                    // También borrar el día del compañero vinculado
+                    if (linkedKey) {
+                        var lparts = linkedKey.split('_');
+                        var lfecha = lparts[1] + '/' + (parseInt(lparts[0])+1);
+                        _hmBorrarPorFecha(lfecha);
+                    }
+                });
             } else {
                 cerrarDesplegables();
             }
@@ -1907,13 +1933,19 @@
                 if (opcion) {
                     const updates = {};
                     diasVac.forEach(i => updates[`cambios/${uid}/${mIdx}_${i}`] = null);
-                    db.ref().update(updates).then(cerrarDesplegables);
+                    db.ref().update(updates).then(function() {
+                        cerrarDesplegables();
+                        diasVac.forEach(function(dv) { _hmBorrarPorFecha(dv + '/' + (mIdx+1)); });
+                    });
                     return;
                 }
             }
         }
 
-        db.ref(`cambios/${uid}/${mIdx}_${d}`).remove().then(cerrarDesplegables);
+        db.ref(`cambios/${uid}/${mIdx}_${d}`).remove().then(function() {
+            cerrarDesplegables();
+            if (uid === miID) _hmBorrarPorFecha(d + '/' + (mIdx+1));
+        });
     }
 
     function abrirVacModal() {
