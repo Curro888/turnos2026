@@ -971,10 +971,10 @@
     }
 
     function _usarGeneradoParaLibre(keyGen, fechaGen, fechaLibre) {
-        // Marcar el dia libre en el calendario
         var pl = fechaLibre.split('/');
         var pg = fechaGen.split('/');
         var updates = {};
+        // Marcar el dia libre en el calendario
         if (pl.length >= 2) {
             var dl = parseInt(pl[0]), ml = parseInt(pl[1])-1;
             updates['cambios/' + miID + '/' + ml + '_' + dl] = {
@@ -982,7 +982,7 @@
                 clase: 'b-cambio-libre'
             };
         }
-        // Actualizar el generado como resuelto
+        // Actualizar texto del generado en calendario
         if (pg.length >= 2) {
             var dg = parseInt(pg[0]), mg = parseInt(pg[1])-1;
             updates['cambios/' + miID + '/' + mg + '_' + dg] = {
@@ -991,12 +991,9 @@
             };
         }
         db.ref().update(updates).then(function() {
-            db.ref('historial2/' + miID + '/' + keyGen + '/resuelto').set({ accion: 'librar', diaLibre: fechaLibre });
-            // Guardar en historial2 el dia libre
-            var ts = Date.now();
-            db.ref('historial2/' + miID + '/' + ts).set({
-                cat: 'generado', ts: ts, fecha: fechaLibre,
-                esLibre: true, resuelto: { accion: 'librar', diaLibre: fechaLibre }, nota: ''
+            // Solo actualizar el registro existente — sin crear uno nuevo
+            db.ref('historial2/' + miID + '/' + keyGen).update({
+                resuelto: { accion: 'librar', diaLibre: fechaLibre }
             });
         });
         document.getElementById('modal-generado').style.display = 'none';
@@ -1154,43 +1151,33 @@
     }
 
     function _cargarDiasPendientesParaLibrar() {
-        // Buscar días b-pend Y b-generado (no cobrados) en el calendario
+        // Solo mostrar dias b-pend del calendario que NO estén ya resueltos
         db.ref('cambios/' + miID).once('value').then(function(snap) {
             var cambios = snap.val() || {};
             var items = [];
             Object.entries(cambios).forEach(function(e) {
                 var key = e[0], val = e[1];
-                if (val && (val.clase === 'b-pend' || val.clase === 'b-generado')) {
-                    // Excluir generados cobrados
-                    if (val.texto && val.texto.includes('cobrado')) return;
+                if (val && val.clase === 'b-pend') {
+                    // Excluir los que ya tienen "libra" en el texto (ya resueltos)
+                    if (val.texto && val.texto.includes('libra')) return;
                     var parts = key.split('_');
                     var mes = parseInt(parts[0]), dia = parseInt(parts[1]);
-                    items.push({
-                        key: key, dia: dia, mes: mes,
-                        fecha: dia + '/' + (mes+1),
-                        texto: val.texto || '',
-                        tipo: val.clase === 'b-pend' ? 'pendiente' : 'generado'
-                    });
+                    items.push({ key: key, dia: dia, mes: mes,
+                        fecha: dia + '/' + (mes+1), texto: val.texto || '' });
                 }
             });
             var cont = document.getElementById('mpt-lista-pendientes');
             if (items.length === 0) {
-                cont.innerHTML = '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No tienes d\u00edas pendientes ni generados.<br>Introduce la fecha manualmente:</div>';
+                cont.innerHTML = '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No tienes dias pendientes sin resolver.<br>Introduce la fecha manualmente:</div>';
             } else {
-                cont.innerHTML = '<div style="font-size:0.82rem;font-weight:700;color:#1e1b4b;margin-bottom:8px;">Elige el d\u00eda que usas para librar:</div>';
+                cont.innerHTML = '<div style="font-size:0.82rem;font-weight:700;color:#6d28d9;margin-bottom:8px;">Toca el dia trabajado que compensas:</div>';
                 items.forEach(function(p) {
-                    var esPend = p.tipo === 'pendiente';
-                    var color = esPend ? '#6d28d9' : '#be185d';
-                    var bg = esPend ? '#f5f3ff' : '#fdf2f8';
-                    var border = esPend ? '#8b5cf6' : '#f472b6';
-                    var icono = esPend ? '\u23f3' : '\u2728';
-                    var tipoLabel = esPend ? 'Pendiente' : 'Generado';
                     var btn = document.createElement('button');
-                    btn.style.cssText = 'width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:'+bg+';border:2px solid '+border+';border-radius:12px;font-size:0.88rem;font-weight:700;color:'+color+';cursor:pointer;display:block;';
-                    btn.innerHTML = icono + ' <b>' + p.fecha + '</b> <span style="font-size:0.72rem;background:'+border+';color:white;border-radius:8px;padding:1px 6px;margin-left:4px;">'+tipoLabel+'</span><br><span style="font-size:0.75rem;font-weight:400;color:#94a3b8;">' + p.texto + '</span>';
+                    btn.style.cssText = 'width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:#f5f3ff;border:2px solid #8b5cf6;border-radius:12px;font-size:0.88rem;font-weight:700;color:#6d28d9;cursor:pointer;display:block;';
+                    btn.innerHTML = '⏳ <b>' + p.fecha + '</b><br><span style="font-size:0.75rem;font-weight:400;color:#94a3b8;">' + p.texto + '</span>';
                     (function(pItem) {
                         btn.addEventListener('click', function() {
-                            if (confirm('\u00bfUsas el d\u00eda ' + pItem.fecha + ' (' + (pItem.tipo==='pendiente'?'Pendiente':'Generado') + ') para librar el ' + _pendDia + '/' + (_pendMes+1) + '?')) {
+                            if (confirm('¿Compensar el dia trabajado ' + pItem.fecha + ' librando el ' + _pendDia + '/' + (_pendMes+1) + '?')) {
                                 _seleccionarPendienteParaLibrar(pItem.key, pItem.fecha);
                             }
                         });
@@ -1578,15 +1565,15 @@
         const libreBase = (tabla[p.g] && tabla[p.g][mIdx]?.includes(d));
         let esLibreReal = libreBase;
         if (data) {
-            const t = data.texto || '';
             const c = data.clase || '';
-            // Libre: libras por cualquier motivo, vacaciones, generado que se va a librar
-            if (t === 'Vacaciones' || t.includes('Libras') || c === 'b-cambio-libre' || c === 'b-vac') {
+            const t = data.texto || '';
+            if (c === 'b-cambio-libre' || c === 'b-vac') {
                 esLibreReal = true;
-            }
-            // Trabaja: haces, pendiente que trabaja, generado pendiente de decidir o cobrado
-            else if (t.includes('Haces') || c === 'b-inter' ||
-                     t.includes('Generado') || t.includes('Pendiente') || c === 'b-pend') {
+            } else if (c === 'b-inter' || c === 'b-pend' || c === 'b-generado') {
+                esLibreReal = false;
+            } else if (t.includes('Libras')) {
+                esLibreReal = true;
+            } else if (t.includes('Haces') || t.includes('Generado') || t.includes('Pendiente')) {
                 esLibreReal = false;
             }
         }
