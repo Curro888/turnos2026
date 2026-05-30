@@ -500,7 +500,7 @@
         "11":{0:[1,2,9,10,17,18,22,23,31],1:[1,6,7,14,15,16,17,18,19,27,28],2:[7,8,13,14,18,19,28,29],3:[2,3,4,11,12,16,17,24,25],4:[2,3,7,8,16,17,22,23,30,31],5:[1,2,3,4,12,13,20,21,26,27],6:[1,2,11,12,16,17,18,25,26,30,31],7:[7,8,15,16,20,21,29,30],8:[4,5,12,13,14,15,16,17,25,26],9:[2,4,9,10,14,15,24,25,29,30,31],10:[7,8,12,13,20,21,28,29],11:[3,4,12,13,18,19,26,27,28,29,30,31]},
         "12":{0:[2,3,10,11,15,16,24,25,30,31],1:[7,8,9,10,11,12,20,21,28],2:[1,6,7,11,12,21,22,26,27,28],3:[4,5,9,10,17,18,25,26,30],4:[1,9,10,15,16,23,24,25,26,27,28],5:[5,6,13,14,19,20,24,25],6:[4,5,9,10,11,18,19,23,24,31],7:[1,8,9,13,14,22,23,28,29],8:[5,6,7,8,9,10,18,19,26,27],9:[2,3,7,8,17,18,22,23,24,31],10:[1,5,6,13,14,21,22,26,27],11:[5,6,11,12,19,20,21,22,23,24]},
         "13":{0:[3,4,8,9,17,18,23,24,31],1:[1,2,3,4,5,13,14,21,22,27,28],2:[4,5,14,15,19,20,21,28,29],3:[2,3,10,11,18,19,23,24],4:[2,3,8,9,16,17,18,19,20,21,29,30],5:[6,7,12,13,17,18,27,28],6:[2,3,4,11,12,16,17,24,25],7:[1,2,6,7,15,16,21,22,29,30],8:[1,2,3,11,12,19,20,25,26,30],9:[1,10,11,15,16,17,24,25,29,30],10:[6,7,14,15,19,20,28,29],11:[4,5,12,13,14,15,16,17,25,26]},
-        "14":{0:[1,2,10,11,16,17,24,25,26,27,28,29],1:[6,7,14,15,20,21,25,26],2:[7,8,12,13,14,21,22,26,27],3:[3,4,11,12,16,17,25,26],4:[1,2,9,10,11,12,13,14,22,23,30,31],5:[5,6,10,11,20,21,25,26,27],6:[4,5,9,10,17,18,25,26,30,31],7:[8,9,14,15,22,23,24,25,26,27],8:[4,5,12,13,18,19,23,24],9:[3,4,8,9,10,17,18,22,23,30,31],10:[7,8,12,13,21,22,27,28],11:[5,6,7,8,9,10,18,19,26,27]},
+        "14":{0:[],1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[],11:[]},
         "15":{0:[3,4,9,10,17,18,19,20,21,22,30,31],1:[7,8,13,14,18,19,28],2:[1,5,6,7,14,15,19,20,27,28],3:[4,5,9,10,18,19,24,25],4:[2,3,4,5,6,7,15,16,23,24,29,30],5:[3,4,13,14,18,19,20],6:[2,3,10,11,18,19,23,24],7:[1,2,7,8,15,16,17,18,19,20,28,29],8:[5,6,11,12,16,17,26,27],9:[1,2,3,10,11,15,16,23,24,31],10:[1,5,6,14,15,20,21,28,29,30],11:[1,2,3,11,12,19,20,25,26,30,31]}
     };
 
@@ -920,6 +920,44 @@
         }
     });
 
+    // ===== MODAL GENERADO =====
+    var _genDia = null, _genMes = null;
+
+    function _abrirModalGenerado() {
+        cerrarDesplegables();
+        _genDia = diaSeleccionado.d;
+        _genMes = diaSeleccionado.mIdx;
+        document.getElementById('mgen-fecha').textContent = 'Día: ' + _genDia + '/' + (_genMes+1);
+        document.getElementById('modal-generado').style.display = 'flex';
+        _onModalOpen();
+    }
+
+    function _elegirGenerado(opcion) {
+        var d = _genDia, mIdx = _genMes;
+        var fecha = d + '/' + (mIdx+1);
+        var texto, clase;
+        if (opcion === 'cobrar') {
+            texto = 'Generado (cobrado)';
+            clase = 'b-generado';
+        } else {
+            texto = 'Generado (librar pendiente)';
+            clase = 'b-generado';
+        }
+        db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({ texto: texto, clase: clase }).then(function() {
+            var ts = Date.now();
+            db.ref('historial2/' + miID + '/' + ts).set({
+                cat: 'generado',
+                ts: ts,
+                fecha: fecha,
+                esLibre: false,
+                cobrado: opcion === 'cobrar',
+                resuelto: opcion === 'cobrar' ? { accion: 'cobrado' } : null,
+                nota: ''
+            });
+            document.getElementById('modal-generado').style.display = 'none';
+        });
+    }
+
     // ===== MODAL CAMBIO PROPIO =====
     var _cpTipoPrimerDia = null;
 
@@ -967,6 +1005,11 @@
             modoSeleccionActivo = false;
             _cpTipoPrimerDia = null;
             document.getElementById('selection-notice').style.display = 'none';
+            var ts = Date.now();
+            db.ref('historial2/' + miID + '/' + ts).set({
+                cat: 'propio', ts: ts,
+                diaTrabaja: fTrabaja, diaLibra: fLibra, nota: ''
+            });
         });
     }
 
@@ -1008,29 +1051,43 @@
     }
 
     function _cargarDiasPendientesParaLibrar() {
+        // Buscar días b-pend Y b-generado (no cobrados) en el calendario
         db.ref('cambios/' + miID).once('value').then(function(snap) {
             var cambios = snap.val() || {};
-            var pendientes = [];
-            Object.entries(cambios).forEach(function(entry) {
-                var key = entry[0], val = entry[1];
-                if (val && val.clase === 'b-pend') {
+            var items = [];
+            Object.entries(cambios).forEach(function(e) {
+                var key = e[0], val = e[1];
+                if (val && (val.clase === 'b-pend' || val.clase === 'b-generado')) {
+                    // Excluir generados cobrados
+                    if (val.texto && val.texto.includes('cobrado')) return;
                     var parts = key.split('_');
                     var mes = parseInt(parts[0]), dia = parseInt(parts[1]);
-                    pendientes.push({ key: key, dia: dia, mes: mes, fecha: dia + '/' + (mes+1), texto: val.texto || '' });
+                    items.push({
+                        key: key, dia: dia, mes: mes,
+                        fecha: dia + '/' + (mes+1),
+                        texto: val.texto || '',
+                        tipo: val.clase === 'b-pend' ? 'pendiente' : 'generado'
+                    });
                 }
             });
             var cont = document.getElementById('mpt-lista-pendientes');
-            if (pendientes.length === 0) {
-                cont.innerHTML = '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No tienes d\u00edas pendientes en el calendario.<br>Introduce la fecha manualmente:</div>';
+            if (items.length === 0) {
+                cont.innerHTML = '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No tienes d\u00edas pendientes ni generados.<br>Introduce la fecha manualmente:</div>';
             } else {
-                cont.innerHTML = '<div style="font-size:0.82rem;font-weight:700;color:#6d28d9;margin-bottom:8px;">Toca el d\u00eda trabajado que compensas:</div>';
-                pendientes.forEach(function(p) {
+                cont.innerHTML = '<div style="font-size:0.82rem;font-weight:700;color:#1e1b4b;margin-bottom:8px;">Elige el d\u00eda que usas para librar:</div>';
+                items.forEach(function(p) {
+                    var esPend = p.tipo === 'pendiente';
+                    var color = esPend ? '#6d28d9' : '#be185d';
+                    var bg = esPend ? '#f5f3ff' : '#fdf2f8';
+                    var border = esPend ? '#8b5cf6' : '#f472b6';
+                    var icono = esPend ? '\u23f3' : '\u2728';
+                    var tipoLabel = esPend ? 'Pendiente' : 'Generado';
                     var btn = document.createElement('button');
-                    btn.style.cssText = 'width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:#f5f3ff;border:2px solid #8b5cf6;border-radius:12px;font-size:0.88rem;font-weight:700;color:#6d28d9;cursor:pointer;display:block;';
-                    btn.innerHTML = '\u23f3 <b>' + p.fecha + '</b><br><span style="font-size:0.75rem;font-weight:400;color:#94a3b8;">' + p.texto + '</span>';
+                    btn.style.cssText = 'width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:'+bg+';border:2px solid '+border+';border-radius:12px;font-size:0.88rem;font-weight:700;color:'+color+';cursor:pointer;display:block;';
+                    btn.innerHTML = icono + ' <b>' + p.fecha + '</b> <span style="font-size:0.72rem;background:'+border+';color:white;border-radius:8px;padding:1px 6px;margin-left:4px;">'+tipoLabel+'</span><br><span style="font-size:0.75rem;font-weight:400;color:#94a3b8;">' + p.texto + '</span>';
                     (function(pItem) {
                         btn.addEventListener('click', function() {
-                            if (confirm('\u00bfCompensar el d\u00eda trabajado ' + pItem.fecha + ' librando el ' + _pendDia + '/' + (_pendMes+1) + '?')) {
+                            if (confirm('\u00bfUsas el d\u00eda ' + pItem.fecha + ' (' + (pItem.tipo==='pendiente'?'Pendiente':'Generado') + ') para librar el ' + _pendDia + '/' + (_pendMes+1) + '?')) {
                                 _seleccionarPendienteParaLibrar(pItem.key, pItem.fecha);
                             }
                         });
@@ -1605,7 +1662,7 @@
         Array.from(menu.children).forEach(c => { if (c !== handle) c.remove(); });
 
         const accionesMenu = {
-            'generado': () => setCambio('Generado', 'b-generado'),
+            'generado': () => _abrirModalGenerado(),
             'pendiente': () => _abrirModalPendiente(),
             'vacaciones': () => abrirVacModal(),
             'comp': () => prepararCambio('COMP'),
@@ -3142,9 +3199,11 @@ const _modalCierres = [
     { id: 'chat-modal',       fn: () => { if(typeof cerrarChat==='function') cerrarChat(); else document.getElementById('chat-modal').style.display='none'; } },
     { id: 'edit-group-modal', fn: () => { if(typeof cerrarEditorGrupo==='function') cerrarEditorGrupo(); else document.getElementById('edit-group-modal').style.display='none'; } },
     { id: 'stats-modal',      fn: () => { if(typeof cerrarEstadisticas==='function') cerrarEstadisticas(); else document.getElementById('stats-modal').style.display='none'; } },
+    { id: 'modal-generado',       fn: () => document.getElementById('modal-generado').style.display='none' },
     { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
     { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
     { id: 'historial-modal',      fn: () => cerrarHistorial() },
+    { id: 'modal-generado',       fn: () => document.getElementById('modal-generado').style.display='none' },
     { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
     { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
     { id: 'historial-modal',      fn: () => cerrarHistorial() },
@@ -3219,6 +3278,21 @@ if ('serviceWorker' in navigator) {
 <audio id="notif-sound" preload="auto" src="./notif.mp3"></audio>
 
 <!-- Modal: cambio propio trabaja/libra -->
+<!-- Modal: generado cobrar/librar -->
+<div id="modal-generado" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.75); z-index:7000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--surface); padding:24px; border-radius:20px; width:100%; max-width:320px; border:1px solid var(--pink); text-align:center;">
+        <div style="font-size:1.6rem; margin-bottom:8px;">✨</div>
+        <h3 style="margin:0 0 6px 0; color:#be185d;">Día generado</h3>
+        <div id="mgen-fecha" style="font-size:0.85rem; color:var(--text2); margin-bottom:18px;"></div>
+        <p style="font-size:0.88rem; color:var(--text); margin:0 0 14px 0; font-weight:600;">¿Qué quieres hacer con este día?</p>
+        <div style="display:flex; gap:10px; margin-bottom:12px;">
+            <button onclick="_elegirGenerado('librar')" style="flex:1; padding:14px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; cursor:pointer; line-height:1.5;">⬜ Librar<br><span style="font-size:0.72rem; font-weight:500;">Cambiarlo por un libre</span></button>
+            <button onclick="_elegirGenerado('cobrar')" style="flex:1; padding:14px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; cursor:pointer; line-height:1.5;">💰 Cobrar<br><span style="font-size:0.72rem; font-weight:500;">Te lo pagan</span></button>
+        </div>
+        <button onclick="document.getElementById('modal-generado').style.display='none';" style="width:100%; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
+    </div>
+</div>
+
 <div id="modal-tipo-propio" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.75); z-index:7000; align-items:center; justify-content:center; padding:20px;">
     <div style="background:var(--surface); padding:24px; border-radius:20px; width:100%; max-width:320px; border:1px solid var(--primary); text-align:center;">
         <div style="font-size:1.6rem; margin-bottom:8px;">🔄</div>
