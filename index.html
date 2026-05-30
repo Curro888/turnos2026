@@ -2383,8 +2383,7 @@
 
     function _hmPush(vista) {
         _hmNav.push(vista);
-        // replaceState: no acumula entradas, solo actualiza el estado actual
-        history.replaceState({ hmVista: vista }, '');
+        history.pushState({ hmVista: vista }, '');
     }
 
     function _hmIr(vista) {
@@ -2453,10 +2452,8 @@
     // Botón atrás del navegador dentro del historial
     window._hmPopstate = function() {
         var vista = _hmNav.pop();
-        if (!vista) { hmVolverPortada(); return; }
         if (vista === 'editar' || vista === 'resolver') { hmVolverDetalle(); return; }
-        if (vista === 'detalle') { hmVolverPortada(); return; }
-        hmVolverPortada();
+        hmVolverPortada(); // detalle o cualquier otra → portada
     };
 
     function _hmBtnBorrar(path) {
@@ -3140,24 +3137,17 @@ function _onModalOpen() {
 history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
-    // Historial modal abierto — gestionar por capas
+    // Historial modal abierto
     if (_hmAbierto) {
         if (_hmNav && _hmNav.length > 0) {
-            // Capa 3/4: resolver/editar → volver a detalle
+            // Hay vistas internas → navegar atrás
             window._hmPopstate();
-            history.replaceState({ hmVista: 'detalle' }, '');
-        } else if (_hmCat !== null) {
-            // Capa 2: detalle → volver a portada
-            // Portada no necesita pushState — el próximo atrás llegará aquí de nuevo
-            hmVolverPortada();
         } else {
-            // Capa 1: portada → cerrar historial
+            // En portada → cerrar historial
             _hmAbierto = false;
             document.getElementById('historial-modal').style.display = 'none';
             _hmCat = null; _hmPendKey = null; _hmEditKey = null; _hmNav = [];
             if (_modalCount > 0) _modalCount--;
-            // Empujar estado base para que el sistema quede estable
-            history.pushState({ base: true }, '');
         }
         return;
     }
