@@ -1,6 +1,3 @@
-
-
- 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -923,45 +920,88 @@
         }
     });
 
-    // ===== MODAL GENERADO =====
+    // ===== GENERADO =====
     var _genDia = null, _genMes = null;
 
     function _abrirModalGenerado() {
+        // Al marcar un dia en calendario: guardar como generado y mostrarlo
         cerrarDesplegables();
         _genDia = diaSeleccionado.d;
         _genMes = diaSeleccionado.mIdx;
-        document.getElementById('mgen-fecha').textContent = 'Día: ' + _genDia + '/' + (_genMes+1);
+        var fecha = _genDia + '/' + (_genMes+1);
+        // Guardar en calendario e historial2 directamente
+        db.ref('cambios/' + miID + '/' + _genMes + '_' + _genDia).set({
+            texto: 'Generado (pendiente de decidir)',
+            clase: 'b-generado'
+        }).then(function() {
+            var ts = Date.now();
+            db.ref('historial2/' + miID + '/' + ts).set({
+                cat: 'generado', ts: ts, fecha: fecha,
+                esLibre: false, cobrado: false, resuelto: null, nota: ''
+            });
+        });
+    }
+
+    // Desde la tarjeta: decidir que hacer con un dia generado
+    function _abrirDecisionGenerado(key, fecha) {
+        document.getElementById('mgen-fecha').textContent = fecha;
+        document.getElementById('mgen-key').value = key;
+        document.getElementById('mgen-fecha-val').value = fecha;
+        document.getElementById('mgen-librar-wrap').style.display = 'none';
+        document.getElementById('mgen-dia-libre').value = '';
         document.getElementById('modal-generado').style.display = 'flex';
         _onModalOpen();
     }
 
     function _elegirGenerado(opcion) {
-        var d = _genDia, mIdx = _genMes;
-        var fecha = d + '/' + (mIdx+1);
-        var texto, clase;
+        var key = document.getElementById('mgen-key').value;
+        var fecha = document.getElementById('mgen-fecha-val').value;
         if (opcion === 'cobrar') {
-            texto = 'Generado (cobrado)';
-            clase = 'b-generado';
-        } else {
-            texto = 'Generado (librar pendiente)';
-            clase = 'b-generado';
-        }
-        db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({ texto: texto, clase: clase }).then(function() {
-            var ts = Date.now();
-            db.ref('historial2/' + miID + '/' + ts).set({
-                cat: 'generado',
-                ts: ts,
-                fecha: fecha,
-                esLibre: false,
-                cobrado: opcion === 'cobrar',
-                resuelto: opcion === 'cobrar' ? { accion: 'cobrado' } : null,
-                nota: ''
-            });
+            // Marcar como cobrado
+            db.ref('historial2/' + miID + '/' + key).update({ cobrado: true, resuelto: { accion: 'cobrado' } });
+            var pg = fecha.split('/');
+            if (pg.length >= 2) {
+                var d = parseInt(pg[0]), m = parseInt(pg[1])-1;
+                db.ref('cambios/' + miID + '/' + m + '_' + d).update({ texto: 'Generado (cobrado)' });
+            }
             document.getElementById('modal-generado').style.display = 'none';
-        });
+            if (typeof _hmCargar === 'function' && _hmCat === 'generado') _hmCargar('generado');
+        } else {
+            // Librar: pedir dia
+            document.getElementById('mgen-librar-wrap').style.display = 'block';
+        }
     }
 
-    // ===== MODAL CAMBIO PROPIO =====
+    function _confirmarGeneradoLibrar() {
+        var key = document.getElementById('mgen-key').value;
+        var fechaGen = document.getElementById('mgen-fecha-val').value;
+        var fechaLibre = document.getElementById('mgen-dia-libre').value.trim();
+        if (!fechaLibre) { alert('Introduce el dia que vas a librar'); return; }
+        // Marcar en historial2
+        db.ref('historial2/' + miID + '/' + key).update({ resuelto: { accion: 'librar', diaLibre: fechaLibre } });
+        // Marcar dia libre en calendario
+        var pl = fechaLibre.split('/');
+        if (pl.length >= 2) {
+            var dl = parseInt(pl[0]), ml = parseInt(pl[1])-1;
+            if (!isNaN(dl) && !isNaN(ml) && ml >= 0 && ml <= 11) {
+                db.ref('cambios/' + miID + '/' + ml + '_' + dl).set({
+                    texto: 'Libras (por generado ' + fechaGen + ')',
+                    clase: 'b-cambio-libre'
+                });
+                // Actualizar texto del dia generado
+                var pg = fechaGen.split('/');
+                if (pg.length >= 2) {
+                    db.ref('cambios/' + miID + '/' + (parseInt(pg[1])-1) + '_' + parseInt(pg[0])).update({
+                        texto: 'Generado (librado el ' + fechaLibre + ')'
+                    });
+                }
+            }
+        }
+        document.getElementById('modal-generado').style.display = 'none';
+        if (typeof _hmCargar === 'function' && _hmCat === 'generado') _hmCargar('generado');
+    }
+
+        // ===== MODAL CAMBIO PROPIO =====
     var _cpTipoPrimerDia = null;
 
     function _abrirModalCambioPropio() {
@@ -2643,13 +2683,22 @@
                 }
 
                 // generado
-                return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                        '<div><div style="font-weight:800;color:'+e.color+';">'+(h.esLibre?'\u25fb':'\u26aa')+' '+(h.fecha||'\u2014')+'</div><div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">'+(h.esLibre?'LIBRE':'TRABAJA')+' \u00b7 '+fecha+'</div></div>' +
-                        btnBar +
-                    '</div>' +
-                    (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';margin-top:4px;">\ud83d\udcdd '+h.nota+'</div>':'') +
-                '</div>';
+                    var estadoLabel = '';
+                    if (h.resuelto) {
+                        if (h.resuelto.accion === 'cobrado') estadoLabel = ' <span style="font-size:0.7rem;background:#f0fdf4;color:#166534;border-radius:6px;padding:1px 6px;font-weight:700;">Cobrado</span>';
+                        else if (h.resuelto.accion === 'librar') estadoLabel = ' <span style="font-size:0.7rem;background:#fdf2f8;color:#be185d;border-radius:6px;padding:1px 6px;font-weight:700;">Librado el '+h.resuelto.diaLibre+'</span>';
+                    }
+                    var btnDec = !h.resuelto
+                        ? '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_abrirDecisionGenerado(this.dataset.key,this.dataset.fecha)" style="background:#be185d;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">Decidir</button>'
+                        : '';
+                    return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">'+
+                        '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+                            '<div><div style="font-weight:800;color:'+e.color+';">'+(h.fecha||'-')+estadoLabel+'</div>'+
+                            '<div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">Generado &middot; '+fecha+'</div></div>'+
+                            '<div style="display:flex;gap:4px;">'+btnDec+_hmBtnEditar(k,'generado')+_hmBtnBorrar(path)+'</div>'+
+                        '</div>'+
+                        (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';margin-top:4px;">'+h.nota+'</div>':'')+
+                    '</div>';
             }).join('');
         });
     }
@@ -3283,14 +3332,20 @@ if ('serviceWorker' in navigator) {
 <!-- Modal: cambio propio trabaja/libra -->
 <!-- Modal: generado cobrar/librar -->
 <div id="modal-generado" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.75); z-index:7000; align-items:center; justify-content:center; padding:20px;">
-    <div style="background:var(--surface); padding:24px; border-radius:20px; width:100%; max-width:320px; border:1px solid var(--pink); text-align:center;">
-        <div style="font-size:1.6rem; margin-bottom:8px;">✨</div>
-        <h3 style="margin:0 0 6px 0; color:#be185d;">Día generado</h3>
-        <div id="mgen-fecha" style="font-size:0.85rem; color:var(--text2); margin-bottom:18px;"></div>
-        <p style="font-size:0.88rem; color:var(--text); margin:0 0 14px 0; font-weight:600;">¿Qué quieres hacer con este día?</p>
+    <div style="background:var(--surface); padding:24px; border-radius:20px; width:100%; max-width:320px; border:1px solid var(--pink);">
+        <h3 style="margin:0 0 6px 0; color:#be185d; text-align:center;">✨ Día generado</h3>
+        <div id="mgen-fecha" style="font-size:0.9rem; font-weight:800; color:#be185d; margin-bottom:16px; text-align:center;"></div>
+        <input type="hidden" id="mgen-key">
+        <input type="hidden" id="mgen-fecha-val">
+        <p style="font-size:0.88rem; color:var(--text); margin:0 0 14px 0; font-weight:600; text-align:center;">¿Qué quieres hacer con este día?</p>
         <div style="display:flex; gap:10px; margin-bottom:12px;">
             <button onclick="_elegirGenerado('librar')" style="flex:1; padding:14px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; cursor:pointer; line-height:1.5;">⬜ Librar<br><span style="font-size:0.72rem; font-weight:500;">Cambiarlo por un libre</span></button>
             <button onclick="_elegirGenerado('cobrar')" style="flex:1; padding:14px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; cursor:pointer; line-height:1.5;">💰 Cobrar<br><span style="font-size:0.72rem; font-weight:500;">Te lo pagan</span></button>
+        </div>
+        <div id="mgen-librar-wrap" style="display:none; background:#f0fdf4; border:1px solid var(--success); border-radius:12px; padding:14px; margin-bottom:12px;">
+            <div style="font-size:0.85rem; font-weight:800; color:#166534; margin-bottom:10px;">📅 ¿Qué día vas a librar?</div>
+            <input id="mgen-dia-libre" type="text" placeholder="Fecha (ej: 20/4/2026)" style="width:100%; padding:10px; border:1px solid var(--success); border-radius:8px; font-size:0.9rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:10px;">
+            <button onclick="_confirmarGeneradoLibrar()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:10px; font-weight:800;">✅ Confirmar</button>
         </div>
         <button onclick="document.getElementById('modal-generado').style.display='none';" style="width:100%; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
     </div>
