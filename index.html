@@ -1151,21 +1151,49 @@
     }
 
     function _cargarDiasPendientesParaLibrar() {
-        // Solo mostrar dias b-pend del calendario que NO estén ya resueltos
-        db.ref('cambios/' + miID).once('value').then(function(snap) {
-            var cambios = snap.val() || {};
+        // Buscar en AMBOS: cambios (b-pend) e historial2 (cat:pendiente sin resolver)
+        Promise.all([
+            db.ref('cambios/' + miID).once('value'),
+            db.ref('historial2/' + miID).once('value')
+        ]).then(function(results) {
+            var cambios = results[0].val() || {};
+            var historial = results[1].val() || {};
             var items = [];
-            Object.entries(cambios).forEach(function(e) {
-                var key = e[0], val = e[1];
-                if (val && val.clase === 'b-pend') {
-                    // Excluir los que ya tienen "libra" en el texto (ya resueltos)
-                    if (val.texto && val.texto.includes('libra')) return;
-                    var parts = key.split('_');
-                    var mes = parseInt(parts[0]), dia = parseInt(parts[1]);
-                    items.push({ key: key, dia: dia, mes: mes,
-                        fecha: dia + '/' + (mes+1), texto: val.texto || '' });
+            var fechasVistas = new Set();
+
+            // Desde historial2 (pendientes creados manualmente)
+            Object.entries(historial).forEach(function(e) {
+                var k = e[0], h = e[1];
+                if (h.cat === 'pendiente' && !h.resuelto && h.fecha) {
+                    if (!fechasVistas.has(h.fecha)) {
+                        fechasVistas.add(h.fecha);
+                        items.push({ key: k, fecha: h.fecha, texto: h.nota || 'Pendiente', fuente: 'historial2' });
+                    }
                 }
             });
+
+            // Desde calendario (b-pend no resueltos)
+            Object.entries(cambios).forEach(function(e) {
+                var key = e[0], val = e[1];
+                if (val && val.clase === 'b-pend' && !(val.texto && val.texto.includes('libra'))) {
+                    var parts = key.split('_');
+                    var mes = parseInt(parts[0]), dia = parseInt(parts[1]);
+                    var fecha = dia + '/' + (mes+1);
+                    if (!fechasVistas.has(fecha)) {
+                        fechasVistas.add(fecha);
+                        items.push({ key: key, fecha: fecha, texto: val.texto || '', fuente: 'cambios' });
+                    }
+                }
+            });
+
+            // Ordenar por fecha
+            items.sort(function(a, b) {
+                var pa = a.fecha.split('/'), pb = b.fecha.split('/');
+                var ma = parseInt(pa[1]||0), mb = parseInt(pb[1]||0);
+                var da = parseInt(pa[0]||0), db2 = parseInt(pb[0]||0);
+                return ma !== mb ? ma - mb : da - db2;
+            });
+
             var cont = document.getElementById('mpt-lista-pendientes');
             if (items.length === 0) {
                 cont.innerHTML = '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No tienes dias pendientes sin resolver.<br>Introduce la fecha manualmente:</div>';
