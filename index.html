@@ -2383,7 +2383,8 @@
 
     function _hmPush(vista) {
         _hmNav.push(vista);
-        history.pushState({ hmVista: vista }, '');
+        // replaceState: no acumula entradas, solo actualiza el estado actual
+        history.replaceState({ hmVista: vista }, '');
     }
 
     function _hmIr(vista) {
@@ -3139,23 +3140,24 @@ function _onModalOpen() {
 history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
-    // Historial modal abierto — gestionar por capas
+    // Historial modal abierto — gestionar por capas SIN acumular entradas
     if (_hmAbierto) {
         if (_hmNav && _hmNav.length > 0) {
             // Capa 3/4: resolver o editar → volver a detalle
             window._hmPopstate();
-            history.pushState({ historial: true }, '');
+            // replaceState para mantenernos en la misma entrada del historial
+            history.replaceState({ hmVista: 'detalle' }, '');
         } else if (_hmCat !== null) {
-            // Capa 2: detalle de categoría → volver a portada
+            // Capa 2: detalle → volver a portada
             hmVolverPortada();
-            history.pushState({ historial: true }, '');
+            history.replaceState({ hmVista: 'portada' }, '');
         } else {
-            // Capa 1: portada → cerrar historial y volver a app
+            // Capa 1: portada → cerrar historial limpiamente
             _hmAbierto = false;
             document.getElementById('historial-modal').style.display = 'none';
             _hmCat = null; _hmPendKey = null; _hmEditKey = null; _hmNav = [];
             if (_modalCount > 0) _modalCount--;
-            history.pushState({ base: true }, '');
+            // NO hacemos pushState aquí — dejamos que el sistema siga normal
         }
         return;
     }
