@@ -1040,9 +1040,46 @@
     }
 
     function _seleccionarPendienteParaLibrar(keyPend, fechaPend) {
-        document.getElementById('mpt-dia-comp').value = fechaPend;
-        document.getElementById('mpt-dia-comp').style.background = '#f0fdf4';
-        document.getElementById('mpt-dia-comp').style.borderColor = '#22c55e';
+        // Al pulsar un pendiente, hacer el cambio directamente
+        var d = _pendDia, mIdx = _pendMes;
+        var fechaLibre = d + '/' + (mIdx+1);
+        var updates = {};
+        // Día libre marcado como librado
+        updates['cambios/' + miID + '/' + mIdx + '_' + d] = {
+            texto: 'Libras (por ' + fechaPend + ')',
+            clase: 'b-cambio-libre'
+        };
+        // Día trabajado pendiente marcado como compensado
+        var partes = fechaPend.split('/');
+        if (partes.length >= 2) {
+            var dc = parseInt(partes[0]), mc = parseInt(partes[1]) - 1;
+            if (!isNaN(dc) && !isNaN(mc) && mc >= 0 && mc <= 11) {
+                updates['cambios/' + miID + '/' + mc + '_' + dc] = {
+                    texto: 'Haces (librado el ' + fechaLibre + ')',
+                    clase: 'b-inter'
+                };
+                // Marcar como resuelto en historial2
+                db.ref('historial2/' + miID).once('value').then(function(snap) {
+                    snap.forEach(function(child) {
+                        var h = child.val();
+                        if (h && h.cat === 'pendiente' && h.fecha === fechaPend && !h.resuelto) {
+                            db.ref('historial2/' + miID + '/' + child.key + '/resuelto').set({
+                                accion: 'libre', diaComp: fechaLibre
+                            });
+                        }
+                    });
+                });
+            }
+        }
+        // Guardar el día libre en historial2
+        var ts = Date.now();
+        db.ref('historial2/' + miID + '/' + ts).set({
+            cat: 'pendiente', ts: ts, fecha: fechaLibre,
+            esLibre: true, nota: '', resuelto: { accion: 'libre', diaComp: fechaPend }
+        });
+        db.ref().update(updates).then(function() {
+            document.getElementById('modal-pendiente-tipo').style.display = 'none';
+        });
     }
 
     function _confirmarPendienteLibra() {
@@ -3098,17 +3135,13 @@ function _onModalOpen() {
 history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
-    // Historial modal visible
+    // Si el historial-modal está abierto, gestionar navegación interna
     if (_estaVisible('historial-modal')) {
         if (_hmNav && _hmNav.length > 0) {
-            // Hay vistas internas — navegar atrás dentro del modal
             window._hmPopstate();
-        } else {
-            // Ya estamos en la portada — absorber el atrás, no cerrar
-            hmVolverPortada();
         }
-        // Siempre re-empujar para que el siguiente atrás también llegue aquí
-        history.pushState({ modal: _modalCount }, '');
+        // Siempre re-empujar para absorber el atrás y no salir de la app
+        history.pushState({ historial: true }, '');
         return;
     }
     // Cierre normal de otros modales
