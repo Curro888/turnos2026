@@ -3090,18 +3090,21 @@
 // Siempre hay al menos 1 entrada base para no salir de la app.
 
 const _modalCierres = [
-    { id: 'ctx-menu',             fn: () => document.getElementById('ctx-menu').style.display = 'none' },
-    { id: 'confirm-modal',        fn: () => document.getElementById('confirm-modal').style.display = 'none' },
-    { id: 'pending-modal',        fn: () => document.getElementById('pending-modal').style.display = 'none' },
-    { id: 'vac-modal',            fn: () => { if(typeof cerrarVacModal==='function') cerrarVacModal(); else document.getElementById('vac-modal').style.display='none'; } },
-    { id: 'report-modal',         fn: () => document.getElementById('report-modal').style.display = 'none' },
-    { id: 'dia-modal',            fn: () => document.getElementById('dia-modal').style.display = 'none' },
-    { id: 'side-panel',           fn: () => document.getElementById('side-panel').style.display = 'none' },
-    { id: 'm-cal',                fn: () => { document.getElementById('m-cal').style.display='none'; document.getElementById('m-cal').style.zIndex='100'; document.getElementById('side-panel').style.display='none'; panelDiaAbierto=null; idCalendarioAbierto=null; } },
-    { id: 'companions-modal',     fn: () => document.getElementById('companions-modal').style.display = 'none' },
-    { id: 'chat-modal',           fn: () => { if(typeof cerrarChat==='function') cerrarChat(); else document.getElementById('chat-modal').style.display='none'; } },
-    { id: 'edit-group-modal',     fn: () => { if(typeof cerrarEditorGrupo==='function') cerrarEditorGrupo(); else document.getElementById('edit-group-modal').style.display='none'; } },
-    { id: 'stats-modal',          fn: () => { if(typeof cerrarEstadisticas==='function') cerrarEstadisticas(); else document.getElementById('stats-modal').style.display='none'; } },
+    { id: 'ctx-menu',         fn: () => document.getElementById('ctx-menu').style.display = 'none' },
+    { id: 'confirm-modal',    fn: () => document.getElementById('confirm-modal').style.display = 'none' },
+    { id: 'pending-modal',    fn: () => document.getElementById('pending-modal').style.display = 'none' },
+    { id: 'vac-modal',        fn: () => { if(typeof cerrarVacModal==='function') cerrarVacModal(); else document.getElementById('vac-modal').style.display='none'; } },
+    { id: 'report-modal',     fn: () => document.getElementById('report-modal').style.display = 'none' },
+    { id: 'dia-modal',        fn: () => document.getElementById('dia-modal').style.display = 'none' },
+    { id: 'side-panel',       fn: () => document.getElementById('side-panel').style.display = 'none' },
+    { id: 'm-cal',            fn: () => { document.getElementById('m-cal').style.display='none'; document.getElementById('m-cal').style.zIndex='100'; document.getElementById('side-panel').style.display='none'; panelDiaAbierto=null; idCalendarioAbierto=null; } },
+    { id: 'companions-modal', fn: () => document.getElementById('companions-modal').style.display = 'none' },
+    { id: 'chat-modal',       fn: () => { if(typeof cerrarChat==='function') cerrarChat(); else document.getElementById('chat-modal').style.display='none'; } },
+    { id: 'edit-group-modal', fn: () => { if(typeof cerrarEditorGrupo==='function') cerrarEditorGrupo(); else document.getElementById('edit-group-modal').style.display='none'; } },
+    { id: 'stats-modal',      fn: () => { if(typeof cerrarEstadisticas==='function') cerrarEstadisticas(); else document.getElementById('stats-modal').style.display='none'; } },
+    { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
+    { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
+    { id: 'historial-modal',      fn: () => cerrarHistorial() },
     { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
     { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
     { id: 'historial-modal',      fn: () => cerrarHistorial() },
@@ -3137,24 +3140,24 @@ function _onModalOpen() {
 history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
-    // Historial modal abierto — gestionar por capas SIN acumular entradas
+    // Historial modal abierto — gestionar por capas
     if (_hmAbierto) {
         if (_hmNav && _hmNav.length > 0) {
-            // Capa 3/4: resolver o editar → volver a detalle
+            // Capa 3/4: resolver/editar → volver a detalle
             window._hmPopstate();
-            // replaceState para mantenernos en la misma entrada del historial
             history.replaceState({ hmVista: 'detalle' }, '');
         } else if (_hmCat !== null) {
             // Capa 2: detalle → volver a portada
+            // Portada no necesita pushState — el próximo atrás llegará aquí de nuevo
             hmVolverPortada();
-            history.replaceState({ hmVista: 'portada' }, '');
         } else {
-            // Capa 1: portada → cerrar historial limpiamente
+            // Capa 1: portada → cerrar historial
             _hmAbierto = false;
             document.getElementById('historial-modal').style.display = 'none';
             _hmCat = null; _hmPendKey = null; _hmEditKey = null; _hmNav = [];
             if (_modalCount > 0) _modalCount--;
-            // NO hacemos pushState aquí — dejamos que el sistema siga normal
+            // Empujar estado base para que el sistema quede estable
+            history.pushState({ base: true }, '');
         }
         return;
     }
