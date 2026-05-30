@@ -3139,13 +3139,24 @@ function _onModalOpen() {
 history.pushState({ base: true }, '');
 
 window.addEventListener('popstate', function(e) {
-    // Si el historial-modal está abierto, gestionar navegación interna
+    // Historial modal abierto — gestionar por capas
     if (_hmAbierto) {
         if (_hmNav && _hmNav.length > 0) {
+            // Capa 3/4: resolver o editar → volver a detalle
             window._hmPopstate();
+            history.pushState({ historial: true }, '');
+        } else if (_hmCat !== null) {
+            // Capa 2: detalle de categoría → volver a portada
+            hmVolverPortada();
+            history.pushState({ historial: true }, '');
+        } else {
+            // Capa 1: portada → cerrar historial y volver a app
+            _hmAbierto = false;
+            document.getElementById('historial-modal').style.display = 'none';
+            _hmCat = null; _hmPendKey = null; _hmEditKey = null; _hmNav = [];
+            if (_modalCount > 0) _modalCount--;
+            history.pushState({ base: true }, '');
         }
-        // Siempre re-empujar para absorber el atrás y no salir de la app
-        history.pushState({ historial: true }, '');
         return;
     }
     // Cierre normal de otros modales
