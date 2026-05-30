@@ -1008,7 +1008,6 @@
     }
 
     function _cargarDiasPendientesParaLibrar() {
-        // Buscar días marcados como b-pend en Firebase
         db.ref('cambios/' + miID).once('value').then(function(snap) {
             var cambios = snap.val() || {};
             var pendientes = [];
@@ -1017,24 +1016,28 @@
                 if (val && val.clase === 'b-pend') {
                     var parts = key.split('_');
                     var mes = parseInt(parts[0]), dia = parseInt(parts[1]);
-                    pendientes.push({ key: key, dia: dia, mes: mes, fecha: dia + '/' + (mes+1), texto: val.texto });
+                    pendientes.push({ key: key, dia: dia, mes: mes, fecha: dia + '/' + (mes+1), texto: val.texto || '' });
                 }
             });
-            // También buscar en historial2
-            var listHtml = '';
+            var cont = document.getElementById('mpt-lista-pendientes');
             if (pendientes.length === 0) {
-                listHtml = '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No tienes días pendientes guardados.<br>Introduce la fecha manualmente:</div>';
+                cont.innerHTML = '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No tienes d\u00edas pendientes en el calendario.<br>Introduce la fecha manualmente:</div>';
             } else {
-                listHtml = '<div style="font-size:0.82rem;font-weight:700;color:#6d28d9;margin-bottom:8px;">Elige el día trabajado que compensas:</div>' +
-                    pendientes.map(function(p) {
-                        var btnEl = document.createElement('button');
-                        btnEl.style.cssText = 'width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;background:#f5f3ff;border:1px solid #8b5cf6;border-radius:10px;font-size:0.85rem;font-weight:700;color:#6d28d9;cursor:pointer;display:block;';
-                        btnEl.innerHTML = '\u23f3 ' + p.fecha + '<br><span style="font-size:0.75rem;font-weight:400;color:#94a3b8;">' + (p.texto||'') + '</span>';
-                        (function(key, fecha) { btnEl.addEventListener('click', function() { _seleccionarPendienteParaLibrar(key, fecha); }); })(p.key, p.fecha);
-                        return btnEl.outerHTML;
-                    }).join('');
+                cont.innerHTML = '<div style="font-size:0.82rem;font-weight:700;color:#6d28d9;margin-bottom:8px;">Toca el d\u00eda trabajado que compensas:</div>';
+                pendientes.forEach(function(p) {
+                    var btn = document.createElement('button');
+                    btn.style.cssText = 'width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:#f5f3ff;border:2px solid #8b5cf6;border-radius:12px;font-size:0.88rem;font-weight:700;color:#6d28d9;cursor:pointer;display:block;';
+                    btn.innerHTML = '\u23f3 <b>' + p.fecha + '</b><br><span style="font-size:0.75rem;font-weight:400;color:#94a3b8;">' + p.texto + '</span>';
+                    (function(pItem) {
+                        btn.addEventListener('click', function() {
+                            if (confirm('\u00bfCompensar el d\u00eda trabajado ' + pItem.fecha + ' librando el ' + _pendDia + '/' + (_pendMes+1) + '?')) {
+                                _seleccionarPendienteParaLibrar(pItem.key, pItem.fecha);
+                            }
+                        });
+                    })(p);
+                    cont.appendChild(btn);
+                });
             }
-            document.getElementById('mpt-lista-pendientes').innerHTML = listHtml;
             document.getElementById('mpt-comp-wrap').style.display = 'block';
         });
     }
@@ -1854,7 +1857,15 @@
     // ===== GESTIÓN DE DÍAS =====
     function setCambio(texto, clase) {
         const { d, mIdx, uid } = diaSeleccionado;
-        db.ref(`cambios/${uid}/${mIdx}_${d}`).set({ texto, clase }).then(cerrarDesplegables);
+        if (clase === 'b-pend' && uid === miID) {
+            cerrarDesplegables();
+            _mostrarModalPendiente(d, mIdx);
+            return;
+        }
+        db.ref(`cambios/${uid}/${mIdx}_${d}`).set({ texto, clase }).then(() => {
+            cerrarDesplegables();
+            _hmSyncCalendario(uid, mIdx, d, texto, clase);
+        });
     }
 
     function borrarCambio() {
