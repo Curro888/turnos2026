@@ -929,19 +929,14 @@
         _modoPickDia = modo;
         if (modo === 'generado') { _pickGenKey = key; _pickGenFecha = fecha; }
         else { _pickPendKey = key; _pickPendFecha = fecha; }
-        // Cerrar todos los modales relacionados
+        // Cerrar modales y abrir calendario del usuario
         document.getElementById('modal-generado').style.display = 'none';
         document.getElementById('hm-resolver').style.display = 'none';
-        if (_hmAbierto) {
-            _hmAbierto = false;
-            document.getElementById('historial-modal').style.display = 'none';
-            _hmCat = null; _hmNav = [];
-            if (_modalCount > 0) _modalCount--;
-        }
-        // Aviso en pantalla
+        document.getElementById('historial-modal').style.display = 'none';
+        // Mostrar aviso
         var notice = document.getElementById('selection-notice');
         notice.style.display = 'block';
-        notice.innerText = '◻ Toca el dia que quieres librar';
+        notice.innerText = '◻ Toca el dia que quieres librar en el calendario';
         // Abrir calendario del usuario
         abrirCal(miID);
     }
@@ -985,23 +980,13 @@
     }
 
     function _confirmarPickPendiente(d, mIdx, fechaLibre) {
-        var key = _pickPendKey, fechaTrabajada = _pickPendFecha;
-        var updates = {};
-        updates['cambios/' + miID + '/' + mIdx + '_' + d] = {
-            texto: 'Libras (por pendiente ' + fechaTrabajada + ')',
+        var key = _pickPendKey;
+        // Solo marcar el dia LIBRE en el calendario
+        db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({
+            texto: 'Libras (por pendiente)',
             clase: 'b-cambio-libre'
-        };
-        // Actualizar el dia trabajado pendiente
-        if (fechaTrabajada) {
-            var pt = fechaTrabajada.split('/');
-            if (pt.length >= 2) {
-                updates['cambios/' + miID + '/' + (parseInt(pt[1])-1) + '_' + parseInt(pt[0])] = {
-                    texto: 'Haces (librado el ' + fechaLibre + ')',
-                    clase: 'b-inter'
-                };
-            }
-        }
-        db.ref().update(updates).then(function() {
+        }).then(function() {
+            // Marcar pendiente como resuelto en historial2 (sin crear nueva entrada)
             if (key) {
                 db.ref('historial2/' + miID + '/' + key).update({
                     resuelto: { accion: 'libre', diaComp: fechaLibre }
@@ -1019,18 +1004,22 @@
     var _genDia = null, _genMes = null;
 
     function _abrirModalGenerado() {
-        // El dia seleccionado en el calendario es el dia LIBRE que voy a usar
+        // El dia seleccionado es un dia TRABAJADO que se queda como generado
+        // Solo guardar en historial2, NO tocar el calendario
         cerrarDesplegables();
-        _genDia = diaSeleccionado.d;
-        _genMes = diaSeleccionado.mIdx;
-        var fechaLibre = _genDia + '/' + (_genMes+1);
-        document.getElementById('mgen-fecha').textContent = 'Dia libre: ' + fechaLibre;
-        document.getElementById('mgen-key').value = '';
-        document.getElementById('mgen-fecha-val').value = fechaLibre;
-        document.getElementById('mgen-librar-wrap').style.display = 'none';
-        _cargarGeneradosDisponibles(fechaLibre);
-        document.getElementById('modal-generado').style.display = 'flex';
-        _onModalOpen();
+        var d = diaSeleccionado.d, mIdx = diaSeleccionado.mIdx;
+        var fecha = d + '/' + (mIdx+1);
+        var ts = Date.now();
+        db.ref('historial2/' + miID + '/' + ts).set({
+            cat: 'generado', ts: ts, fecha: fecha,
+            esLibre: false, cobrado: false, resuelto: null, nota: ''
+        }).then(function() {
+            // Mostrar brevemente que se ha guardado
+            var notice = document.getElementById('selection-notice');
+            notice.style.display = 'block';
+            notice.innerText = '✨ Dia generado guardado: ' + fecha + ' — úsalo desde la tarjeta Generado';
+            setTimeout(function() { notice.style.display = 'none'; }, 3000);
+        });
     }
 
     function _cargarGeneradosDisponibles(fechaLibre) {
@@ -1304,46 +1293,33 @@
     }
 
     function _seleccionarPendienteParaLibrar(keyPend, fechaPend) {
-        // Al pulsar un pendiente, hacer el cambio directamente
         var d = _pendDia, mIdx = _pendMes;
         var fechaLibre = d + '/' + (mIdx+1);
-        var updates = {};
-        // Día libre marcado como librado
-        updates['cambios/' + miID + '/' + mIdx + '_' + d] = {
-            texto: 'Libras (por ' + fechaPend + ')',
+        // Solo marcar el dia LIBRE en el calendario
+        db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({
+            texto: 'Libras (por pendiente)',
             clase: 'b-cambio-libre'
-        };
-        // Día trabajado pendiente marcado como compensado
-        var partes = fechaPend.split('/');
-        if (partes.length >= 2) {
-            var dc = parseInt(partes[0]), mc = parseInt(partes[1]) - 1;
-            if (!isNaN(dc) && !isNaN(mc) && mc >= 0 && mc <= 11) {
-                updates['cambios/' + miID + '/' + mc + '_' + dc] = {
-                    texto: 'Haces (librado el ' + fechaLibre + ')',
-                    clase: 'b-inter'
-                };
-                // Marcar como resuelto en historial2
+        }).then(function() {
+            // Marcar el pendiente como resuelto (sin crear nueva entrada ni tocar el dia trabajado)
+            if (keyPend) {
+                db.ref('historial2/' + miID + '/' + keyPend).update({
+                    resuelto: { accion: 'libre', diaComp: fechaLibre }
+                });
+            } else {
+                // Buscar en historial2 por fecha
                 db.ref('historial2/' + miID).once('value').then(function(snap) {
                     snap.forEach(function(child) {
                         var h = child.val();
                         if (h && h.cat === 'pendiente' && h.fecha === fechaPend && !h.resuelto) {
-                            db.ref('historial2/' + miID + '/' + child.key + '/resuelto').set({
-                                accion: 'libre', diaComp: fechaLibre
+                            db.ref('historial2/' + miID + '/' + child.key).update({
+                                resuelto: { accion: 'libre', diaComp: fechaLibre }
                             });
                         }
                     });
                 });
             }
-        }
-        // Guardar el día libre en historial2
-        var ts = Date.now();
-        db.ref('historial2/' + miID + '/' + ts).set({
-            cat: 'pendiente', ts: ts, fecha: fechaLibre,
-            esLibre: true, nota: '', resuelto: { accion: 'libre', diaComp: fechaPend }
         });
-        db.ref().update(updates).then(function() {
-            document.getElementById('modal-pendiente-tipo').style.display = 'none';
-        });
+        document.getElementById('modal-pendiente-tipo').style.display = 'none';
     }
 
     function _confirmarPendienteLibra() {
@@ -2144,6 +2120,20 @@
     }
 
     // Borra entradas de historial2 que coincidan con una fecha dada
+    function _hmQuitarResolucionPendiente(fechaLibre) {
+        // Al borrar un dia libre que resolvía un pendiente:
+        // quitar solo la resolución, mantener el pendiente disponible
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            snap.forEach(function(child) {
+                var h = child.val();
+                if (h && h.cat === 'pendiente' && h.resuelto &&
+                    h.resuelto.diaComp === fechaLibre) {
+                    db.ref('historial2/' + miID + '/' + child.key + '/resuelto').set(null);
+                }
+            });
+        });
+    }
+
     function _hmBorrarPorFecha(fecha) {
         db.ref('historial2/' + miID).once('value').then(function(snap) {
             var todos = snap.val() || {};
@@ -2219,7 +2209,16 @@
 
         db.ref(`cambios/${uid}/${mIdx}_${d}`).remove().then(function() {
             cerrarDesplegables();
-            if (uid === miID) _hmBorrarPorFecha(d + '/' + (mIdx+1));
+            if (uid === miID) {
+                var fecha = d + '/' + (mIdx+1);
+                var texto = data ? (data.texto || '') : '';
+                if (texto.includes('Libras (por pendiente)')) {
+                    // Solo quitar la resolucion del pendiente, mantener el pendiente
+                    _hmQuitarResolucionPendiente(fecha);
+                } else {
+                    _hmBorrarPorFecha(fecha);
+                }
+            }
         });
     }
 
