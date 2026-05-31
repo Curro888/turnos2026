@@ -929,14 +929,19 @@
         _modoPickDia = modo;
         if (modo === 'generado') { _pickGenKey = key; _pickGenFecha = fecha; }
         else { _pickPendKey = key; _pickPendFecha = fecha; }
-        // Cerrar modales y abrir calendario del usuario
+        // Cerrar todos los modales relacionados
         document.getElementById('modal-generado').style.display = 'none';
         document.getElementById('hm-resolver').style.display = 'none';
-        document.getElementById('historial-modal').style.display = 'none';
-        // Mostrar aviso
+        if (_hmAbierto) {
+            _hmAbierto = false;
+            document.getElementById('historial-modal').style.display = 'none';
+            _hmCat = null; _hmNav = [];
+            if (_modalCount > 0) _modalCount--;
+        }
+        // Aviso en pantalla
         var notice = document.getElementById('selection-notice');
         notice.style.display = 'block';
-        notice.innerText = '◻ Toca el dia que quieres librar en el calendario';
+        notice.innerText = '◻ Toca el dia que quieres librar';
         // Abrir calendario del usuario
         abrirCal(miID);
     }
@@ -1014,22 +1019,18 @@
     var _genDia = null, _genMes = null;
 
     function _abrirModalGenerado() {
-        // El dia seleccionado es un dia TRABAJADO que se queda como generado
-        // Solo guardar en historial2, NO tocar el calendario
+        // El dia seleccionado en el calendario es el dia LIBRE que voy a usar
         cerrarDesplegables();
-        var d = diaSeleccionado.d, mIdx = diaSeleccionado.mIdx;
-        var fecha = d + '/' + (mIdx+1);
-        var ts = Date.now();
-        db.ref('historial2/' + miID + '/' + ts).set({
-            cat: 'generado', ts: ts, fecha: fecha,
-            esLibre: false, cobrado: false, resuelto: null, nota: ''
-        }).then(function() {
-            // Mostrar brevemente que se ha guardado
-            var notice = document.getElementById('selection-notice');
-            notice.style.display = 'block';
-            notice.innerText = '✨ Dia generado guardado: ' + fecha + ' — úsalo desde la tarjeta Generado';
-            setTimeout(function() { notice.style.display = 'none'; }, 3000);
-        });
+        _genDia = diaSeleccionado.d;
+        _genMes = diaSeleccionado.mIdx;
+        var fechaLibre = _genDia + '/' + (_genMes+1);
+        document.getElementById('mgen-fecha').textContent = 'Dia libre: ' + fechaLibre;
+        document.getElementById('mgen-key').value = '';
+        document.getElementById('mgen-fecha-val').value = fechaLibre;
+        document.getElementById('mgen-librar-wrap').style.display = 'none';
+        _cargarGeneradosDisponibles(fechaLibre);
+        document.getElementById('modal-generado').style.display = 'flex';
+        _onModalOpen();
     }
 
     function _cargarGeneradosDisponibles(fechaLibre) {
