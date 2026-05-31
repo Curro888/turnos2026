@@ -49,11 +49,24 @@ body.dark-mode .id-black { color: var(--text) !important; }
 body.dark-mode .member-row .member-sub { color: #a8b8cc; }
 body.dark-mode .member-row { background: #1e2a3a !important; border-color: #2e4a7f; }
 body.dark-mode .member-row .member-name { color: var(--text) !important; }
-body.dark-mode #stats-modal [style*="background:#f5f3ff"], body.dark-mode #stats-modal [style*="background:#f0fdf4"], body.dark-mode #stats-modal [style*="background:#f0f9ff"], body.dark-mode #stats-modal [style*="background:#faf5ff"], body.dark-mode #stats-modal [style*="background:#fef2f2"], body.dark-mode #stats-modal [style*="background:#fefce8"], body.dark-mode #stats-modal [style*="background: #f5f3ff"], body.dark-mode #stats-modal [style*="background: #f0fdf4"], body.dark-mode #stats-modal [style*="background: #f0f9ff"], body.dark-mode #stats-modal [style*="background: #faf5ff"], body.dark-mode #stats-modal [style*="background: #fef2f2"] { background: #1e2a3a !important; }
-body.dark-mode #stats-modal [style*="color:#64748b"], body.dark-mode #stats-modal [style*="color: #64748b"] { color: #a8b8cc !important; }
+body.dark-mode #stats-modal [style*="background:#f5f3ff"],
+body.dark-mode #stats-modal [style*="background:#f0fdf4"],
+body.dark-mode #stats-modal [style*="background:#f0f9ff"],
+body.dark-mode #stats-modal [style*="background:#faf5ff"],
+body.dark-mode #stats-modal [style*="background:#fef2f2"],
+body.dark-mode #stats-modal [style*="background:#fefce8"],
+body.dark-mode #stats-modal [style*="background: #f5f3ff"],
+body.dark-mode #stats-modal [style*="background: #f0fdf4"],
+body.dark-mode #stats-modal [style*="background: #f0f9ff"],
+body.dark-mode #stats-modal [style*="background: #faf5ff"],
+body.dark-mode #stats-modal [style*="background: #fef2f2"] { background: #1e2a3a !important; }
+body.dark-mode #stats-modal [style*="color:#64748b"],
+body.dark-mode #stats-modal [style*="color: #64748b"] { color: #a8b8cc !important; }
 body.dark-mode #edit-group-modal [style*="background:#f5f3ff"] { background: #1e2a3a !important; }
-body.dark-mode #edit-group-modal [style*="color:#94a3b8"], body.dark-mode #edit-group-modal [style*="color: #94a3b8"] { color: #7a8fa8 !important; }
-body.dark-mode #edit-group-modal input, body.dark-mode #edit-group-modal select { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; }
+body.dark-mode #edit-group-modal [style*="color:#94a3b8"],
+body.dark-mode #edit-group-modal [style*="color: #94a3b8"] { color: #7a8fa8 !important; }
+body.dark-mode #edit-group-modal input,
+body.dark-mode #edit-group-modal select { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; }
 body.dark-mode .user-card { background: #1e3a5f !important; border-color: #2e4a7f; }
 body.dark-mode #m-cal-box { background: #2a2d45 !important; }
 body.dark-mode #cal-target-name { color: #c4b5fd; }
@@ -79,11 +92,23 @@ body.dark-mode .b-generado { border: 2px solid var(--pink) !important; backgroun
 .days-container { display: grid; grid-template-columns: repeat(7, 1fr); }
 .btn-main { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; }
 .btn-main:active { background: var(--primary-dark); }
-#ctx-menu { display: none; position: fixed; background: var(--surface); border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 2000; width: 240px; border: 1px solid var(--border); overflow: hidden; touch-action: none; }
-#ctx-menu-handle { background: var(--surface2); padding: 10px; text-align: center; font-size: 0.7rem; font-weight: 800; color: var(--primary-dark); letter-spacing: 0.05em; cursor: grab; border-bottom: 1px solid var(--border); }
+#ctx-menu {
+display: none; position: fixed; background: var(--surface); border-radius: 14px;
+box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 2000; width: 240px;
+border: 1px solid var(--border); overflow: hidden;
+touch-action: none;
+}
+#ctx-menu-handle {
+background: var(--surface2); padding: 10px; text-align: center;
+font-size: 0.7rem; font-weight: 800; color: var(--primary-dark);
+letter-spacing: 0.05em; cursor: grab; border-bottom: 1px solid var(--border);
+}
 .menu-opt { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--text); }
 .menu-opt:active { background: var(--surface2); }
-#vac-modal, #report-modal, #confirm-modal { display: none; position: fixed; inset: 0; background: rgba(30,27,75,0.6); z-index: 3000; align-items: center; justify-content: center; padding: 20px; }
+#vac-modal, #report-modal, #confirm-modal {
+display: none; position: fixed; inset: 0; background: rgba(30,27,75,0.6);
+z-index: 3000; align-items: center; justify-content: center; padding: 20px;
+}
 .modal-box { background: var(--surface); padding: 25px; border-radius: 20px; width: 100%; max-width: 320px; text-align: center; border: 1px solid var(--primary); }
 .input-app { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid var(--border); border-radius: 12px; font-size: 1.2rem; text-align: center; outline: none; color: var(--primary-dark); background: var(--surface); }
 .report-content { max-height: 300px; overflow-y: auto; text-align: left; margin: 15px 0; padding-right: 5px; }
@@ -103,7 +128,6 @@ select.input-app { appearance: none; background: white url("data:image/svg+xml,%
 .btn-danger-sm { background: #fee2e2; color: var(--danger); border: none; border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
 @keyframes splashFade { 0% { opacity:1; } 80% { opacity:1; } 100% { opacity:0; } }
 @keyframes splashLogo { 0% { transform:scale(0.5); opacity:0; } 60% { transform:scale(1.1); opacity:1; } 100% { transform:scale(1); opacity:1; } }
-/* ✅ FIX 1: @keyframes del badge corregido */
 @keyframes badgePulse {
   0%   { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
   50%  { transform: scale(1.2); box-shadow: 0 0 12px rgba(239,68,68,0.9); }
@@ -355,6 +379,26 @@ select.input-app { appearance: none; background: white url("data:image/svg+xml,%
 <div id="ctx-menu-handle">⠿ MANTÉN Y ARRASTRA</div>
 </div>
 <div id="selection-notice"></div>
+<!-- Modal panel todos los grupos -->
+<div id="grupos-panel" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:5000; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto;">
+<div style="background:var(--surface); padding:20px; border-radius:20px; width:100%; max-width:480px; margin-top:10px; border:1px solid var(--primary);">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+<h3 style="margin:0; color:var(--primary-dark); font-size:1rem;">📅 Todos los grupos de libres</h3>
+<button onclick="cerrarPanelGrupos()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;" type="button">✕</button>
+</div>
+<div style="display:flex; gap:8px; margin-bottom:12px;">
+<button id="pg-tab-7327" onclick="setPanelTurno('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;" type="button">🌙 73/27</button>
+<button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;" type="button">🌙 80/20</button>
+</div>
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; background:var(--surface2); border-radius:12px; padding:8px 14px;">
+<button onclick="cambiarMesPanel(-1)" style="background:none; border:none; font-size:1.4rem; color:var(--primary); cursor:pointer; font-weight:900;" type="button">‹</button>
+<span id="pg-mes-label" style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;"></span>
+<button onclick="cambiarMesPanel(1)" style="background:none; border:none; font-size:1.4rem; color:var(--primary); cursor:pointer; font-weight:900;" type="button">›</button>
+</div>
+<div id="pg-grupos-lista" style="max-height:60vh; overflow-y:auto; padding-right:4px;"></div>
+<button onclick="cerrarPanelGrupos()" style="width:100%; padding:12px; background:var(--surface2); border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;" type="button">Cerrar</button>
+</div>
+</div>
 <script>
 // ===== FIREBASE =====
 const firebaseConfig = {
@@ -377,7 +421,6 @@ let primerDiaCambio = null, targetCompaneroID = null, idCalendarioAbierto = null
 let dbCambios = {}, dbSolicitudes = {};
 let equipo = [];
 let pendingSolicitudKey = null;
-// ✅ FIX 2: Fecha dinámica (evita que se quede obsoleta si la app sigue abierta)
 let dHoy, mHoy;
 function _actualizarHoy(){ const h=new Date(); dHoy=h.getDate(); mHoy=h.getMonth(); }
 _actualizarHoy();
@@ -661,7 +704,6 @@ tipoCambio = 'AUTO'; modoSeleccionActivo = true; primerDiaCambio = { ...diaSelec
 document.getElementById('selection-notice').style.display = 'block';
 document.getElementById('selection-notice').innerText = tipo === 'trabaja' ? '⭕ DÍA QUE TRABAJAS — ELIGE AHORA EL DÍA QUE LIBRAS' : '⬜ DÍA QUE LIBRAS — ELIGE AHORA EL DÍA QUE TRABAJAS';
 }
-// ✅ FIX 3: Mantenemos SOLO la versión CORRECTA de aplicarCambioPropio (con _cpTipoPrimerDia). La duplicada se eliminó.
 function aplicarCambioPropio(d1, m1, d2, m2) {
 const f1 = d1 + '/' + (m1+1), f2 = d2 + '/' + (m2+1);
 var dTrabaja, mTrabaja, fTrabaja, dLibra, mLibra, fLibra;
@@ -720,7 +762,6 @@ var ts = Date.now();
 db.ref('historial2/' + miID + '/' + ts).set({ cat: 'pendiente', ts: ts, fecha: fecha, esLibre: true, nota: '', resuelto: { accion: 'libre', diaComp: diaComp } });
 db.ref().update(updates).then(function() { document.getElementById('modal-pendiente-tipo').style.display = 'none'; });
 }
-// ✅ FIX 4: Eliminada variable muerta `miSolicitudListener` y su `.off()`
 function cerrarSesion() {
 if (listenerCambios) { listenerCambios.off(); listenerCambios = null; }
 if (listenerSolicitudes) { listenerSolicitudes.off(); listenerSolicitudes = null; }
@@ -758,7 +799,7 @@ function añadirCompanero(key, inputId) { const input = document.getElementById(
 function eliminarCompanero(key, idx) { const comp = cargarCompaneros(); if (!comp[key]) return; comp[key].splice(idx, 1); guardarCompaneros(comp); mostrarTablaComp(companerosTurnoActivo); }
 // ===== RENDER LISTA INDIVIDUAL =====
 function renderListIndividual() {
-_actualizarHoy(); // ✅ FIX 2: Refresca fecha cada vez
+_actualizarHoy();
 const cont = document.getElementById('list-container'); const p = equipoBase.find(x => x.id === miID); if (!p) return;
 const { esLibreReal } = checkEstadoIndividual(p.g, p.t, mHoy, dHoy);
 let html = `<div class="user-card ${esLibreReal ? 'card-libra' : 'card-trabaja'}" style="margin-bottom:16px;"><div><span class="name-big">${p.n}</span></div><div style="display:flex; align-items:center;"><div class="info-tag">🌙N · G${p.g} · ${p.t}</div><button class="btn-main" onclick="abrirCal('${p.id}')" type="button">Calendario</button></div></div>`;
@@ -820,7 +861,7 @@ db.ref(`presencia/${grupoActual}`).on('value', snap => { presencias = snap.val()
 }
 function estaConectado(uid) { const p = presencias[uid]; if (!p) return false; return (Date.now() - p.ts) < 120000; }
 function renderList() {
-_actualizarHoy(); // ✅ FIX 2: Refresca fecha cada vez
+_actualizarHoy();
 if (!modoGrupo) { renderListIndividual(); return; }
 const cont = document.getElementById('list-container'); cont.innerHTML = "";
 equipo.forEach(e => { const { esLibreReal } = checkEstado(e.id, mHoy, dHoy); const esNoche = (e.t === '73/27' || e.t === '80/20'); const tagLabel = `${esNoche ? '🌙N · ' : ''}G${e.g}`; const conectado = estaConectado(e.id); const puntito = conectado ? `<span style="display:inline-block; width:9px; height:9px; background:#22c55e; border-radius:50%; margin-left:6px; box-shadow:0 0 4px #22c55e;" title="En línea"></span>` : ''; cont.innerHTML += `<div class="user-card ${esLibreReal ? 'card-libra' : 'card-trabaja'}"><div style="display:flex; align-items:center;"><span class="name-big">${e.n}</span><span class="id-black">${e.id}</span>${puntito}</div><div style="display:flex; align-items:center;"><div class="info-tag">${tagLabel}</div><button class="btn-main" onclick="abrirCal('${e.id}')" type="button">Calendario</button></div></div>`; });
@@ -959,30 +1000,42 @@ function mostrarInformeLeyenda(clase, titulo) { const uid = idCalendarioAbierto;
 document.addEventListener('click', (e) => { const menu = document.getElementById('ctx-menu'); if (ignorarSiguienteClick) { ignorarSiguienteClick = false; return; } if (menu.style.display === 'block' && !menu.contains(e.target)) menu.style.display = 'none'; });
 // ===== PANEL TODOS LOS GRUPOS =====
 let panelTurno = '73/27'; let panelMes = new Date().getMonth();
-function abrirPanelGrupos() { panelMes = mHoy; panelTurno = '73/27'; document.getElementById('grupos-panel').style.display = 'flex'; _onModalOpen(); renderPanelGrupos(); }
+function abrirPanelGrupos() {
+  panelMes = mHoy; // Sincroniza con el mes actual del usuario
+  panelTurno = '73/27';
+  document.getElementById('grupos-panel').style.display = 'flex'; _onModalOpen();
+  renderPanelGrupos();
+}
 function cerrarPanelGrupos() { document.getElementById('grupos-panel').style.display = 'none'; }
 function abrirCalGrupo(grupo, turno) {
-const tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres; const grid = document.getElementById('m-grid'); grid.innerHTML = '';
-document.getElementById('cal-target-name').innerText = 'Grupo ' + grupo + ' · ' + turno + ' · Días libres';
-mesesArr.forEach((m, mIdx) => { const diasLibres = (tabla[grupo] && tabla[grupo][mIdx]) ? tabla[grupo][mIdx] : []; let html = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`; let start = new Date(2026, mIdx, 1).getDay(); start = (start === 0) ? 6 : start - 1; for (let i = 0; i < start; i++) html += `<div></div>`; const totalDias = new Date(2026, mIdx + 1, 0).getDate(); for (let d = 1; d <= totalDias; d++) { const esLibre = diasLibres.includes(d); const esDom = (start + d - 1) % 7 === 6; let clase = esLibre ? 'is-free' : 'is-work'; if (esDom) clase += ' is-sun'; html += `<div class="d-cell ${clase}">${d}</div>`; } grid.innerHTML += html + `</div></div>`; });
-document.getElementById('m-cal').style.display = 'block'; document.getElementById('m-cal').style.zIndex = '6000'; _onModalOpen();
+  const tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres; const grid = document.getElementById('m-grid'); grid.innerHTML = '';
+  document.getElementById('cal-target-name').innerText = 'Grupo ' + grupo + ' · ' + turno + ' · Días libres';
+  mesesArr.forEach((m, mIdx) => { const diasLibres = (tabla[grupo] && tabla[grupo][mIdx]) ? tabla[grupo][mIdx] : []; let html = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`; let start = new Date(2026, mIdx, 1).getDay(); start = (start === 0) ? 6 : start - 1; for (let i = 0; i < start; i++) html += `<div></div>`; const totalDias = new Date(2026, mIdx + 1, 0).getDate(); for (let d = 1; d <= totalDias; d++) { const esLibre = diasLibres.includes(d); const esDom = (start + d - 1) % 7 === 6; let clase = esLibre ? 'is-free' : 'is-work'; if (esDom) clase += ' is-sun'; html += `<div class="d-cell ${clase}">${d}</div>`; } grid.innerHTML += html + `</div></div>`; });
+  document.getElementById('m-cal').style.display = 'block'; document.getElementById('m-cal').style.zIndex = '6000'; _onModalOpen();
 }
 function setPanelTurno(turno) {
-panelTurno = turno; document.getElementById('pg-tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
-document.getElementById('pg-tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)'; document.getElementById('pg-tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#ddd6fe';
-document.getElementById('pg-tab-8020').style.background = turno === '80/20' ? 'var(--primary)' : 'white'; document.getElementById('pg-tab-8020').style.color = turno === '80/20' ? 'white' : 'var(--primary)'; document.getElementById('pg-tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#ddd6fe';
-renderPanelGrupos();
+  panelTurno = turno;
+  document.getElementById('pg-tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
+  document.getElementById('pg-tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)'; document.getElementById('pg-tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#ddd6fe';
+  document.getElementById('pg-tab-8020').style.background = turno === '80/20' ? 'var(--primary)' : 'white'; document.getElementById('pg-tab-8020').style.color = turno === '80/20' ? 'white' : 'var(--primary)'; document.getElementById('pg-tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#ddd6fe';
+  renderPanelGrupos();
 }
 function cambiarMesPanel(dir) { panelMes = (panelMes + dir + 12) % 12; renderPanelGrupos(); }
 function renderPanelGrupos() {
-document.getElementById('pg-mes-label').innerText = mesesArr[panelMes] + ' 2026';
-const tabla = panelTurno === '80/20' ? gruposLibres8020 : gruposLibres; const cont = document.getElementById('pg-grupos-lista'); cont.innerHTML = '';
-const miembrosPorGrupo = {}; equipo.forEach(m => { if (m.t === panelTurno) { if (!miembrosPorGrupo[m.g]) miembrosPorGrupo[m.g] = []; miembrosPorGrupo[m.g].push(m.n); } });
-Object.keys(tabla).sort((a,b) => parseInt(a)-parseInt(b)).forEach(g => {
-const diasLibres = tabla[g][panelMes] || []; const miembros = miembrosPorGrupo[g] || []; const tieneMiembros = miembros.length > 0; const rangos = []; let i = 0; const dias = [...diasLibres].sort((a,b) => a-b);
-while (i < dias.length) { let inicio = dias[i], fin = dias[i]; while (i + 1 < dias.length && dias[i+1] === dias[i] + 1) { i++; fin = dias[i]; } rangos.push(inicio === fin ? `${inicio}` : `${inicio}-${fin}`); i++; }
-cont.innerHTML += `<div style="border:1px solid ${tieneMiembros ? 'var(--primary)' : '#e2e8f0'}; border-radius:12px; padding:12px; margin-bottom:8px; background:var(--surface2);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><span style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;">Grupo ${g}</span><div style="display:flex; align-items:center; gap:6px;">${tieneMiembros ? `<span style="font-size:0.7rem; background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-weight:700;">${miembros.join(', ')}</span>` : `<span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Sin asignar</span>`}<button onclick="abrirCalGrupo('${g}','${panelTurno}')" style="font-size:0.7rem; background:var(--primary); color:white; border:none; border-radius:8px; padding:4px 8px; font-weight:700; cursor:pointer;" type="button">📅 Ver</button></div></div><div style="font-size:0.78rem; color:#475569;"><span style="font-weight:700; color:var(--danger);">🗓 Libra: </span>${diasLibres.length > 0 ? rangos.join(', ') : '<span style="color:#94a3b8;">Sin datos</span>'}</div></div>`;
-});
+  if (!document.getElementById('pg-grupos-lista')) return; // Seguridad DOM
+  document.getElementById('pg-mes-label').innerText = mesesArr[panelMes] + ' 2026';
+  const tabla = panelTurno === '80/20' ? gruposLibres8020 : gruposLibres;
+  const cont = document.getElementById('pg-grupos-lista'); cont.innerHTML = '';
+  const miembrosPorGrupo = {};
+  (equipo || []).forEach(m => { if (m.t === panelTurno) { if (!miembrosPorGrupo[m.g]) miembrosPorGrupo[m.g] = []; miembrosPorGrupo[m.g].push(m.n); } });
+  Object.keys(tabla).sort((a,b) => parseInt(a)-parseInt(b)).forEach(g => {
+    const diasLibres = tabla[g][panelMes] || [];
+    const miembros = miembrosPorGrupo[g] || [];
+    const tieneMiembros = miembros.length > 0;
+    const rangos = []; let i = 0; const dias = [...diasLibres].sort((a,b) => a-b);
+    while (i < dias.length) { let inicio = dias[i], fin = dias[i]; while (i + 1 < dias.length && dias[i+1] === dias[i] + 1) { i++; fin = dias[i]; } rangos.push(inicio === fin ? `${inicio}` : `${inicio}-${fin}`); i++; }
+    cont.innerHTML += `<div style="border:1px solid ${tieneMiembros ? 'var(--primary)' : '#e2e8f0'}; border-radius:12px; padding:12px; margin-bottom:8px; background:var(--surface2);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><span style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;">Grupo ${g}</span><div style="display:flex; align-items:center; gap:6px;">${tieneMiembros ? `<span style="font-size:0.7rem; background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-weight:700;">${miembros.join(', ')}</span>` : `<span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Sin asignar</span>`}<button onclick="abrirCalGrupo('${g}','${panelTurno}')" style="font-size:0.7rem; background:var(--primary); color:white; border:none; border-radius:8px; padding:4px 8px; font-weight:700; cursor:pointer;" type="button">📅 Ver</button></div></div><div style="font-size:0.78rem; color:#475569;"><span style="font-weight:700; color:var(--danger);">🗓 Libra: </span>${diasLibres.length > 0 ? rangos.join(', ') : '<span style="color:#94a3b8;">Sin datos</span>'}</div></div>`;
+  });
 }
 // ===== CHAT =====
 let chatListener = null; let ultimoMensajeVisto = '0'; let chatAbierto = false;
@@ -1014,7 +1067,6 @@ else contenido = '<span style="font-size:0.88rem;">' + m.texto + '</span>';
 const leido = m.leido === true; const ticks = esMio ? '<span style="font-size:0.7rem; margin-left:4px;">' + (leido ? '<span style="color:#a78bfa;">✓✓</span>' : '<span style="color:#94a3b8;">✓</span>') + '</span>' : '';
 cont.innerHTML += '<div style="display:flex; flex-direction:column; align-items:' + (esMio ? 'flex-end' : 'flex-start') + '; margin-bottom:8px;"><span style="font-size:0.75rem; color:' + (esMio ? 'var(--primary)' : '#7c3aed') + '; margin-bottom:2px; font-weight:800;">' + nombre + '</span><div style="max-width:75%; padding:10px 14px; border-radius:' + (esMio ? '16px 16px 4px 16px' : '16px 16px 16px 4px') + '; background:' + (esMio ? 'var(--primary)' : '#f1f5f9') + '; color:' + (esMio ? 'white' : '#1e293b') + ';">' + contenido + '</div><span style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">' + hora + ticks + '</span></div>';
 });
-// ✅ FIX 5: Auto-scroll inteligente (solo si el usuario ya estaba cerca del fondo)
 const cercaDelFondo = cont.scrollHeight - cont.scrollTop - cont.clientHeight < 150;
 if (cercaDelFondo) cont.scrollTop = cont.scrollHeight;
 });
