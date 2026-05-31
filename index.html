@@ -129,9 +129,9 @@ select.input-app { appearance: none; background: white url("data:image/svg+xml,%
 @keyframes splashFade { 0% { opacity:1; } 80% { opacity:1; } 100% { opacity:0; } }
 @keyframes splashLogo { 0% { transform:scale(0.5); opacity:0; } 60% { transform:scale(1.1); opacity:1; } 100% { transform:scale(1); opacity:1; } }
 @keyframes badgePulse {
-  0%   { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
-  50%  { transform: scale(1.2); box-shadow: 0 0 12px rgba(239,68,68,0.9); }
-  100% { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
+0%   { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
+50%  { transform: scale(1.2); box-shadow: 0 0 12px rgba(239,68,68,0.9); }
+100% { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
 }
 #splash-screen { position:fixed; inset:0; background:var(--primary); z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; animation:splashFade 2s ease forwards; pointer-events:none; }
 #splash-screen .splash-logo { font-size:4rem; animation:splashLogo 0.8s ease forwards; }
@@ -424,7 +424,6 @@ let pendingSolicitudKey = null;
 let dHoy, mHoy;
 function _actualizarHoy(){ const h=new Date(); dHoy=h.getDate(); mHoy=h.getMonth(); }
 _actualizarHoy();
-
 const equipoBase = [
 { n:"Raul Infantes", id:"16161", g:"1", t:"73/27" }, { n:"Carlos Romero", id:"16225", g:"2", t:"73/27" },
 { n:"Javi Ranz", id:"18393", g:"2", t:"73/27" }, { n:"Curro", id:"2669", g:"4", t:"73/27" },
@@ -499,7 +498,9 @@ if (pass !== pass2) { alert("Las contraseñas no coinciden"); return; }
 const codigo = nombre.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') + '_' + Date.now().toString(36);
 const primerMiembro = { n: miNom, id: miId, g: miGrupo, t: miTipo };
 db.ref(`grupos/${codigo}`).set({ nombre, pass, miembros: { [miId]: primerMiembro } }).then(() => {
-alert(`✅ Grupo creado!\nCódigo del grupo: ${codigo}\nGuárdalo para compartirlo con tus compañeros.`);
+alert(`✅ Grupo creado!
+Código del grupo: ${codigo}
+Guárdalo para compartirlo con tus compañeros.`);
 miID = miId; miNombreCompleto = miNom; modoGrupo = true; grupoActual = codigo;
 miTipoSesion = miTipo; miGrupoSesion = miGrupo;
 try { localStorage.setItem('lastID2026', miId); } catch(e) {}
@@ -641,14 +642,14 @@ document.getElementById('selection-notice').style.display = 'none';
 }
 function _confirmarPickGenerado(d, mIdx, fechaLibre) {
 var key = _pickGenKey;
-db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({ texto: 'Libras (por generado)', clase: 'b-cambio-libre' }).then(function() {
+db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({ texto: 'Libras (por generado)', clase: 'b-cambio-libre', linkedHistoryKey: key }).then(function() {
 if (key) db.ref('historial2/' + miID + '/' + key).update({ resuelto: { accion: 'librar', diaLibre: fechaLibre } });
 });
 cerrarCalendario(); setTimeout(function() { abrirHistorial(); abrirCategoria('generado'); }, 300);
 }
 function _confirmarPickPendiente(d, mIdx, fechaLibre) {
 var key = _pickPendKey;
-db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({ texto: 'Libras (por pendiente)', clase: 'b-cambio-libre' }).then(function() {
+db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({ texto: 'Libras (por pendiente)', clase: 'b-cambio-libre', linkedHistoryKey: key }).then(function() {
 if (key) db.ref('historial2/' + miID + '/' + key).update({ resuelto: { accion: 'libre', diaComp: fechaLibre } });
 });
 cerrarCalendario(); setTimeout(function() { abrirHistorial(); abrirCategoria('pendiente'); }, 300);
@@ -674,7 +675,7 @@ else { cont.innerHTML = '<div style="font-size:0.82rem;font-weight:700;color:#be
 }
 function _usarGeneradoParaLibre(keyGen, fechaGen, fechaLibre) {
 var pl = fechaLibre.split('/');
-if (pl.length >= 2) { var dl = parseInt(pl[0]), ml = parseInt(pl[1])-1; db.ref('cambios/' + miID + '/' + ml + '_' + dl).set({ texto: 'Libras (por generado)', clase: 'b-cambio-libre' }); }
+if (pl.length >= 2) { var dl = parseInt(pl[0]), ml = parseInt(pl[1])-1; db.ref('cambios/' + miID + '/' + ml + '_' + dl).set({ texto: 'Libras (por generado)', clase: 'b-cambio-libre', linkedHistoryKey: keyGen }); }
 db.ref('historial2/' + miID + '/' + keyGen).update({ resuelto: { accion: 'librar', diaLibre: fechaLibre } });
 document.getElementById('modal-generado').style.display = 'none';
 }
@@ -693,7 +694,7 @@ var key = document.getElementById('mgen-key').value; var fechaGen = document.get
 if (!fechaLibre) { alert('Introduce el dia que vas a librar'); return; }
 db.ref('historial2/' + miID + '/' + key).update({ resuelto: { accion: 'librar', diaLibre: fechaLibre } });
 var pl = fechaLibre.split('/');
-if (pl.length >= 2) { var dl = parseInt(pl[0]), ml = parseInt(pl[1])-1; if (!isNaN(dl) && !isNaN(ml) && ml >= 0 && ml <= 11) { db.ref('cambios/' + miID + '/' + ml + '_' + dl).set({ texto: 'Libras (por generado ' + fechaGen + ')', clase: 'b-cambio-libre' }); var pg = fechaGen.split('/'); if (pg.length >= 2) db.ref('cambios/' + miID + '/' + (parseInt(pg[1])-1) + '_' + parseInt(pg[0])).update({ texto: 'Generado (librado el ' + fechaLibre + ')' }); } }
+if (pl.length >= 2) { var dl = parseInt(pl[0]), ml = parseInt(pl[1])-1; if (!isNaN(dl) && !isNaN(ml) && ml >= 0 && ml <= 11) { db.ref('cambios/' + miID + '/' + ml + '_' + dl).set({ texto: 'Libras (por generado ' + fechaGen + ')', clase: 'b-cambio-libre', linkedHistoryKey: key }); } }
 document.getElementById('modal-generado').style.display = 'none'; if (typeof _hmCargar === 'function' && _hmCat === 'generado') _hmCargar('generado');
 }
 var _cpTipoPrimerDia = null;
@@ -705,20 +706,35 @@ document.getElementById('selection-notice').style.display = 'block';
 document.getElementById('selection-notice').innerText = tipo === 'trabaja' ? '⭕ DÍA QUE TRABAJAS — ELIGE AHORA EL DÍA QUE LIBRAS' : '⬜ DÍA QUE LIBRAS — ELIGE AHORA EL DÍA QUE TRABAJAS';
 }
 function aplicarCambioPropio(d1, m1, d2, m2) {
-const f1 = d1 + '/' + (m1+1), f2 = d2 + '/' + (m2+1);
-var dTrabaja, mTrabaja, fTrabaja, dLibra, mLibra, fLibra;
-if (_cpTipoPrimerDia === 'libra') { dLibra=d1; mLibra=m1; fLibra=f1; dTrabaja=d2; mTrabaja=m2; fTrabaja=f2; }
-else { dTrabaja=d1; mTrabaja=m1; fTrabaja=f1; dLibra=d2; mLibra=m2; fLibra=f2; }
-const updates = {
-[`cambios/${miID}/${mTrabaja}_${dTrabaja}`]: { texto: `Haces (x ${fLibra})`, clase: 'b-inter' },
-[`cambios/${miID}/${mLibra}_${dLibra}`]: { texto: `Libras (x ${fTrabaja})`, clase: 'b-cambio-libre' }
-};
-db.ref().update(updates).then(() => {
-modoSeleccionActivo = false; _cpTipoPrimerDia = null;
-document.getElementById('selection-notice').style.display = 'none';
-var ts = Date.now();
-db.ref('historial2/' + miID + '/' + ts).set({ cat: 'propio', ts: ts, diaTrabaja: fTrabaja, diaLibra: fLibra, nota: '' });
-});
+    const f1 = d1 + '/' + (m1+1), f2 = d2 + '/' + (m2+1);
+    var dTrabaja, mTrabaja, fTrabaja, dLibra, mLibra, fLibra;
+    
+    if (_cpTipoPrimerDia === 'libra') { 
+        dLibra=d1; mLibra=m1; fLibra=f1; 
+        dTrabaja=d2; mTrabaja=m2; fTrabaja=f2; 
+    } else { 
+        dTrabaja=d1; mTrabaja=m1; fTrabaja=f1; 
+        dLibra=d2; mLibra=m2; fLibra=f2; 
+    }
+    
+    const ts = Date.now();
+    
+    // Guardamos atómicamente calendario e historial
+    const updates = {
+        [`cambios/${miID}/${mTrabaja}_${dTrabaja}`]: { texto: `Haces (x ${fLibra})`, clase: 'b-inter', linkedHistoryKey: ts, linkedKey: `${mLibra}_${dLibra}` },
+        [`cambios/${miID}/${mLibra}_${dLibra}`]: { texto: `Libras (x ${fTrabaja})`, clase: 'b-cambio-libre', linkedHistoryKey: ts, linkedKey: `${mTrabaja}_${dTrabaja}` },
+        // Tarjeta en el historial
+        [`historial2/${miID}/${ts}`]: { cat: 'propio', ts: ts, diaTrabaja: fTrabaja, diaLibra: fLibra, nota: '' }
+    };
+    
+    db.ref().update(updates).then(() => { 
+        modoSeleccionActivo = false; 
+        _cpTipoPrimerDia = null;
+        document.getElementById('selection-notice').style.display = 'none'; 
+        // Refrescar historial si está abierto
+        if(_hmAbierto && _hmCat === 'propio') _hmCargar('propio');
+        _hmBadges(); // Actualizar contadores
+    });
 }
 var _pendDia = null, _pendMes = null;
 function _abrirModalPendiente() { cerrarDesplegables(); _pendDia = diaSeleccionado.d; _pendMes = diaSeleccionado.mIdx; document.getElementById('mpt-fecha').textContent = 'Día: ' + _pendDia + '/' + (_pendMes+1); document.getElementById('mpt-dia-comp').value = ''; document.getElementById('mpt-comp-wrap').style.display = 'none'; document.getElementById('modal-pendiente-tipo').style.display = 'flex'; _onModalOpen(); }
@@ -745,7 +761,7 @@ document.getElementById('mpt-comp-wrap').style.display = 'block';
 }
 function _seleccionarPendienteParaLibrar(keyPend, fechaPend) {
 var d = _pendDia, mIdx = _pendMes; var fechaLibre = d + '/' + (mIdx+1);
-db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({ texto: 'Libras (por pendiente)', clase: 'b-cambio-libre' }).then(function() {
+db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({ texto: 'Libras (por pendiente)', clase: 'b-cambio-libre', linkedHistoryKey: keyPend }).then(function() {
 if (keyPend) db.ref('historial2/' + miID + '/' + keyPend).update({ resuelto: { accion: 'libre', diaComp: fechaLibre } });
 else db.ref('historial2/' + miID).once('value').then(function(snap) { snap.forEach(function(child) { var h = child.val(); if (h && h.cat === 'pendiente' && h.fecha === fechaPend && !h.resuelto) db.ref('historial2/' + miID + '/' + child.key).update({ resuelto: { accion: 'libre', diaComp: fechaLibre } }); }); });
 });
@@ -961,7 +977,10 @@ if (solicitudesVistas.has(key)) return; solicitudesVistas.add(key);
 const remitente = equipo.find(x => x.id === sol.de)?.n || sol.miNom || sol.de;
 reproducirSonido();
 if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') { try { new Notification('🤝 Solicitud de cambio', { body: remitente + ' quiere cambiar contigo: libras el ' + sol.f1 + ' y trabajas el ' + sol.f2, icon: 'https://cdn-icons-png.flaticon.com/512/1827/1827347.png' }); } catch(e) {} }
-const acepta = confirm(`🤝 SOLICITUD DE CAMBIO\n${remitente} quiere hacer un cambio contigo:\nTú libras el ${sol.f1} y trabajas el ${sol.f2}\n¿Aceptas?`);
+const acepta = confirm(`🤝 SOLICITUD DE CAMBIO
+${remitente} quiere hacer un cambio contigo:
+Tú libras el ${sol.f1} y trabajas el ${sol.f2}
+¿Aceptas?`);
 if (acepta) { aplicarCambioComp(sol).then(() => { db.ref(`solicitudes/${key}`).update({ estado: 'aceptada' }); }); }
 else { db.ref(`solicitudes/${key}`).update({ estado: 'rechazada' }); solicitudesVistas.delete(key); }
 }
@@ -973,14 +992,24 @@ db.ref(hKey).set({ con: compNom, conId: u2, diaTrabaja: f2, diaLibra: f1, ts, no
 db.ref(hKey2).set({ con: miNom, conId: u1, diaTrabaja: f1, diaLibra: f2, ts, nota: '' });
 return db.ref().update(updates);
 }
-function aplicarCambioPropio(d1, m1, d2, m2) { const f1 = `${d1}/${m1+1}`, f2 = `${d2}/${m2+1}`; const updates = { [`cambios/${miID}/${m1}_${d1}`]: { texto: `Haces (x ${f2})`, clase: 'b-inter' }, [`cambios/${miID}/${m2}_${d2}`]: { texto: `Libras (x ${f1})`, clase: 'b-cambio-libre' } }; db.ref().update(updates).then(() => { modoSeleccionActivo = false; document.getElementById('selection-notice').style.display = 'none'; }); }
 function setCambio(texto, clase) { const { d, mIdx, uid } = diaSeleccionado; if (clase === 'b-pend' && uid === miID) { cerrarDesplegables(); _mostrarModalPendiente(d, mIdx); return; } db.ref(`cambios/${uid}/${mIdx}_${d}`).set({ texto, clase }).then(() => { cerrarDesplegables(); _hmSyncCalendario(uid, mIdx, d, texto, clase); }); }
 function _hmQuitarResolucionGenerado(fechaLibre) { db.ref('historial2/' + miID).once('value').then(function(snap) { snap.forEach(function(child) { var h = child.val(); if (h && h.cat === 'generado' && h.resuelto && h.resuelto.diaLibre === fechaLibre) db.ref('historial2/' + miID + '/' + child.key + '/resuelto').set(null); }); }); }
 function _hmQuitarResolucionPendiente(fechaLibre) { db.ref('historial2/' + miID).once('value').then(function(snap) { snap.forEach(function(child) { var h = child.val(); if (h && h.cat === 'pendiente' && h.resuelto && h.resuelto.diaComp === fechaLibre) db.ref('historial2/' + miID + '/' + child.key + '/resuelto').set(null); }); }); }
 function _hmBorrarPorFecha(fecha) { db.ref('historial2/' + miID).once('value').then(function(snap) { var todos = snap.val() || {}; var updates = {}; Object.entries(todos).forEach(function(e) { var k = e[0], h = e[1]; if (h.fecha === fecha || h.diaTrabaja === fecha || h.diaLibra === fecha) updates['historial2/' + miID + '/' + k] = null; }); if (Object.keys(updates).length > 0) db.ref().update(updates); }); }
 function borrarCambio() {
-const { d, mIdx, uid } = diaSeleccionado; const data = dbCambios[uid]?.[`${mIdx}_${d}`]; const esVacaciones = data?.texto === 'Vacaciones'; const esCambioComp = (data?.clase === 'b-inter' || data?.clase === 'b-cambio-libre') && data?.linkedUid;
+const { d, mIdx, uid } = diaSeleccionado; const data = dbCambios[uid]?.[`${mIdx}_${d}`]; const esVacaciones = data?.texto === 'Vacaciones'; const esCambioComp = (data?.clase === 'b-inter' || data?.clase === 'b-cambio-libre') && data?.linkedUid; const esCambioPropio = (data?.clase === 'b-inter' || data?.clase === 'b-cambio-libre') && data?.linkedHistoryKey && !data?.linkedUid; const esGenerado = data?.clase === 'b-cambio-libre' && data?.linkedHistoryKey && (data?.texto || '').includes('generado');
 if (esCambioComp) { const linkedUid = data.linkedUid; const linkedKey = data.linkedKey; const compNombre = equipo.find(x => x.id === linkedUid)?.n || linkedUid; if (confirm(`Este día es un cambio con ${compNombre}.\n¿Borrar el cambio para los dos?`)) { const updates = { [`cambios/${uid}/${mIdx}_${d}`]: null, [`cambios/${linkedUid}/${linkedKey}`]: null }; const linkedData = dbCambios[linkedUid]?.[linkedKey]; if (linkedData?.linkedKey) { updates[`cambios/${uid}/${linkedData.linkedKey}`] = null; updates[`cambios/${linkedUid}/${linkedData.linkedUid === uid ? linkedKey : linkedData.linkedKey}`] = null; } db.ref().update(updates).then(function() { cerrarDesplegables(); var fecha1 = d + '/' + (mIdx+1); _hmBorrarPorFecha(fecha1); if (linkedKey) { var lparts = linkedKey.split('_'); var lfecha = lparts[1] + '/' + (parseInt(lparts[0])+1); _hmBorrarPorFecha(lfecha); } }); } else { cerrarDesplegables(); } return; }
+if (esCambioPropio) { 
+const hKey = data.linkedHistoryKey; 
+const linkedKey = data.linkedKey; 
+const otherPart = dbCambios[uid]?.[linkedKey];
+if (otherPart) { db.ref(`cambios/${uid}/${linkedKey}`).remove(); }
+if (hKey) db.ref(`historial2/${miID}/${hKey}`).remove();
+}
+if (esGenerado) {
+const hKey = data.linkedHistoryKey;
+if (hKey) db.ref(`historial2/${miID}/${hKey}/resuelto`).set(null);
+}
 if (esVacaciones) { const totalDias = new Date(2026, mIdx + 1, 0).getDate(); const diasVac = []; for (let i = 1; i <= totalDias; i++) { if (dbCambios[uid]?.[`${mIdx}_${i}`]?.texto === 'Vacaciones') diasVac.push(i); } if (diasVac.length > 1) { const opcion = confirm(`Hay ${diasVac.length} días de vacaciones en este mes.\nAceptar = todo el mes\nCancelar = solo este día`); if (opcion) { const updates = {}; diasVac.forEach(i => updates[`cambios/${uid}/${mIdx}_${i}`] = null); db.ref().update(updates).then(function() { cerrarDesplegables(); diasVac.forEach(function(dv) { _hmBorrarPorFecha(dv + '/' + (mIdx+1)); }); }); return; } } }
 db.ref(`cambios/${uid}/${mIdx}_${d}`).remove().then(function() { cerrarDesplegables(); if (uid === miID) { var fecha = d + '/' + (mIdx+1); var texto = data ? (data.texto || '') : ''; if (texto.includes('Libras (por pendiente)')) _hmQuitarResolucionPendiente(fecha); else if (texto.includes('Libras (por generado)')) _hmQuitarResolucionGenerado(fecha); else _hmBorrarPorFecha(fecha); } });
 }
@@ -1001,41 +1030,41 @@ document.addEventListener('click', (e) => { const menu = document.getElementById
 // ===== PANEL TODOS LOS GRUPOS =====
 let panelTurno = '73/27'; let panelMes = new Date().getMonth();
 function abrirPanelGrupos() {
-  panelMes = mHoy; // Sincroniza con el mes actual del usuario
-  panelTurno = '73/27';
-  document.getElementById('grupos-panel').style.display = 'flex'; _onModalOpen();
-  renderPanelGrupos();
+panelMes = mHoy;
+panelTurno = '73/27';
+document.getElementById('grupos-panel').style.display = 'flex'; _onModalOpen();
+renderPanelGrupos();
 }
 function cerrarPanelGrupos() { document.getElementById('grupos-panel').style.display = 'none'; }
 function abrirCalGrupo(grupo, turno) {
-  const tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres; const grid = document.getElementById('m-grid'); grid.innerHTML = '';
-  document.getElementById('cal-target-name').innerText = 'Grupo ' + grupo + ' · ' + turno + ' · Días libres';
-  mesesArr.forEach((m, mIdx) => { const diasLibres = (tabla[grupo] && tabla[grupo][mIdx]) ? tabla[grupo][mIdx] : []; let html = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`; let start = new Date(2026, mIdx, 1).getDay(); start = (start === 0) ? 6 : start - 1; for (let i = 0; i < start; i++) html += `<div></div>`; const totalDias = new Date(2026, mIdx + 1, 0).getDate(); for (let d = 1; d <= totalDias; d++) { const esLibre = diasLibres.includes(d); const esDom = (start + d - 1) % 7 === 6; let clase = esLibre ? 'is-free' : 'is-work'; if (esDom) clase += ' is-sun'; html += `<div class="d-cell ${clase}">${d}</div>`; } grid.innerHTML += html + `</div></div>`; });
-  document.getElementById('m-cal').style.display = 'block'; document.getElementById('m-cal').style.zIndex = '6000'; _onModalOpen();
+const tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres; const grid = document.getElementById('m-grid'); grid.innerHTML = '';
+document.getElementById('cal-target-name').innerText = 'Grupo ' + grupo + ' · ' + turno + ' · Días libres';
+mesesArr.forEach((m, mIdx) => { const diasLibres = (tabla[grupo] && tabla[grupo][mIdx]) ? tabla[grupo][mIdx] : []; let html = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`; let start = new Date(2026, mIdx, 1).getDay(); start = (start === 0) ? 6 : start - 1; for (let i = 0; i < start; i++) html += `<div></div>`; const totalDias = new Date(2026, mIdx + 1, 0).getDate(); for (let d = 1; d <= totalDias; d++) { const esLibre = diasLibres.includes(d); const esDom = (start + d - 1) % 7 === 6; let clase = esLibre ? 'is-free' : 'is-work'; if (esDom) clase += ' is-sun'; html += `<div class="d-cell ${clase}">${d}</div>`; } grid.innerHTML += html + `</div></div>`; });
+document.getElementById('m-cal').style.display = 'block'; document.getElementById('m-cal').style.zIndex = '6000'; _onModalOpen();
 }
 function setPanelTurno(turno) {
-  panelTurno = turno;
-  document.getElementById('pg-tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
-  document.getElementById('pg-tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)'; document.getElementById('pg-tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#ddd6fe';
-  document.getElementById('pg-tab-8020').style.background = turno === '80/20' ? 'var(--primary)' : 'white'; document.getElementById('pg-tab-8020').style.color = turno === '80/20' ? 'white' : 'var(--primary)'; document.getElementById('pg-tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#ddd6fe';
-  renderPanelGrupos();
+panelTurno = turno;
+document.getElementById('pg-tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
+document.getElementById('pg-tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)'; document.getElementById('pg-tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#ddd6fe';
+document.getElementById('pg-tab-8020').style.background = turno === '80/20' ? 'var(--primary)' : 'white'; document.getElementById('pg-tab-8020').style.color = turno === '80/20' ? 'white' : 'var(--primary)'; document.getElementById('pg-tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#ddd6fe';
+renderPanelGrupos();
 }
 function cambiarMesPanel(dir) { panelMes = (panelMes + dir + 12) % 12; renderPanelGrupos(); }
 function renderPanelGrupos() {
-  if (!document.getElementById('pg-grupos-lista')) return; // Seguridad DOM
-  document.getElementById('pg-mes-label').innerText = mesesArr[panelMes] + ' 2026';
-  const tabla = panelTurno === '80/20' ? gruposLibres8020 : gruposLibres;
-  const cont = document.getElementById('pg-grupos-lista'); cont.innerHTML = '';
-  const miembrosPorGrupo = {};
-  (equipo || []).forEach(m => { if (m.t === panelTurno) { if (!miembrosPorGrupo[m.g]) miembrosPorGrupo[m.g] = []; miembrosPorGrupo[m.g].push(m.n); } });
-  Object.keys(tabla).sort((a,b) => parseInt(a)-parseInt(b)).forEach(g => {
-    const diasLibres = tabla[g][panelMes] || [];
-    const miembros = miembrosPorGrupo[g] || [];
-    const tieneMiembros = miembros.length > 0;
-    const rangos = []; let i = 0; const dias = [...diasLibres].sort((a,b) => a-b);
-    while (i < dias.length) { let inicio = dias[i], fin = dias[i]; while (i + 1 < dias.length && dias[i+1] === dias[i] + 1) { i++; fin = dias[i]; } rangos.push(inicio === fin ? `${inicio}` : `${inicio}-${fin}`); i++; }
-    cont.innerHTML += `<div style="border:1px solid ${tieneMiembros ? 'var(--primary)' : '#e2e8f0'}; border-radius:12px; padding:12px; margin-bottom:8px; background:var(--surface2);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><span style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;">Grupo ${g}</span><div style="display:flex; align-items:center; gap:6px;">${tieneMiembros ? `<span style="font-size:0.7rem; background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-weight:700;">${miembros.join(', ')}</span>` : `<span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Sin asignar</span>`}<button onclick="abrirCalGrupo('${g}','${panelTurno}')" style="font-size:0.7rem; background:var(--primary); color:white; border:none; border-radius:8px; padding:4px 8px; font-weight:700; cursor:pointer;" type="button">📅 Ver</button></div></div><div style="font-size:0.78rem; color:#475569;"><span style="font-weight:700; color:var(--danger);">🗓 Libra: </span>${diasLibres.length > 0 ? rangos.join(', ') : '<span style="color:#94a3b8;">Sin datos</span>'}</div></div>`;
-  });
+if (!document.getElementById('pg-grupos-lista')) return;
+document.getElementById('pg-mes-label').innerText = mesesArr[panelMes] + ' 2026';
+const tabla = panelTurno === '80/20' ? gruposLibres8020 : gruposLibres;
+const cont = document.getElementById('pg-grupos-lista'); cont.innerHTML = '';
+const miembrosPorGrupo = {};
+(equipo || []).forEach(m => { if (m.t === panelTurno) { if (!miembrosPorGrupo[m.g]) miembrosPorGrupo[m.g] = []; miembrosPorGrupo[m.g].push(m.n); } });
+Object.keys(tabla).sort((a,b) => parseInt(a)-parseInt(b)).forEach(g => {
+const diasLibres = tabla[g][panelMes] || [];
+const miembros = miembrosPorGrupo[g] || [];
+const tieneMiembros = miembros.length > 0;
+const rangos = []; let i = 0; const dias = [...diasLibres].sort((a,b) => a-b);
+while (i < dias.length) { let inicio = dias[i], fin = dias[i]; while (i + 1 < dias.length && dias[i+1] === dias[i] + 1) { i++; fin = dias[i]; } rangos.push(inicio === fin ? `${inicio}` : `${inicio}-${fin}`); i++; }
+cont.innerHTML += `<div style="border:1px solid ${tieneMiembros ? 'var(--primary)' : '#e2e8f0'}; border-radius:12px; padding:12px; margin-bottom:8px; background:var(--surface2);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><span style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;">Grupo ${g}</span><div style="display:flex; align-items:center; gap:6px;">${tieneMiembros ? `<span style="font-size:0.7rem; background:var(--primary); color:white; padding:2px 8px; border-radius:20px; font-weight:700;">${miembros.join(', ')}</span>` : `<span style="font-size:0.7rem; color:#94a3b8; font-weight:600;">Sin asignar</span>`}<button onclick="abrirCalGrupo('${g}','${panelTurno}')" style="font-size:0.7rem; background:var(--primary); color:white; border:none; border-radius:8px; padding:4px 8px; font-weight:700; cursor:pointer;" type="button">📅 Ver</button></div></div><div style="font-size:0.78rem; color:#475569;"><span style="font-weight:700; color:var(--danger);">🗓 Libra: </span>${diasLibres.length > 0 ? rangos.join(', ') : '<span style="color:#94a3b8;">Sin datos</span>'}</div></div>`;
+});
 }
 // ===== CHAT =====
 let chatListener = null; let ultimoMensajeVisto = '0'; let chatAbierto = false;
@@ -1129,7 +1158,31 @@ try { if (localStorage.getItem('darkMode2026') === '1') { document.body.classLis
 function activarNotificaciones() { if (!('Notification' in window)) { alert('Tu navegador no soporta notificaciones'); return; } if (Notification.permission === 'granted') { alert('✅ Notificaciones ya activadas'); return; } Notification.requestPermission().then(p => { if (p === 'granted') new Notification('✅ Notificaciones activadas', { body: 'Recibirás avisos de chat y cambios de turno' }); else alert('Permiso denegado. Actívalo desde los ajustes del navegador.'); }); }
 // ===== HISTORIAL DE CAMBIOS =====
 var _hmCat = null, _hmPendKey = null, _hmEditKey = null, _hmNav = [];
-window._hmDel = function(btn) { var path = btn.dataset.path; if (!confirm('\u00bfBorrar esta entrada?')) return; db.ref(path).remove().then(function() { _hmCargar(_hmCat); }); };
+window._hmDel = function(btn) { 
+var path = btn.dataset.path; 
+var cat = btn.dataset.cat; 
+var key = btn.dataset.key; 
+var linkedHistoryKey = btn.dataset.linkedhistkey; 
+if (!confirm('\u00bfBorrar esta entrada?')) return; 
+var updates = {};
+updates[path] = null;
+if (linkedHistoryKey) {
+   updates['historial2/' + miID + '/' + linkedHistoryKey] = null;
+}
+if (cat === 'propio') {
+    db.ref(path).once('value').then(snap => {
+        var val = snap.val();
+        if(val && val.linkedHistoryKey) updates['historial2/' + miID + '/' + val.linkedHistoryKey] = null;
+        if(val && val.linkedKey) {
+            var parts = val.linkedKey.split('_');
+            updates['cambios/' + miID + '/' + parts[0] + '_' + parts[1]] = null;
+        }
+        db.ref().update(updates).then(() => _hmCargar(_hmCat));
+    });
+} else {
+    db.ref().update(updates).then(function() { _hmCargar(_hmCat); });
+}
+};
 window._hmRes = function(btn) { hmAbrirResolver(btn.dataset.key, btn.dataset.fecha); };
 window._hmEdit = function(btn) { hmAbrirEditar(btn.dataset.key, btn.dataset.cat); };
 function _hmPush(vista) { _hmNav.push(vista); history.pushState({ hmVista: vista }, ''); }
@@ -1161,7 +1214,12 @@ var items = Object.entries(snap.val()||{}).filter(function(e){ return e[1].cat==
 if (!items.length) { cont.innerHTML='<div style="text-align:center;color:#64748b;padding:20px;">Sin entradas a\u00fan. Pulsa \u2795</div>'; return; }
 var E = { generado:{borde:'#f472b6',bg:'#fdf2f8',color:'#be185d'}, pendiente:{borde:'#8b5cf6',bg:'#f5f3ff',color:'#6d28d9'}, propio:{borde:'#ef4444',bg:'#fff1f2',color:'#ef4444'} };
 var e = E[cat] || E.generado;
-cont.innerHTML = items.map(function(item) { var k=item[0], h=item[1]; var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'numeric'}) : ''; var path = 'historial2/'+miID+'/'+k; var btnBar = '<div style="display:flex;gap:4px;">' + _hmBtnEditar(k,cat) + _hmBtnBorrar(path) + '</div>';
+cont.innerHTML = items.map(function(item) { var k=item[0], h=item[1]; var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'numeric'}) : ''; var path = 'historial2/'+miID+'/'+k; 
+var deleteBtn = _hmBtnBorrar(path); 
+if(cat === 'propio' && h.linkedHistoryKey) {
+   deleteBtn = '<button data-path="'+path+'" data-linkedhistkey="'+h.linkedHistoryKey+'" data-cat="propio" onclick="_hmDel(this)" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">\ud83d\uddd1\ufe0f</button>';
+}
+var btnBar = '<div style="display:flex;gap:4px;">' + _hmBtnEditar(k,cat) + deleteBtn + '</div>';
 if (cat === 'pendiente') { var res = h.resuelto; var btnRes = res ? '<span style="font-size:0.72rem;background:#f0fdf4;color:#166534;border-radius:8px;padding:4px 8px;font-weight:700;border:1px solid #22c55e;">\u2705 Resuelto</span>' : '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_hmRes(this)" style="background:#8b5cf6;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>'; var resInfo = res ? '<div style="font-size:0.78rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:6px 10px;border:1px solid #22c55e;margin-bottom:4px;">'+(res.accion==='libre'?'\u25fb Libras \u00b7 compensa el <b>'+res.diaComp+'</b> \u26aa':'\u26aa Trabajas')+'</div>' : ''; return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div><div style="font-weight:800;color:'+e.color+';">'+(h.esLibre?'\u25fb':'\u26aa')+' '+(h.fecha||'\u2014')+'</div><div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">'+fecha+'</div></div><div style="display:flex;gap:4px;">' + btnRes + _hmBtnEditar(k,cat) + _hmBtnBorrar(path) + '</div></div>' + resInfo + (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';opacity:0.8;">\ud83d\udcdd '+h.nota+'</div>':'') + '</div>'; }
 if (cat === 'propio') { return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-weight:800;color:'+e.color+';">\ud83d\udd04 Cambio propio <span style="font-size:0.72rem;opacity:0.7;">'+fecha+'</span></div>' + btnBar + '</div><div style="display:flex;gap:8px;margin-bottom:6px;"><div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid '+e.borde+';"><div>\u26aa</div><div style="font-size:0.68rem;font-weight:700;color:'+e.color+';">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaTrabaja||'\u2014')+'</div></div><div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid '+e.borde+';"><div>\u25fb</div><div style="font-size:0.68rem;font-weight:700;color:'+e.color+';">LIBRAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaLibra||'\u2014')+'</div></div></div>' + (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';">\ud83d\udcdd '+h.nota+'</div>':'') + '</div>'; }
 var estadoLabel = ''; if (h.resuelto) { if (h.resuelto.accion === 'cobrado') estadoLabel = ' <span style="font-size:0.7rem;background:#f0fdf4;color:#166534;border-radius:6px;padding:1px 6px;font-weight:700;">Cobrado</span>'; else if (h.resuelto.accion === 'librar') estadoLabel = ' <span style="font-size:0.7rem;background:#fdf2f8;color:#be185d;border-radius:6px;padding:1px 6px;font-weight:700;">Librado el '+h.resuelto.diaLibre+'</span>'; } var btnDec = !h.resuelto ? '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_abrirDecisionGenerado(this.dataset.key,this.dataset.fecha)" style="background:#be185d;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">Decidir</button>' : ''; return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:800;color:'+e.color+';">'+(h.fecha||'-')+estadoLabel+'</div><div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">Generado &middot; '+fecha+'</div></div><div style="display:flex;gap:4px;">'+btnDec+_hmBtnEditar(k,'generado')+_hmBtnBorrar(path)+'</div></div>' + (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';margin-top:4px;">'+h.nota+'</div>':'') + '</div>'; }).join('');
@@ -1289,3 +1347,4 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').ca
 </div>
 </body>
 </html>
+
