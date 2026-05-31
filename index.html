@@ -1,7 +1,3 @@
-
-
-
- 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2110,6 +2106,35 @@
     }
 
     // Borra entradas de historial2 que coincidan con una fecha dada
+    function _hmBorrarCambioPropio(fecha, texto) {
+        // Buscar el otro dia vinculado en el texto: "Haces (x 15/3)" o "Libras (x 20/3)"
+        var match = texto.match(/\(x ([\d\/]+)\)/);
+        var fechaOtro = match ? match[1] : null;
+        // Borrar ambos dias del calendario
+        var updates = {};
+        var f1 = fecha.split('/');
+        if (f1.length >= 2) updates['cambios/' + miID + '/' + (parseInt(f1[1])-1) + '_' + parseInt(f1[0])] = null;
+        if (fechaOtro) {
+            var f2 = fechaOtro.split('/');
+            if (f2.length >= 2) updates['cambios/' + miID + '/' + (parseInt(f2[1])-1) + '_' + parseInt(f2[0])] = null;
+        }
+        db.ref().update(updates);
+        // Borrar entrada en historial2 que contenga alguna de las dos fechas
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            var upd = {};
+            snap.forEach(function(child) {
+                var h = child.val();
+                if (h && h.cat === 'propio') {
+                    if (h.diaTrabaja === fecha || h.diaLibra === fecha ||
+                        (fechaOtro && (h.diaTrabaja === fechaOtro || h.diaLibra === fechaOtro))) {
+                        upd['historial2/' + miID + '/' + child.key] = null;
+                    }
+                }
+            });
+            if (Object.keys(upd).length > 0) db.ref().update(upd);
+        });
+    }
+
     function _hmQuitarResolucionGenerado(fechaLibre) {
         // Al borrar un dia libre que resolvía un generado:
         // quitar solo la resolución, el generado sigue disponible
@@ -2220,6 +2245,9 @@
                     _hmQuitarResolucionPendiente(fecha);
                 } else if (texto.includes('Libras (por generado)')) {
                     _hmQuitarResolucionGenerado(fecha);
+                } else if (texto.includes('Haces (x ') || texto.includes('Libras (x ')) {
+                    // Cambio propio — borrar ambos dias del calendario y la entrada en historial2
+                    _hmBorrarCambioPropio(fecha, texto);
                 } else {
                     _hmBorrarPorFecha(fecha);
                 }
