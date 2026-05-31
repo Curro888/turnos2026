@@ -920,6 +920,96 @@
         }
     });
 
+    // ===== MODO PICK DIA (para generado y pendiente) =====
+    var _modoPickDia = null; // 'generado' | 'pendiente'
+    var _pickGenKey = null, _pickGenFecha = null;
+    var _pickPendKey = null, _pickPendFecha = null;
+
+    function _activarPickDia(modo, key, fecha) {
+        _modoPickDia = modo;
+        if (modo === 'generado') { _pickGenKey = key; _pickGenFecha = fecha; }
+        else { _pickPendKey = key; _pickPendFecha = fecha; }
+        // Cerrar modales y abrir calendario del usuario
+        document.getElementById('modal-generado').style.display = 'none';
+        document.getElementById('hm-resolver').style.display = 'none';
+        document.getElementById('historial-modal').style.display = 'none';
+        // Mostrar aviso
+        var notice = document.getElementById('selection-notice');
+        notice.style.display = 'block';
+        notice.innerText = '◻ Toca el dia que quieres librar en el calendario';
+        // Abrir calendario del usuario
+        abrirCal(miID);
+    }
+
+    function _onPickDia(d, mIdx) {
+        var fecha = d + '/' + (mIdx+1);
+        if (_modoPickDia === 'generado') {
+            _confirmarPickGenerado(d, mIdx, fecha);
+        } else if (_modoPickDia === 'pendiente') {
+            _confirmarPickPendiente(d, mIdx, fecha);
+        }
+        _modoPickDia = null;
+        document.getElementById('selection-notice').style.display = 'none';
+    }
+
+    function _confirmarPickGenerado(d, mIdx, fechaLibre) {
+        var key = _pickGenKey, fechaGen = _pickGenFecha;
+        var updates = {};
+        updates['cambios/' + miID + '/' + mIdx + '_' + d] = {
+            texto: 'Libras (por generado ' + fechaGen + ')',
+            clase: 'b-cambio-libre'
+        };
+        var pg = fechaGen ? fechaGen.split('/') : [];
+        if (pg.length >= 2) {
+            updates['cambios/' + miID + '/' + (parseInt(pg[1])-1) + '_' + parseInt(pg[0])] = {
+                texto: 'Generado (librado el ' + fechaLibre + ')',
+                clase: 'b-generado'
+            };
+        }
+        db.ref().update(updates).then(function() {
+            db.ref('historial2/' + miID + '/' + key).update({
+                resuelto: { accion: 'librar', diaLibre: fechaLibre }
+            });
+        });
+        cerrarCalendario();
+        // Reabrir historial en tarjeta generado
+        setTimeout(function() {
+            abrirHistorial();
+            abrirCategoria('generado');
+        }, 300);
+    }
+
+    function _confirmarPickPendiente(d, mIdx, fechaLibre) {
+        var key = _pickPendKey, fechaTrabajada = _pickPendFecha;
+        var updates = {};
+        updates['cambios/' + miID + '/' + mIdx + '_' + d] = {
+            texto: 'Libras (por pendiente ' + fechaTrabajada + ')',
+            clase: 'b-cambio-libre'
+        };
+        // Actualizar el dia trabajado pendiente
+        if (fechaTrabajada) {
+            var pt = fechaTrabajada.split('/');
+            if (pt.length >= 2) {
+                updates['cambios/' + miID + '/' + (parseInt(pt[1])-1) + '_' + parseInt(pt[0])] = {
+                    texto: 'Haces (librado el ' + fechaLibre + ')',
+                    clase: 'b-inter'
+                };
+            }
+        }
+        db.ref().update(updates).then(function() {
+            if (key) {
+                db.ref('historial2/' + miID + '/' + key).update({
+                    resuelto: { accion: 'libre', diaComp: fechaLibre }
+                });
+            }
+        });
+        cerrarCalendario();
+        setTimeout(function() {
+            abrirHistorial();
+            abrirCategoria('pendiente');
+        }, 300);
+    }
+
     // ===== GENERADO =====
     var _genDia = null, _genMes = null;
 
@@ -1016,18 +1106,11 @@
         var key = document.getElementById('mgen-key').value;
         var fecha = document.getElementById('mgen-fecha-val').value;
         if (opcion === 'cobrar') {
-            // Marcar como cobrado
             db.ref('historial2/' + miID + '/' + key).update({ cobrado: true, resuelto: { accion: 'cobrado' } });
-            var pg = fecha.split('/');
-            if (pg.length >= 2) {
-                var d = parseInt(pg[0]), m = parseInt(pg[1])-1;
-                db.ref('cambios/' + miID + '/' + m + '_' + d).update({ texto: 'Generado (cobrado)' });
-            }
             document.getElementById('modal-generado').style.display = 'none';
             if (typeof _hmCargar === 'function' && _hmCat === 'generado') _hmCargar('generado');
         } else {
-            // Librar: pedir dia
-            document.getElementById('mgen-librar-wrap').style.display = 'block';
+            _activarPickDia('generado', key, fecha);
         }
     }
 
@@ -1696,6 +1779,11 @@
     function handleDayClick(d, mIdx, uid) {
         if (pressTimerActive) { pressTimerActive = false; return; }
         if (ignorarSiguienteClick) { ignorarSiguienteClick = false; return; }
+        // Modo pick para generado/pendiente
+        if (_modoPickDia && uid === miID) {
+            _onPickDia(d, mIdx);
+            return;
+        }
         if (modoSeleccionActivo) {
             if (tipoCambio === 'COMP' && uid !== miID) {
                 finalizarProceso(d, mIdx, uid);
@@ -2896,13 +2984,12 @@
     }
 
     function hmResolver(accion) {
-        if (accion==='trabajo') {
-            db.ref('historial2/'+miID+'/'+_hmPendKey+'/resuelto').set({accion:'trabajo'}).then(function() {
-                alert('\u2705 Marcado como \u26aa trabajas'); hmVolverDetalle();
-            });
-        } else {
-            document.getElementById('hm-pend-comp').style.display = 'block';
-        }
+        // Solo librar — activar pick en calendario
+        var key = _hmPendKey;
+        db.ref('historial2/' + miID + '/' + key).once('value').then(function(snap) {
+            var h = snap.val() || {};
+            _activarPickDia('pendiente', key, h.fecha || '');
+        });
     }
 
     function hmConfirmarComp() {
@@ -3301,8 +3388,7 @@
             <div id="hm-pend-info" style="background:#f5f3ff; border:1px solid var(--primary); border-radius:12px; padding:12px; margin-bottom:16px; font-size:0.9rem; color:var(--primary-dark); font-weight:700;"></div>
             <p style="font-size:0.88rem; color:var(--text); margin:0 0 12px 0; font-weight:600;">¿Cómo se resuelve este día?</p>
             <div style="display:flex; gap:10px; margin-bottom:16px;">
-                <button onclick="hmResolver('libre')" style="flex:1; padding:16px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; line-height:1.5; cursor:pointer;">⬜ Libras<br><span style="font-size:0.72rem; font-weight:500;">Día libre</span></button>
-                <button onclick="hmResolver('trabajo')" style="flex:1; padding:16px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; line-height:1.5; cursor:pointer;">⭕ Trabajas<br><span style="font-size:0.72rem; font-weight:500;">Vienes a trabajar</span></button>
+                <button onclick="hmResolver('libre')" style="width:100%; padding:16px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; line-height:1.5; cursor:pointer;">⬜ Librar<br><span style="font-size:0.72rem; font-weight:500;">Marcar en el calendario</span></button>
             </div>
             <div id="hm-pend-comp" style="display:none; background:#f0fdf4; border:1px solid var(--success); border-radius:12px; padding:14px;">
                 <div style="font-size:0.85rem; font-weight:800; color:#166534; margin-bottom:10px;">📅 ¿Qué día compensas trabajando?</div>
