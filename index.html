@@ -2743,17 +2743,25 @@
         });
     }
 
+    var _hmListener = null;
+
     function abrirCategoria(cat) {
         _hmCat = cat;
-        var titulos = { generado:'\u2728 Generado', pendiente:'\u23f3 Pendiente', comp:'\ud83e\udd1d Con compa\u00f1ero', propio:'\ud83d\udd04 Cambio propio' };
+        var titulos = { generado:'\u2728 Generado', pendiente:'\u23f3 Pendiente', comp:'Con companero', propio:'Cambio propio' };
         document.getElementById('hm-titulo').textContent = titulos[cat] || cat;
         document.getElementById('hm-form-wrap').style.display = 'none';
         _hmIr('detalle');
         _hmPush('detalle');
+        if (_hmListener) { _hmListener.off(); _hmListener = null; }
+        _hmListener = db.ref('historial2/' + miID);
+        _hmListener.on('value', function() {
+            if (_hmCat === cat && _hmAbierto) _hmCargar(cat);
+        });
         _hmCargar(cat);
     }
 
     function hmVolverPortada() {
+        if (_hmListener) { _hmListener.off(); _hmListener = null; }
         _hmNav = [];
         _hmIr('portada');
         _hmBadges();
