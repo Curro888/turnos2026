@@ -1170,6 +1170,10 @@
             db.ref('historial2/' + miID + '/' + ts).set({
                 cat: 'propio', ts: ts,
                 diaTrabaja: fTrabaja, diaLibra: fLibra, nota: ''
+            }).then(function() {
+                // Refrescar tarjeta si está abierta
+                if (_hmAbierto && _hmCat === 'propio') _hmCargar('propio');
+                _hmBadges();
             });
         });
     }
@@ -2785,10 +2789,6 @@
         _hmIr('detalle');
         _hmPush('detalle');
         if (_hmListener) { _hmListener.off(); _hmListener = null; }
-        _hmListener = db.ref('historial2/' + miID);
-        _hmListener.on('value', function() {
-            if (_hmCat === cat && _hmAbierto) _hmCargar(cat);
-        });
         _hmCargar(cat);
     }
 
