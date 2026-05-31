@@ -953,26 +953,19 @@
     }
 
     function _confirmarPickGenerado(d, mIdx, fechaLibre) {
-        var key = _pickGenKey, fechaGen = _pickGenFecha;
-        var updates = {};
-        updates['cambios/' + miID + '/' + mIdx + '_' + d] = {
-            texto: 'Libras (por generado ' + fechaGen + ')',
+        var key = _pickGenKey;
+        // Solo marcar el dia LIBRE en el calendario
+        db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({
+            texto: 'Libras (por generado)',
             clase: 'b-cambio-libre'
-        };
-        var pg = fechaGen ? fechaGen.split('/') : [];
-        if (pg.length >= 2) {
-            updates['cambios/' + miID + '/' + (parseInt(pg[1])-1) + '_' + parseInt(pg[0])] = {
-                texto: 'Generado (librado el ' + fechaLibre + ')',
-                clase: 'b-generado'
-            };
-        }
-        db.ref().update(updates).then(function() {
-            db.ref('historial2/' + miID + '/' + key).update({
-                resuelto: { accion: 'librar', diaLibre: fechaLibre }
-            });
+        }).then(function() {
+            if (key) {
+                db.ref('historial2/' + miID + '/' + key).update({
+                    resuelto: { accion: 'librar', diaLibre: fechaLibre }
+                });
+            }
         });
         cerrarCalendario();
-        // Reabrir historial en tarjeta generado
         setTimeout(function() {
             abrirHistorial();
             abrirCategoria('generado');
@@ -1054,29 +1047,17 @@
 
     function _usarGeneradoParaLibre(keyGen, fechaGen, fechaLibre) {
         var pl = fechaLibre.split('/');
-        var pg = fechaGen.split('/');
-        var updates = {};
-        // Marcar el dia libre en el calendario
+        // Solo marcar el dia LIBRE en el calendario
         if (pl.length >= 2) {
             var dl = parseInt(pl[0]), ml = parseInt(pl[1])-1;
-            updates['cambios/' + miID + '/' + ml + '_' + dl] = {
-                texto: 'Libras (por generado ' + fechaGen + ')',
+            db.ref('cambios/' + miID + '/' + ml + '_' + dl).set({
+                texto: 'Libras (por generado)',
                 clase: 'b-cambio-libre'
-            };
-        }
-        // Actualizar texto del generado en calendario
-        if (pg.length >= 2) {
-            var dg = parseInt(pg[0]), mg = parseInt(pg[1])-1;
-            updates['cambios/' + miID + '/' + mg + '_' + dg] = {
-                texto: 'Generado (librado el ' + fechaLibre + ')',
-                clase: 'b-generado'
-            };
-        }
-        db.ref().update(updates).then(function() {
-            // Solo actualizar el registro existente — sin crear uno nuevo
-            db.ref('historial2/' + miID + '/' + keyGen).update({
-                resuelto: { accion: 'librar', diaLibre: fechaLibre }
             });
+        }
+        // Solo actualizar historial2 — sin tocar el dia generado en calendario
+        db.ref('historial2/' + miID + '/' + keyGen).update({
+            resuelto: { accion: 'librar', diaLibre: fechaLibre }
         });
         document.getElementById('modal-generado').style.display = 'none';
     }
@@ -2120,6 +2101,20 @@
     }
 
     // Borra entradas de historial2 que coincidan con una fecha dada
+    function _hmQuitarResolucionGenerado(fechaLibre) {
+        // Al borrar un dia libre que resolvía un generado:
+        // quitar solo la resolución, el generado sigue disponible
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            snap.forEach(function(child) {
+                var h = child.val();
+                if (h && h.cat === 'generado' && h.resuelto &&
+                    h.resuelto.diaLibre === fechaLibre) {
+                    db.ref('historial2/' + miID + '/' + child.key + '/resuelto').set(null);
+                }
+            });
+        });
+    }
+
     function _hmQuitarResolucionPendiente(fechaLibre) {
         // Al borrar un dia libre que resolvía un pendiente:
         // quitar solo la resolución, mantener el pendiente disponible
@@ -2213,8 +2208,9 @@
                 var fecha = d + '/' + (mIdx+1);
                 var texto = data ? (data.texto || '') : '';
                 if (texto.includes('Libras (por pendiente)')) {
-                    // Solo quitar la resolucion del pendiente, mantener el pendiente
                     _hmQuitarResolucionPendiente(fecha);
+                } else if (texto.includes('Libras (por generado)')) {
+                    _hmQuitarResolucionGenerado(fecha);
                 } else {
                     _hmBorrarPorFecha(fecha);
                 }
