@@ -1,7 +1,3 @@
-
-
-
- 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -2087,17 +2083,7 @@
         return db.ref().update(updates);
     }
 
-    function aplicarCambioPropio(d1, m1, d2, m2) {
-        const f1 = `${d1}/${m1+1}`, f2 = `${d2}/${m2+1}`;
-        const updates = {
-            [`cambios/${miID}/${m1}_${d1}`]: { texto: `Haces (x ${f2})`, clase: 'b-inter' },
-            [`cambios/${miID}/${m2}_${d2}`]: { texto: `Libras (x ${f1})`, clase: 'b-cambio-libre' }
-        };
-        db.ref().update(updates).then(() => {
-            modoSeleccionActivo = false;
-            document.getElementById('selection-notice').style.display = 'none';
-        });
-    }
+    
 
     // ===== GESTIÓN DE DÍAS =====
     function setCambio(texto, clase) {
@@ -2114,6 +2100,28 @@
     }
 
     // Borra entradas de historial2 que coincidan con una fecha dada
+    function _hmBorrarCambioComp(fecha1, linkedKey) {
+        // Borrar entradas de historial2 que coincidan con alguno de los dos dias del cambio
+        var fecha2 = null;
+        if (linkedKey) {
+            var lparts = linkedKey.split('_');
+            if (lparts.length >= 2) fecha2 = lparts[1] + '/' + (parseInt(lparts[0])+1);
+        }
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            var upd = {};
+            snap.forEach(function(child) {
+                var h = child.val();
+                if (h && h.cat === 'comp') {
+                    if (h.diaTrabaja === fecha1 || h.diaLibra === fecha1 ||
+                        (fecha2 && (h.diaTrabaja === fecha2 || h.diaLibra === fecha2))) {
+                        upd['historial2/' + miID + '/' + child.key] = null;
+                    }
+                }
+            });
+            if (Object.keys(upd).length > 0) db.ref().update(upd);
+        });
+    }
+
     function _hmBorrarCambioPropio(fecha, texto) {
         // Buscar el otro dia vinculado en el texto: "Haces (x 15/3)" o "Libras (x 20/3)"
         var match = texto.match(/\(x ([\d\/]+)\)/);
@@ -2209,14 +2217,9 @@
                 }
                 db.ref().update(updates).then(function() {
                     cerrarDesplegables();
+                    // Borrar de historial2 por ambas fechas del cambio
                     var fecha1 = d + '/' + (mIdx+1);
-                    _hmBorrarPorFecha(fecha1);
-                    // También borrar el día del compañero vinculado
-                    if (linkedKey) {
-                        var lparts = linkedKey.split('_');
-                        var lfecha = lparts[1] + '/' + (parseInt(lparts[0])+1);
-                        _hmBorrarPorFecha(lfecha);
-                    }
+                    _hmBorrarCambioComp(fecha1, linkedKey);
                 });
             } else {
                 cerrarDesplegables();
