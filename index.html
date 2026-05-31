@@ -2074,12 +2074,15 @@
             [`cambios/${u2}/${m1}_${d1}`]: { texto: `Libras (x ${miNom} ${f2})`, clase: 'b-cambio-libre', linkedUid: u1, linkedKey: `${m2}_${d2}` },
             [`cambios/${u2}/${m2}_${d2}`]: { texto: `Haces (x ${miNom} ${f1})`, clase: 'b-inter', linkedUid: u1, linkedKey: `${m1}_${d1}` }
         };
-        // Guardar en historial personal de cada uno
+        // Guardar en historial personal (antiguo) y en historial2 (nuevo)
         const ts = Date.now();
         const hKey = `historial/${u1}/${ts}`;
         const hKey2 = `historial/${u2}/${ts}`;
         db.ref(hKey).set({ con: compNom, conId: u2, diaTrabaja: f2, diaLibra: f1, ts, nota: '' });
         db.ref(hKey2).set({ con: miNom, conId: u1, diaTrabaja: f1, diaLibra: f2, ts, nota: '' });
+        // Guardar en historial2 para la tarjeta "Con compañero"
+        db.ref('historial2/' + u1 + '/' + ts).set({ cat: 'comp', ts, con: compNom, diaTrabaja: f2, diaLibra: f1, nota: '' });
+        db.ref('historial2/' + u2 + '/' + ts).set({ cat: 'comp', ts, con: miNom, diaTrabaja: f1, diaLibra: f2, nota: '' });
         return db.ref().update(updates);
     }
 
