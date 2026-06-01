@@ -2782,8 +2782,16 @@
             var c = { generado:0, pendiente:0, comp:0, propio:0 };
             Object.values(snap.val() || {}).forEach(function(h) {
                 if (c[h.cat] === undefined) return;
-                // Generados cobrados no cuentan como disponibles
-                if (h.cat === 'generado' && (h.cobrado || (h.resuelto && h.resuelto.accion === 'cobrado'))) return;
+                // Generados: solo cuentan los disponibles (sin resolver ni cobrar)
+                if (h.cat === 'generado') {
+                    if (!h.resuelto && !h.cobrado) c.generado++;
+                    return;
+                }
+                // Pendientes: solo cuentan los sin resolver
+                if (h.cat === 'pendiente') {
+                    if (!h.resuelto) c.pendiente++;
+                    return;
+                }
                 c[h.cat]++;
             });
             Object.keys(c).forEach(function(cat) {
@@ -2792,13 +2800,6 @@
                 b.style.display = c[cat] > 0 ? 'block' : 'none';
                 b.textContent = c[cat];
             });
-        });
-        db.ref('historial/' + miID).once('value').then(function(snap) {
-            var n = Object.keys(snap.val() || {}).length;
-            if (n > 0) {
-                var b = document.getElementById('badge-comp');
-                if (b) { b.style.display = 'block'; b.textContent = (parseInt(b.textContent) || 0) + n; }
-            }
         });
     }
 
@@ -2877,7 +2878,13 @@
         }
 
         db.ref('historial2/' + miID).once('value').then(function(snap) {
-            var items = Object.entries(snap.val()||{}).filter(function(e){ return e[1].cat===cat; }).sort(function(a,b){ return (b[1].ts||0)-(a[1].ts||0); });
+            var items = Object.entries(snap.val()||{}).filter(function(e) {
+                var h = e[1];
+                if (h.cat !== cat) return false;
+                // Pendientes: mostrar todos (resueltos con etiqueta, no resueltos con boton)
+                // Generados: mostrar todos (cobrados con etiqueta, disponibles con boton Decidir)
+                return true;
+            }).sort(function(a,b){ return (b[1].ts||0)-(a[1].ts||0); });
             if (!items.length) { cont.innerHTML='<div style="text-align:center;color:#64748b;padding:20px;">Sin entradas a\u00fan. Pulsa \u2795</div>'; return; }
             var E = { generado:{borde:'#f472b6',bg:'#fdf2f8',color:'#be185d'}, pendiente:{borde:'#8b5cf6',bg:'#f5f3ff',color:'#6d28d9'}, propio:{borde:'#ef4444',bg:'#fff1f2',color:'#ef4444'} };
             var e = E[cat] || E.generado;
