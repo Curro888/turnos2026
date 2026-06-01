@@ -2081,8 +2081,10 @@
         db.ref(hKey).set({ con: compNom, conId: u2, diaTrabaja: f2, diaLibra: f1, ts, nota: '' });
         db.ref(hKey2).set({ con: miNom, conId: u1, diaTrabaja: f1, diaLibra: f2, ts, nota: '' });
         // Guardar en historial2 para la tarjeta "Con compañero"
-        db.ref('historial2/' + u1 + '/' + ts).set({ cat: 'comp', ts, con: compNom, diaTrabaja: f2, diaLibra: f1, nota: '' });
-        db.ref('historial2/' + u2 + '/' + ts).set({ cat: 'comp', ts, con: miNom, diaTrabaja: f1, diaLibra: f2, nota: '' });
+        // u1 trabaja en f1 (su dia que ahora hace) y libra en f2
+        // u2 trabaja en f2 (su dia que ahora hace) y libra en f1
+        db.ref('historial2/' + u1 + '/' + ts).set({ cat: 'comp', ts: ts, con: compNom, diaTrabaja: f1, diaLibra: f2, nota: '' });
+        db.ref('historial2/' + u2 + '/' + ts).set({ cat: 'comp', ts: ts, con: miNom, diaTrabaja: f2, diaLibra: f1, nota: '' });
         return db.ref().update(updates);
     }
 
