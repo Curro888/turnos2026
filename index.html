@@ -2259,8 +2259,14 @@
                     _hmQuitarResolucionPendiente(fecha);
                 } else if (texto.includes('Libras (por generado)')) {
                     _hmQuitarResolucionGenerado(fecha);
+                } else if (texto.includes('Haces (x ') && data && data.linkedUid) {
+                    // Cambio con compañero
+                    _hmBorrarCambioComp(fecha, data.linkedKey);
+                } else if (texto.includes('Libras (x ') && data && data.linkedUid) {
+                    // Cambio con compañero (dia libre)
+                    _hmBorrarCambioComp(fecha, data.linkedKey);
                 } else if (texto.includes('Haces (x ') || texto.includes('Libras (x ')) {
-                    // Cambio propio — borrar ambos dias del calendario y la entrada en historial2
+                    // Cambio propio
                     _hmBorrarCambioPropio(fecha, texto);
                 } else {
                     _hmBorrarPorFecha(fecha);
@@ -2772,7 +2778,12 @@
     function _hmBadges() {
         db.ref('historial2/' + miID).once('value').then(function(snap) {
             var c = { generado:0, pendiente:0, comp:0, propio:0 };
-            Object.values(snap.val() || {}).forEach(function(h) { if (c[h.cat] !== undefined) c[h.cat]++; });
+            Object.values(snap.val() || {}).forEach(function(h) {
+                if (c[h.cat] === undefined) return;
+                // Generados cobrados no cuentan como disponibles
+                if (h.cat === 'generado' && (h.cobrado || (h.resuelto && h.resuelto.accion === 'cobrado'))) return;
+                c[h.cat]++;
+            });
             Object.keys(c).forEach(function(cat) {
                 var b = document.getElementById('badge-' + cat);
                 if (!b) return;
@@ -2836,24 +2847,21 @@
         cont.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Cargando...</div>';
 
         if (cat === 'comp') {
-            Promise.all([
-                db.ref('historial2/' + miID).once('value'),
-                db.ref('historial/' + miID).once('value')
-            ]).then(function(res) {
+            db.ref('historial2/' + miID).once('value').then(function(snap) {
                 var items = [];
-                Object.entries(res[0].val() || {}).filter(function(e) { return e[1].cat === 'comp'; }).forEach(function(e) { items.push([e[0], e[1], 'nuevo']); });
-                Object.entries(res[1].val() || {}).forEach(function(e) { items.push([e[0], e[1], 'antiguo']); });
+                Object.entries(snap.val() || {}).filter(function(e) {
+                    return e[1].cat === 'comp';
+                }).forEach(function(e) { items.push([e[0], e[1]]); });
                 items.sort(function(a,b) { return (b[1].ts||0)-(a[1].ts||0); });
-                if (!items.length) { cont.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Sin cambios a\u00fan. Pulsa \u2795</div>'; return; }
+                if (!items.length) { cont.innerHTML='<div style="text-align:center;color:#64748b;padding:20px;">Sin cambios aun. Pulsa \u2795</div>'; return; }
                 cont.innerHTML = items.map(function(item) {
-                    var k=item[0], h=item[1], origen=item[2];
-                    var path = origen==='antiguo' ? 'historial/'+miID+'/'+k : 'historial2/'+miID+'/'+k;
+                    var k=item[0], h=item[1];
+                    var path = 'historial2/'+miID+'/'+k;
                     var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
-                    var esNuevo = origen === 'nuevo';
                     return '<div style="border:1px solid #fde68a;border-radius:12px;padding:14px;margin-bottom:10px;background:#fefce8;">' +
                         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-                            '<div><div style="font-weight:800;color:#854d0e;">\ud83e\udd1d '+(h.con||'Compa\u00f1ero')+'</div><div style="font-size:0.75rem;color:#92400e;">'+fecha+'</div></div>' +
-                            '<div style="display:flex;gap:4px;">' + (esNuevo ? _hmBtnEditar(k,'comp') : '') + _hmBtnBorrar(path) + '</div>' +
+                            '<div><div style="font-weight:800;color:#854d0e;">\ud83e\udd1d '+(h.con||'Companero')+'</div><div style="font-size:0.75rem;color:#92400e;">'+fecha+'</div></div>' +
+                            '<div style="display:flex;gap:4px;">' + _hmBtnEditar(k,'comp') + _hmBtnBorrar(path) + '</div>' +
                         '</div>' +
                         '<div style="display:flex;gap:8px;">' +
                             '<div style="flex:1;background:white;border-radius:10px;padding:8px;text-align:center;border:1px solid #fde68a;"><div>\u26aa</div><div style="font-size:0.68rem;font-weight:700;color:#854d0e;">TRABAJAS</div><div style="font-size:0.82rem;font-weight:800;">'+(h.diaTrabaja||'\u2014')+'</div></div>' +
