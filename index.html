@@ -85,16 +85,16 @@
         .b-pend { border: 2px solid var(--primary) !important; background: var(--white) !important; color: var(--primary) !important; }
         .b-vac { border: 2px solid var(--success) !important; background: #f0fdf4 !important; color: #166534 !important; }
         .b-generado { border: 2px solid var(--pink) !important; background: #fdf2f8 !important; color: #be185d !important; }
-        .is-festivo { background: #bfdbfe !important; color: #1e3a8a !important; }
-        .is-festivo.is-free { background: #1d4ed8 !important; color: #ffffff !important; }
-        .is-festivo.shape-circle { background: #bfdbfe !important; color: #1e3a8a !important; }
-        .is-festivo.shape-square { background: #bfdbfe !important; color: #1e3a8a !important; }
-        .is-festivo.is-free.shape-square { background: #1d4ed8 !important; color: #ffffff !important; }
-        body.dark-mode .is-festivo { background: #2563eb !important; color: #ffffff !important; }
-        body.dark-mode .is-festivo.is-free { background: #1e40af !important; color: #ffffff !important; }
-        body.dark-mode .is-festivo.shape-circle { background: #2563eb !important; color: #ffffff !important; }
-        body.dark-mode .is-festivo.shape-square { background: #2563eb !important; color: #ffffff !important; }
-        body.dark-mode .is-festivo.is-free.shape-square { background: #1e40af !important; color: #ffffff !important; }
+        .is-festivo { background: #ef4444 !important; color: #000000 !important; }
+        .is-festivo.is-free { background: #ef4444 !important; color: #ffffff !important; }
+        .is-festivo.shape-circle { background: #ef4444 !important; color: #000000 !important; }
+        .is-festivo.shape-square { background: #ef4444 !important; color: #000000 !important; }
+        .is-festivo.is-free.shape-square { background: #ef4444 !important; color: #ffffff !important; }
+        body.dark-mode .is-festivo { background: #ef4444 !important; color: #000000 !important; }
+        body.dark-mode .is-festivo.is-free { background: #ef4444 !important; color: #ffffff !important; }
+        body.dark-mode .is-festivo.shape-circle { background: #ef4444 !important; color: #000000 !important; }
+        body.dark-mode .is-festivo.shape-square { background: #ef4444 !important; color: #000000 !important; }
+        body.dark-mode .is-festivo.is-free.shape-square { background: #ef4444 !important; color: #ffffff !important; }
         .legend-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 12px; background: var(--surface2); border-radius: 12px; justify-content: center; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; padding: 4px; border-radius: 6px; }
         .legend-item:active { background: var(--border); }
@@ -408,8 +408,8 @@
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-vac','Vacaciones')"><div class="legend-box b-vac"></div><span>Vacaciones</span></div>
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-pend','Pendientes')"><div class="legend-box b-pend"></div><span>Pendiente</span></div>
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-generado','Generados')"><div class="legend-box b-generado"></div><span>Generado</span></div>
-            <div class="legend-item"><div class="legend-box is-festivo" style="background:#bfdbfe;"></div><span>Festivo (trabajas)</span></div>
-            <div class="legend-item"><div class="legend-box is-festivo is-free" style="background:#1d4ed8;"></div><span>Festivo (libras)</span></div>
+            <div class="legend-item"><div class="legend-box is-festivo" style="background:#ef4444;"></div><span>Festivo (trabajas)</span></div>
+            <div class="legend-item"><div class="legend-box is-festivo is-free" style="background:#ef4444;"></div><span>Festivo (libras)</span></div>
         </div>
         <div class="cal-grid" id="m-grid"></div>
     </div>
