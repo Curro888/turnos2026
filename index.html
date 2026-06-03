@@ -901,6 +901,65 @@
         iniciarListeners();
         renderList();
         if (modoGrupo) { iniciarPresencia(); iniciarListenerLeidos(); }
+        _checkFestivos();
+    }
+
+    // ===== FESTIVOS MADRID 2026 =====
+    var _FESTIVOS_2026 = [
+        { fecha: '3/6',   nombre: '🧪 PRUEBA - Borrar después' },
+        { fecha: '1/1',   nombre: 'Año Nuevo' },
+        { fecha: '6/1',   nombre: 'Epifanía del Señor' },
+        { fecha: '2/4',   nombre: 'Jueves Santo' },
+        { fecha: '3/4',   nombre: 'Viernes Santo' },
+        { fecha: '1/5',   nombre: 'Fiesta del Trabajo' },
+        { fecha: '2/5',   nombre: 'Fiesta de la Comunidad de Madrid' },
+        { fecha: '15/8',  nombre: 'Asunción de la Virgen' },
+        { fecha: '12/10', nombre: 'Fiesta Nacional de España' },
+        { fecha: '2/11',  nombre: 'Traslado de Todos los Santos' },
+        { fecha: '7/12',  nombre: 'Traslado del Día de la Constitución' },
+        { fecha: '8/12',  nombre: 'Inmaculada Concepción' },
+        { fecha: '25/12', nombre: 'Natividad del Señor' }
+    ];
+
+    function _checkFestivos() {
+        if (!miID) return;
+        var hoy = new Date();
+        var festivosHoy = [];
+        _FESTIVOS_2026.forEach(function(f) {
+            var parts = f.fecha.split('/');
+            var dia = parseInt(parts[0]), mes = parseInt(parts[1]);
+            var fechaFestivo = new Date(2026, mes - 1, dia);
+            // Solo los que ya han llegado (fecha <= hoy)
+            if (fechaFestivo <= hoy) festivosHoy.push(f);
+        });
+        if (!festivosHoy.length) return;
+
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            var existentes = {};
+            snap.forEach(function(child) {
+                var h = child.val();
+                if (h && h.cat === 'generado' && h.subtipo === 'festivo') {
+                    existentes[h.fecha] = true;
+                }
+            });
+            var updates = {};
+            festivosHoy.forEach(function(f) {
+                if (!existentes[f.fecha]) {
+                    var ts = Date.now() + Math.random(); // evitar colisiones
+                    updates['historial2/' + miID + '/' + Math.floor(ts)] = {
+                        cat: 'generado',
+                        subtipo: 'festivo',
+                        ts: Math.floor(ts),
+                        fecha: f.fecha,
+                        nota: f.nombre,
+                        esLibre: false
+                    };
+                }
+            });
+            if (Object.keys(updates).length > 0) {
+                db.ref().update(updates).then(function() { _hmBadges(); });
+            }
+        });
     }
 
     function toggleMenu() {
@@ -921,13 +980,14 @@
     });
 
     // ===== MODO PICK DIA (para generado y pendiente) =====
-    var _modoPickDia = null; // 'generado' | 'pendiente'
+    var _modoPickDia = null; // 'generado' | 'pendiente' | 'convenio'
     var _pickGenKey = null, _pickGenFecha = null;
     var _pickPendKey = null, _pickPendFecha = null;
 
     function _activarPickDia(modo, key, fecha) {
         _modoPickDia = modo;
         if (modo === 'generado') { _pickGenKey = key; _pickGenFecha = fecha; }
+        else if (modo === 'convenio') { _pickPendKey = key; _pickPendFecha = fecha; }
         else { _pickPendKey = key; _pickPendFecha = fecha; }
         // Cerrar modales y abrir calendario del usuario
         document.getElementById('modal-generado').style.display = 'none';
@@ -945,6 +1005,8 @@
         var fecha = d + '/' + (mIdx+1);
         if (_modoPickDia === 'generado') {
             _confirmarPickGenerado(d, mIdx, fecha);
+        } else if (_modoPickDia === 'convenio') {
+            _confirmarPickConvenio(d, mIdx, fecha);
         } else if (_modoPickDia === 'pendiente') {
             _confirmarPickPendiente(d, mIdx, fecha);
         }
@@ -993,7 +1055,24 @@
         }, 300);
     }
 
-    // ===== GENERADO =====
+    function _confirmarPickConvenio(d, mIdx, fechaLibre) {
+        var key = _pickPendKey;
+        db.ref('cambios/' + miID + '/' + mIdx + '_' + d).set({
+            texto: 'Libras (por convenio)',
+            clase: 'b-cambio-libre'
+        }).then(function() {
+            if (key) {
+                db.ref('historial2/' + miID + '/' + key).update({
+                    resuelto: { accion: 'libre', diaComp: fechaLibre }
+                });
+            }
+        });
+        cerrarCalendario();
+        setTimeout(function() {
+            abrirHistorial();
+            abrirCategoria('generado');
+        }, 300);
+    }
     var _genDia = null, _genMes = null;
 
     function _abrirModalGenerado() {
@@ -2184,6 +2263,20 @@
         });
     }
 
+    function _hmQuitarResolucionConvenio(fechaLibre) {
+        // Al borrar un dia libre que resolvía un convenio:
+        // quitar solo la resolución, el convenio queda disponible de nuevo
+        db.ref('historial2/' + miID).once('value').then(function(snap) {
+            snap.forEach(function(child) {
+                var h = child.val();
+                if (h && h.cat === 'generado' && h.subtipo === 'convenio' && h.resuelto &&
+                    (h.resuelto.diaComp === fechaLibre || h.resuelto.diaLibre === fechaLibre)) {
+                    db.ref('historial2/' + miID + '/' + child.key + '/resuelto').set(null);
+                }
+            });
+        });
+    }
+
     function _hmBorrarPorFecha(fecha) {
         db.ref('historial2/' + miID).once('value').then(function(snap) {
             var todos = snap.val() || {};
@@ -2259,6 +2352,8 @@
                 var texto = data ? (data.texto || '') : '';
                 if (texto.includes('Libras (por pendiente)')) {
                     _hmQuitarResolucionPendiente(fecha);
+                } else if (texto.includes('Libras (por convenio)')) {
+                    _hmQuitarResolucionConvenio(fecha);
                 } else if (texto.includes('Libras (por generado)')) {
                     _hmQuitarResolucionGenerado(fecha);
                 } else if (texto.includes('Haces (x ') && data && data.linkedUid) {
@@ -2779,27 +2874,32 @@
 
     function _hmBadges() {
         db.ref('historial2/' + miID).once('value').then(function(snap) {
-            var c = { generado:0, pendiente:0, comp:0, propio:0 };
+            var c = { generado:0, convenio:0, festivo:0, pendiente:0, comp:0, propio:0 };
             Object.values(snap.val() || {}).forEach(function(h) {
-                if (c[h.cat] === undefined) return;
-                // Generados: solo cuentan los disponibles (sin resolver ni cobrar)
                 if (h.cat === 'generado') {
-                    if (!h.resuelto && !h.cobrado) c.generado++;
+                    if (!h.resuelto && !h.cobrado) {
+                        if (h.subtipo === 'convenio') c.convenio++;
+                        else if (h.subtipo === 'festivo') c.festivo++;
+                        else c.generado++;
+                    }
                     return;
                 }
-                // Pendientes: solo cuentan los sin resolver
                 if (h.cat === 'pendiente') {
                     if (!h.resuelto) c.pendiente++;
                     return;
                 }
-                c[h.cat]++;
+                if (c[h.cat] !== undefined) c[h.cat]++;
             });
-            Object.keys(c).forEach(function(cat) {
+            ['generado','pendiente','comp','propio'].forEach(function(cat) {
                 var b = document.getElementById('badge-' + cat);
                 if (!b) return;
                 b.style.display = c[cat] > 0 ? 'block' : 'none';
                 b.textContent = c[cat];
             });
+            var bc = document.getElementById('badge-convenio');
+            if (bc) { bc.style.display = c.convenio > 0 ? 'block' : 'none'; bc.textContent = c.convenio; }
+            var bf = document.getElementById('badge-festivo');
+            if (bf) { bf.style.display = c.festivo > 0 ? 'block' : 'none'; bf.textContent = c.festivo; }
         });
     }
 
@@ -2888,7 +2988,29 @@
             if (!items.length) { cont.innerHTML='<div style="text-align:center;color:#64748b;padding:20px;">Sin entradas a\u00fan. Pulsa \u2795</div>'; return; }
             var E = { generado:{borde:'#f472b6',bg:'#fdf2f8',color:'#be185d'}, pendiente:{borde:'#8b5cf6',bg:'#f5f3ff',color:'#6d28d9'}, propio:{borde:'#ef4444',bg:'#fff1f2',color:'#ef4444'} };
             var e = E[cat] || E.generado;
-            cont.innerHTML = items.map(function(item) {
+            cont.innerHTML = (function() {
+                if (cat !== 'generado') return items.map(renderItemGen).join('');
+                var grpGen = items.filter(function(i){ return i[1].subtipo !== 'convenio' && i[1].subtipo !== 'festivo'; });
+                var grpCon = items.filter(function(i){ return i[1].subtipo === 'convenio'; });
+                var grpFes = items.filter(function(i){ return i[1].subtipo === 'festivo'; });
+                var html = '';
+                if (grpGen.length) {
+                    html += '<div style="font-size:0.72rem;font-weight:800;color:#be185d;letter-spacing:0.05em;margin-bottom:8px;padding:4px 2px;">✨ GENERADOS</div>';
+                    html += grpGen.map(renderItemGen).join('');
+                }
+                if (grpCon.length) {
+                    if (grpGen.length) html += '<div style="border-top:1px solid #f0e0c8;margin:12px 0 10px 0;"></div>';
+                    html += '<div style="font-size:0.72rem;font-weight:800;color:#92400e;letter-spacing:0.05em;margin-bottom:8px;padding:4px 2px;">📋 CONVENIO</div>';
+                    html += grpCon.map(renderItemGen).join('');
+                }
+                if (grpFes.length) {
+                    if (grpGen.length || grpCon.length) html += '<div style="border-top:1px solid #bfdbfe;margin:12px 0 10px 0;"></div>';
+                    html += '<div style="font-size:0.72rem;font-weight:800;color:#1d4ed8;letter-spacing:0.05em;margin-bottom:8px;padding:4px 2px;">🎉 FESTIVOS</div>';
+                    html += grpFes.map(renderItemGen).join('');
+                }
+                return html;
+            })();
+            function renderItemGen(item) {
                 var k=item[0], h=item[1];
                 var fecha = h.ts ? new Date(h.ts).toLocaleDateString('es',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
                 var path = 'historial2/'+miID+'/'+k;
@@ -2925,23 +3047,35 @@
                 }
 
                 // generado
+                    var esConvenio = h.subtipo === 'convenio';
+                    var esFestivo = h.subtipo === 'festivo';
+                    var eConv = {borde:'#f59e0b', bg:'#fffbeb', color:'#92400e'};
+                    var eFes  = {borde:'#3b82f6', bg:'#eff6ff', color:'#1d4ed8'};
+                    var eActual = esConvenio ? eConv : esFestivo ? eFes : e;
                     var estadoLabel = '';
                     if (h.resuelto) {
                         if (h.resuelto.accion === 'cobrado') estadoLabel = ' <span style="font-size:0.7rem;background:#f0fdf4;color:#166534;border-radius:6px;padding:1px 6px;font-weight:700;">Cobrado</span>';
                         else if (h.resuelto.accion === 'librar') estadoLabel = ' <span style="font-size:0.7rem;background:#fdf2f8;color:#be185d;border-radius:6px;padding:1px 6px;font-weight:700;">Librado el '+h.resuelto.diaLibre+'</span>';
+                        else if (h.resuelto.accion === 'libre') estadoLabel = ' <span style="font-size:0.7rem;background:#fff7ed;color:#92400e;border-radius:6px;padding:1px 6px;font-weight:700;">Librado el '+(h.resuelto.diaComp||h.resuelto.diaLibre||'')+'</span>';
                     }
-                    var btnDec = !h.resuelto
-                        ? '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_abrirDecisionGenerado(this.dataset.key,this.dataset.fecha)" style="background:#be185d;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">Decidir</button>'
-                        : '';
-                    return '<div style="border:1px solid '+e.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+e.bg+';">'+
+                    var btnDec = '';
+                    if (!h.resuelto) {
+                        if (esConvenio) {
+                            btnDec = '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_hmRes(this)" style="background:#f59e0b;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">Resolver</button>';
+                        } else {
+                            btnDec = '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_abrirDecisionGenerado(this.dataset.key,this.dataset.fecha)" style="background:'+(esFestivo?'#3b82f6':'#be185d')+';color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">Decidir</button>';
+                        }
+                    }
+                    var subLabel = esConvenio ? 'Convenio &middot; ' : esFestivo ? 'Festivo &middot; ' : 'Generado &middot; ';
+                    return '<div style="border:1px solid '+eActual.borde+';border-radius:12px;padding:14px;margin-bottom:10px;background:'+eActual.bg+';">'+
                         '<div style="display:flex;justify-content:space-between;align-items:center;">'+
-                            '<div><div style="font-weight:800;color:'+e.color+';">'+(h.fecha||'-')+estadoLabel+'</div>'+
-                            '<div style="font-size:0.72rem;color:'+e.color+';opacity:0.7;">Generado &middot; '+fecha+'</div></div>'+
+                            '<div><div style="font-weight:800;color:'+eActual.color+';">'+(h.fecha||'-')+estadoLabel+'</div>'+
+                            '<div style="font-size:0.72rem;color:'+eActual.color+';opacity:0.7;">'+subLabel+fecha+'</div></div>'+
                             '<div style="display:flex;gap:4px;">'+btnDec+_hmBtnEditar(k,'generado')+_hmBtnBorrar(path)+'</div>'+
                         '</div>'+
-                        (h.nota?'<div style="font-size:0.78rem;color:'+e.color+';margin-top:4px;">'+h.nota+'</div>':'')+
+                        (h.nota?'<div style="font-size:0.78rem;color:'+eActual.color+';margin-top:4px;">'+h.nota+'</div>':'')+
                     '</div>';
-            }).join('');
+            }
         });
     }
 
@@ -2951,13 +3085,33 @@
         ['generado','pendiente','comp','propio'].forEach(function(c) {
             document.getElementById('hm-form-'+c).style.display = c === _hmCat ? 'block' : 'none';
         });
+        // Resetear subtipo a 'generado' cada vez que se abre el form
+        if (_hmCat === 'generado') _faGenSubtipo('generado');
     }
+
+    window._faGenSubtipo = function(sub) {
+        document.getElementById('fa-gen-subtipo').value = sub;
+        var btnGen = document.getElementById('fa-gen-btn-generado');
+        var btnCon = document.getElementById('fa-gen-btn-convenio');
+        var selTipo = document.getElementById('fa-gen-tipo');
+        if (sub === 'generado') {
+            btnGen.style.background = '#f472b6'; btnGen.style.borderColor = '#f472b6'; btnGen.style.color = 'white';
+            btnCon.style.background = 'var(--surface2)'; btnCon.style.borderColor = '#d1d5db'; btnCon.style.color = '#6b7280';
+            selTipo.style.display = 'block';
+        } else {
+            btnCon.style.background = '#f59e0b'; btnCon.style.borderColor = '#f59e0b'; btnCon.style.color = 'white';
+            btnGen.style.background = 'var(--surface2)'; btnGen.style.borderColor = '#d1d5db'; btnGen.style.color = '#6b7280';
+            selTipo.style.display = 'none';
+        }
+    };
 
     function hmGuardar() {
         var cat=_hmCat, ts=Date.now(), d={ cat:cat, ts:ts };
         if (cat==='generado') {
             var f=document.getElementById('fa-gen-fecha').value.trim(); if(!f){alert('Introduce la fecha');return;}
-            d.fecha=f; d.esLibre=document.getElementById('fa-gen-tipo').value==='libre'; d.nota=document.getElementById('fa-gen-nota').value.trim();
+            var sub=document.getElementById('fa-gen-subtipo').value||'generado';
+            d.fecha=f; d.subtipo=sub; d.nota=document.getElementById('fa-gen-nota').value.trim();
+            if(sub==='generado') d.esLibre=document.getElementById('fa-gen-tipo').value==='libre';
         } else if (cat==='pendiente') {
             var f=document.getElementById('fa-pend-fecha').value.trim(); if(!f){alert('Introduce la fecha');return;}
             d.fecha=f; d.nota=document.getElementById('fa-pend-nota').value.trim(); d.resuelto=null;
@@ -2988,9 +3142,15 @@
             document.getElementById('hm-edit-titulo').textContent = titulo[cat] || 'Editar';
             var body = document.getElementById('hm-edit-body');
             if (cat==='generado') {
+                var esConv = h.subtipo === 'convenio';
                 body.innerHTML =
+                    '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
+                    '<button id="ed-gen-btn-generado" onclick="_edGenSubtipo(\'generado\')" style="flex:1;padding:8px 4px;border-radius:10px;border:2px solid '+(esConv?'#d1d5db':'#f472b6')+';background:'+(esConv?'var(--surface2)':'#f472b6')+';color:'+(esConv?'#6b7280':'white')+';font-weight:800;font-size:0.8rem;cursor:pointer;">✨ Generado</button>' +
+                    '<button id="ed-gen-btn-convenio" onclick="_edGenSubtipo(\'convenio\')" style="flex:1;padding:8px 4px;border-radius:10px;border:2px solid '+(esConv?'#f59e0b':'#d1d5db')+';background:'+(esConv?'#f59e0b':'var(--surface2)')+';color:'+(esConv?'white':'#6b7280')+';font-weight:800;font-size:0.8rem;cursor:pointer;">📋 Convenio</button>' +
+                    '</div>' +
+                    '<input type="hidden" id="ed-subtipo" value="'+(h.subtipo||'generado')+'">' +
                     '<input id="ed-fecha" type="text" value="'+(h.fecha||'')+'" placeholder="Fecha" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:8px;">' +
-                    '<select id="ed-tipo" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:8px;"><option value="libre"'+(h.esLibre?' selected':'')+'>\u25fb Libre</option><option value="trabajo"'+(!h.esLibre?' selected':'')+'>\u26aa Trabajo</option></select>' +
+                    '<select id="ed-tipo" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);box-sizing:border-box;margin-bottom:8px;'+(esConv?'display:none;':'')+'"><option value="libre"'+(h.esLibre?' selected':'')+'>\u25fb Libre</option><option value="trabajo"'+(!h.esLibre?' selected':'')+'>\u26aa Trabajo</option></select>' +
                     '<textarea id="ed-nota" rows="2" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--surface);color:var(--text);resize:none;box-sizing:border-box;">'+(h.nota||'')+'</textarea>';
             } else if (cat==='pendiente') {
                 body.innerHTML =
@@ -3014,13 +3174,30 @@
         });
     }
 
+    window._edGenSubtipo = function(sub) {
+        document.getElementById('ed-subtipo').value = sub;
+        var btnGen = document.getElementById('ed-gen-btn-generado');
+        var btnCon = document.getElementById('ed-gen-btn-convenio');
+        var selTipo = document.getElementById('ed-tipo');
+        if (sub === 'generado') {
+            btnGen.style.background='#f472b6'; btnGen.style.borderColor='#f472b6'; btnGen.style.color='white';
+            btnCon.style.background='var(--surface2)'; btnCon.style.borderColor='#d1d5db'; btnCon.style.color='#6b7280';
+            selTipo.style.display='block';
+        } else {
+            btnCon.style.background='#f59e0b'; btnCon.style.borderColor='#f59e0b'; btnCon.style.color='white';
+            btnGen.style.background='var(--surface2)'; btnGen.style.borderColor='#d1d5db'; btnGen.style.color='#6b7280';
+            selTipo.style.display='none';
+        }
+    };
+
     function hmGuardarEdicion() {
         var cat = document.getElementById('hm-edit-cat').value;
         var key = _hmEditKey;
         var upd = {};
         if (cat==='generado') {
             upd.fecha = document.getElementById('ed-fecha').value.trim();
-            upd.esLibre = document.getElementById('ed-tipo').value === 'libre';
+            upd.subtipo = (document.getElementById('ed-subtipo')||{value:'generado'}).value || 'generado';
+            if (upd.subtipo === 'generado') upd.esLibre = document.getElementById('ed-tipo').value === 'libre';
             upd.nota = document.getElementById('ed-nota').value.trim();
         } else if (cat==='pendiente') {
             upd.fecha = document.getElementById('ed-fecha').value.trim();
@@ -3052,11 +3229,11 @@
     }
 
     function hmResolver(accion) {
-        // Solo librar — activar pick en calendario
         var key = _hmPendKey;
         db.ref('historial2/' + miID + '/' + key).once('value').then(function(snap) {
             var h = snap.val() || {};
-            _activarPickDia('pendiente', key, h.fecha || '');
+            var modo = (h.cat === 'generado' && h.subtipo === 'convenio') ? 'convenio' : 'pendiente';
+            _activarPickDia(modo, key, h.fecha || '');
         });
     }
 
@@ -3361,6 +3538,8 @@
                     <div style="font-weight:800; color:#be185d;">Generado</div>
                     <div style="font-size:0.72rem; color:#be185d; opacity:0.7; margin-top:3px;">Días asignados</div>
                     <div id="badge-generado" style="display:none; position:absolute; top:8px; right:10px; background:var(--pink); color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
+                    <div id="badge-convenio" style="display:none; position:absolute; top:8px; left:10px; background:#f59e0b; color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
+                    <div id="badge-festivo" style="display:none; position:absolute; bottom:8px; right:10px; background:#3b82f6; color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
                 </div>
                 <div onclick="abrirCategoria('pendiente')" style="border:2px solid var(--primary); background:#f5f3ff; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
                     <div style="font-size:1.8rem; margin-bottom:6px;">⏳</div>
@@ -3396,6 +3575,11 @@
             <div id="hm-form-wrap" style="display:none; background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px;">
                 <div id="hm-form-generado" style="display:none;">
                     <div style="font-weight:700; color:#be185d; margin-bottom:8px; font-size:0.85rem;">✨ Día generado</div>
+                    <div style="display:flex; gap:8px; margin-bottom:8px;">
+                        <button id="fa-gen-btn-generado" onclick="_faGenSubtipo('generado')" style="flex:1; padding:9px 6px; border-radius:10px; border:2px solid #f472b6; background:#f472b6; color:white; font-weight:800; font-size:0.82rem; cursor:pointer;">✨ Generado</button>
+                        <button id="fa-gen-btn-convenio" onclick="_faGenSubtipo('convenio')" style="flex:1; padding:9px 6px; border-radius:10px; border:2px solid #d1d5db; background:var(--surface2); color:#6b7280; font-weight:800; font-size:0.82rem; cursor:pointer;">📋 Convenio</button>
+                    </div>
+                    <input type="hidden" id="fa-gen-subtipo" value="generado">
                     <input id="fa-gen-fecha" type="text" placeholder="Fecha (ej: 15/3/2025)" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
                     <select id="fa-gen-tipo" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:8px; font-size:0.85rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:8px;">
                         <option value="libre">⬜ Libre</option>
