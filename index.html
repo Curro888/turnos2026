@@ -942,13 +942,14 @@
                 }
             });
             var updates = {};
-            festivosHoy.forEach(function(f) {
+            var base = Date.now();
+            festivosHoy.forEach(function(f, idx) {
                 if (!existentes[f.fecha]) {
-                    var ts = Date.now() + Math.random(); // evitar colisiones
-                    updates['historial2/' + miID + '/' + Math.floor(ts)] = {
+                    var key = base + idx;
+                    updates['historial2/' + miID + '/' + key] = {
                         cat: 'generado',
                         subtipo: 'festivo',
-                        ts: Math.floor(ts),
+                        ts: key,
                         fecha: f.fecha,
                         nota: f.nombre,
                         esLibre: false
