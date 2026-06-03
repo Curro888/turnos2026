@@ -85,6 +85,10 @@
         .b-pend { border: 2px solid var(--primary) !important; background: var(--white) !important; color: var(--primary) !important; }
         .b-vac { border: 2px solid var(--success) !important; background: #f0fdf4 !important; color: #166534 !important; }
         .b-generado { border: 2px solid var(--pink) !important; background: #fdf2f8 !important; color: #be185d !important; }
+        .is-festivo { background: #bfdbfe !important; color: #1e3a8a !important; }
+        .is-festivo.is-free { background: #1d4ed8 !important; color: #ffffff !important; }
+        body.dark-mode .is-festivo { background: #1e3a8a !important; color: #93c5fd !important; }
+        body.dark-mode .is-festivo.is-free { background: #1d4ed8 !important; color: #ffffff !important; }
         .legend-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 12px; background: var(--surface2); border-radius: 12px; justify-content: center; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; padding: 4px; border-radius: 6px; }
         .legend-item:active { background: var(--border); }
@@ -141,10 +145,6 @@
     #splash-screen .splash-logo { font-size:4rem; animation:splashLogo 0.8s ease forwards; }
     #splash-screen .splash-title { color:white; font-size:1.5rem; font-weight:900; margin-top:16px; letter-spacing:0.05em; }
     #splash-screen .splash-sub { color:rgba(255,255,255,0.7); font-size:0.85rem; margin-top:8px; }
-        0%   { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
-        50%  { transform: scale(1.2); box-shadow: 0 0 12px rgba(239,68,68,0.9); }
-        100% { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
-    }
     </style>
 </head>
 <body ontouchmove="handleGlobalTouchMove(event)">
@@ -402,6 +402,8 @@
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-vac','Vacaciones')"><div class="legend-box b-vac"></div><span>Vacaciones</span></div>
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-pend','Pendientes')"><div class="legend-box b-pend"></div><span>Pendiente</span></div>
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-generado','Generados')"><div class="legend-box b-generado"></div><span>Generado</span></div>
+            <div class="legend-item"><div class="legend-box is-festivo" style="background:#bfdbfe;"></div><span>Festivo (trabajas)</span></div>
+            <div class="legend-item"><div class="legend-box is-festivo is-free" style="background:#1d4ed8;"></div><span>Festivo (libras)</span></div>
         </div>
         <div class="cal-grid" id="m-grid"></div>
     </div>
@@ -485,6 +487,11 @@
     ];
 
     const mesesArr = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+    function esFestivo(mIdx, d) {
+        var clave = d + '/' + (mIdx + 1);
+        return _FESTIVOS_2026.some(function(f) { return f.fecha === clave; });
+    }
 
     const gruposLibres = {
         "1":{0:[2,3,10,11,12,13,14,15,23,24,31],1:[1,6,7,11,12,21,22,26,27,28],2:[7,8,12,13,20,21,28,29],3:[2,3,11,12,17,18,25,26,27,28,29,30],4:[8,9,16,17,22,23,27,28],5:[6,7,11,12,13,20,21,25,26],6:[3,4,11,12,16,17,25,26,31],7:[1,8,9,10,11,12,13,21,22,29,30],8:[4,5,9,10,19,24,25,26],9:[3,4,8,9,16,17,24,25,29,30],10:[7,8,13,14,21,22,23,24,25,26],11:[4,5,12,13,18,19,23,24]},
@@ -1081,9 +1088,9 @@
         _genDia = diaSeleccionado.d;
         _genMes = diaSeleccionado.mIdx;
         var fechaLibre = _genDia + '/' + (_genMes+1);
-        document.getElementById('mgen-fecha').textContent = 'Dia libre: ' + fechaLibre;
-        document.getElementById('mgen-key').value = '';
-        document.getElementById('mgen-fecha-val').value = fechaLibre;
+        document.getElementById('mgen2-fecha').textContent = 'Dia libre: ' + fechaLibre;
+        document.getElementById('mgen2-key').value = '';
+        document.getElementById('mgen2-fecha-val').value = fechaLibre;
         document.getElementById('mgen-librar-wrap').style.display = 'none';
         _cargarGeneradosDisponibles(fechaLibre);
         document.getElementById('modal-generado').style.display = 'flex';
@@ -1170,8 +1177,8 @@
     }
 
     function _confirmarGeneradoLibrar() {
-        var key = document.getElementById('mgen-key').value;
-        var fechaGen = document.getElementById('mgen-fecha-val').value;
+        var key = document.getElementById('mgen2-key').value;
+        var fechaGen = document.getElementById('mgen2-fecha-val').value;
         var fechaLibre = document.getElementById('mgen-dia-libre').value.trim();
         if (!fechaLibre) { alert('Introduce el dia que vas a librar'); return; }
         // Marcar en historial2
@@ -1808,6 +1815,7 @@
                 let forma = '';
                 if (esLibreReal) { forma = 'shape-square'; }
                 else { forma = 'shape-circle'; }
+                if (esFestivo(mIdx, d)) clase += " is-festivo";
                 html += `<div class="d-cell ${clase} ${forma}"
                     onclick="handleDayClick(${d},${mIdx},'${uid}')"
                     onmousedown="pressStart(event,${d},${mIdx},'${uid}')"
@@ -2474,6 +2482,7 @@
                 const esDom = (start + d - 1) % 7 === 6;
                 let clase = esLibre ? 'is-free' : 'is-work';
                 if (esDom) clase += ' is-sun';
+                if (esFestivo(mIdx, d)) clase += ' is-festivo';
                 html += `<div class="d-cell ${clase}">${d}</div>`;
             }
             grid.innerHTML += html + `</div></div>`;
@@ -3692,11 +3701,6 @@ const _modalCierres = [
     { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
     { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
     { id: 'historial-modal',      fn: () => cerrarHistorial() },
-    { id: 'modal-generado-decision', fn: () => document.getElementById('modal-generado-decision').style.display='none' },
-    { id: 'modal-generado',       fn: () => document.getElementById('modal-generado').style.display='none' },
-    { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
-    { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
-    { id: 'historial-modal',      fn: () => cerrarHistorial() },
     { id: 'grupos-panel',     fn: () => document.getElementById('grupos-panel').style.display = 'none' },
 ];
 
@@ -3788,9 +3792,9 @@ if ('serviceWorker' in navigator) {
 <div id="modal-generado" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.75); z-index:7000; align-items:center; justify-content:center; padding:20px;">
     <div style="background:var(--surface); padding:24px; border-radius:20px; width:100%; max-width:320px; border:1px solid var(--pink);">
         <h3 style="margin:0 0 6px 0; color:#be185d; text-align:center;">✨ Usar día generado</h3>
-        <div id="mgen-fecha" style="font-size:0.9rem; font-weight:800; color:#be185d; margin-bottom:12px; text-align:center;"></div>
-        <input type="hidden" id="mgen-key">
-        <input type="hidden" id="mgen-fecha-val">
+        <div id="mgen2-fecha" style="font-size:0.9rem; font-weight:800; color:#be185d; margin-bottom:12px; text-align:center;"></div>
+        <input type="hidden" id="mgen2-key">
+        <input type="hidden" id="mgen2-fecha-val">
         <div id="mgen-lista" style="max-height:200px; overflow-y:auto; margin-bottom:12px;"></div>
         <div id="mgen-librar-wrap" style="display:none; background:#f0fdf4; border:1px solid var(--success); border-radius:12px; padding:14px; margin-bottom:12px;">
             <div style="font-size:0.85rem; font-weight:800; color:#166534; margin-bottom:10px;">📅 ¿Qué día vas a librar?</div>
