@@ -941,10 +941,13 @@
                     existentes[h.fecha] = true;
                 }
             });
+            console.log('Festivos existentes en Firebase:', JSON.stringify(existentes));
+            console.log('Festivos a comprobar:', festivosHoy.map(function(f){ return f.fecha; }));
             var updates = {};
             var base = Date.now();
             festivosHoy.forEach(function(f, idx) {
                 if (!existentes[f.fecha]) {
+                    console.log('Creando festivo:', f.fecha);
                     var key = base + idx;
                     updates['historial2/' + miID + '/' + key] = {
                         cat: 'generado',
