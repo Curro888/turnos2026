@@ -941,13 +941,10 @@
                     existentes[h.fecha] = true;
                 }
             });
-            console.log('Festivos existentes en Firebase:', JSON.stringify(existentes));
-            console.log('Festivos a comprobar:', festivosHoy.map(function(f){ return f.fecha; }));
             var updates = {};
             var base = Date.now();
             festivosHoy.forEach(function(f, idx) {
                 if (!existentes[f.fecha]) {
-                    console.log('Creando festivo:', f.fecha);
                     var key = base + idx;
                     updates['historial2/' + miID + '/' + key] = {
                         cat: 'generado',
@@ -2996,6 +2993,17 @@
                 var grpGen = items.filter(function(i){ return i[1].subtipo !== 'convenio' && i[1].subtipo !== 'festivo'; });
                 var grpCon = items.filter(function(i){ return i[1].subtipo === 'convenio'; });
                 var grpFes = items.filter(function(i){ return i[1].subtipo === 'festivo'; });
+
+                function _sortByFecha(arr) {
+                    return arr.sort(function(a, b) {
+                        var pa = (a[1].fecha||'').split('/'), pb = (b[1].fecha||'').split('/');
+                        var da = new Date(2026, parseInt(pa[1]||1)-1, parseInt(pa[0]||1));
+                        var db2 = new Date(2026, parseInt(pb[1]||1)-1, parseInt(pb[0]||1));
+                        return da - db2;
+                    });
+                }
+                grpGen = _sortByFecha(grpGen);
+                grpCon = _sortByFecha(grpCon);
                 var html = '';
                 if (grpGen.length) {
                     html += '<div style="font-size:0.72rem;font-weight:800;color:#be185d;letter-spacing:0.05em;margin-bottom:8px;padding:4px 2px;">✨ GENERADOS</div>';
@@ -3007,6 +3015,7 @@
                     html += grpCon.map(renderItemGen).join('');
                 }
                 if (grpFes.length) {
+                    _sortByFecha(grpFes);
                     if (grpGen.length || grpCon.length) html += '<div style="border-top:1px solid #bfdbfe;margin:12px 0 10px 0;"></div>';
                     html += '<div style="font-size:0.72rem;font-weight:800;color:#1d4ed8;letter-spacing:0.05em;margin-bottom:8px;padding:4px 2px;">🎉 FESTIVOS</div>';
                     html += grpFes.map(renderItemGen).join('');
