@@ -910,6 +910,7 @@
         renderList();
         if (modoGrupo) { iniciarPresencia(); iniciarListenerLeidos(); }
         _checkFestivos();
+        _checkVacacionesGenerados();
     }
 
     // ===== FESTIVOS MADRID 2026 =====
@@ -972,6 +973,90 @@
             if (Object.keys(updates).length > 0) {
                 db.ref().update(updates).then(function() { _hmBadges(); });
             }
+        });
+    }
+
+    // ===== GENERADOS POR EXCESO DE DÍAS LIBRES EN VACACIONES =====
+    function _checkVacacionesGenerados() {
+        if (!miID) return;
+
+        var hoy = new Date();
+        var hoyAnio = hoy.getFullYear();
+        // Solo aplica en 2026
+        if (hoyAnio < 2026) return;
+
+        // Obtener datos del usuario para saber su grupo y turno
+        var p = equipoBase.find(function(x) { return x.id === miID; });
+        if (!p) return;
+        var tabla = p.t === '80/20' ? gruposLibres8020 : gruposLibres;
+        var diasLibresBase = tabla[p.g] || {};
+
+        db.ref('cambios/' + miID).once('value').then(function(snapCambios) {
+            var cambios = snapCambios.val() || {};
+
+            // Recoger todos los días marcados como Vacaciones
+            var diasVac = []; // [{mIdx, d}]
+            Object.entries(cambios).forEach(function(e) {
+                var key = e[0], val = e[1];
+                if (val && val.texto === 'Vacaciones') {
+                    var parts = key.split('_');
+                    var mIdx = parseInt(parts[0]), d = parseInt(parts[1]);
+                    if (!isNaN(mIdx) && !isNaN(d)) {
+                        diasVac.push({ mIdx: mIdx, d: d });
+                    }
+                }
+            });
+
+            if (diasVac.length === 0) return;
+
+            // Encontrar el último día de vacaciones
+            diasVac.sort(function(a, b) {
+                return (a.mIdx !== b.mIdx) ? a.mIdx - b.mIdx : a.d - b.d;
+            });
+            var ultimo = diasVac[diasVac.length - 1];
+            var fechaUltimo = new Date(2026, ultimo.mIdx, ultimo.d);
+
+            // Solo actuar si ya pasó el último día de vacaciones
+            if (hoy <= fechaUltimo) return;
+
+            // Contar días libres de base dentro de los días de vacaciones
+            var libresEnVac = 0;
+            diasVac.forEach(function(dv) {
+                var libresDelMes = diasLibresBase[dv.mIdx] || [];
+                if (libresDelMes.includes(dv.d)) libresEnVac++;
+            });
+
+            var MAX_LIBRES_VAC = 8;
+            var generadosADar = libresEnVac - MAX_LIBRES_VAC;
+            if (generadosADar <= 0) return;
+
+            // Comprobar si ya se generaron antes (evitar duplicados)
+            db.ref('historial2/' + miID).once('value').then(function(snapHist) {
+                var yaGenerado = false;
+                snapHist.forEach(function(child) {
+                    var h = child.val();
+                    if (h && h.cat === 'generado' && h.subtipo === 'vacaciones2026') {
+                        yaGenerado = true;
+                    }
+                });
+                if (yaGenerado) return;
+
+                // Añadir los días generados al historial
+                var updates = {};
+                var base = Date.now();
+                for (var i = 0; i < generadosADar; i++) {
+                    var key = base + i;
+                    updates['historial2/' + miID + '/' + key] = {
+                        cat: 'generado',
+                        subtipo: 'vacaciones2026',
+                        ts: key,
+                        fecha: ultimo.d + '/' + (ultimo.mIdx + 1),
+                        nota: 'Generado por exceso de libres en vacaciones (' + libresEnVac + ' libres, máx. 8)',
+                        esLibre: false
+                    };
+                }
+                db.ref().update(updates).then(function() { _hmBadges(); });
+            });
         });
     }
 
