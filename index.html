@@ -987,9 +987,11 @@
 
         // Obtener datos del usuario para saber su grupo y turno
         var p = equipoBase.find(function(x) { return x.id === miID; });
-        if (!p) return;
-        var tabla = p.t === '80/20' ? gruposLibres8020 : gruposLibres;
-        var diasLibresBase = tabla[p.g] || {};
+        var grupo = p ? p.g : miGrupoSesion;
+        var turno = p ? p.t : miTipoSesion;
+        if (!grupo || !turno) return;
+        var tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres;
+        var diasLibresBase = tabla[grupo] || {};
 
         db.ref('cambios/' + miID).once('value').then(function(snapCambios) {
             var cambios = snapCambios.val() || {};
