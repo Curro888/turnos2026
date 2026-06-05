@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Planificación 2026</title>
+    <title>Planificación</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="manifest" href="manifest.json">
@@ -85,16 +85,6 @@
         .b-pend { border: 2px solid var(--primary) !important; background: var(--white) !important; color: var(--primary) !important; }
         .b-vac { border: 2px solid var(--success) !important; background: #f0fdf4 !important; color: #166534 !important; }
         .b-generado { border: 2px solid var(--pink) !important; background: #fdf2f8 !important; color: #be185d !important; }
-        .is-festivo { background: #ef4444 !important; color: #000000 !important; }
-        .is-festivo.is-free { background: #ef4444 !important; color: #ffffff !important; }
-        .is-festivo.shape-circle { background: #ef4444 !important; color: #000000 !important; }
-        .is-festivo.shape-square { background: #ef4444 !important; color: #000000 !important; }
-        .is-festivo.is-free.shape-square { background: #ef4444 !important; color: #ffffff !important; }
-        body.dark-mode .is-festivo { background: #ef4444 !important; color: #000000 !important; }
-        body.dark-mode .is-festivo.is-free { background: #ef4444 !important; color: #ffffff !important; }
-        body.dark-mode .is-festivo.shape-circle { background: #ef4444 !important; color: #000000 !important; }
-        body.dark-mode .is-festivo.shape-square { background: #ef4444 !important; color: #000000 !important; }
-        body.dark-mode .is-festivo.is-free.shape-square { background: #ef4444 !important; color: #ffffff !important; }
         .legend-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 12px; background: var(--surface2); border-radius: 12px; justify-content: center; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; padding: 4px; border-radius: 6px; }
         .legend-item:active { background: var(--border); }
@@ -151,19 +141,23 @@
     #splash-screen .splash-logo { font-size:4rem; animation:splashLogo 0.8s ease forwards; }
     #splash-screen .splash-title { color:white; font-size:1.5rem; font-weight:900; margin-top:16px; letter-spacing:0.05em; }
     #splash-screen .splash-sub { color:rgba(255,255,255,0.7); font-size:0.85rem; margin-top:8px; }
+        0%   { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
+        50%  { transform: scale(1.2); box-shadow: 0 0 12px rgba(239,68,68,0.9); }
+        100% { transform: scale(1); box-shadow: 0 0 6px rgba(239,68,68,0.7); }
+    }
     </style>
 </head>
 <body ontouchmove="handleGlobalTouchMove(event)">
 <div id="splash-screen">
     <div class="splash-logo">📅</div>
-    <div class="splash-title">Turnos 2026</div>
+    <div class="splash-title">Turnos <span id="anio-splash"></span></div>
     <div class="splash-sub">Cargando...</div>
 </div>
 
 <!-- ===== LOGIN ===== -->
 <div id="login-view" style="position:fixed; inset:0; background:#1e1b4b; display:flex; align-items:center; justify-content:center; z-index:9999; overflow-y:auto; padding: 20px 0;">
     <div style="background:var(--surface); padding:28px; border-radius:20px; text-align:center; width:90%; max-width:340px; border-bottom:5px solid var(--primary);">
-        <h2 style="color:var(--primary); margin:0 0 4px 0;">Planificación 2026</h2>
+        <h2 style="color:var(--primary); margin:0 0 4px 0;">Planificación <span id="anio-titulo"></span></h2>
         <p style="font-size:0.8rem; color:#64748b; margin-bottom:20px;">¿Cómo quieres acceder?</p>
 
         <!-- PASO -1: Elegir grupo guardado -->
@@ -398,7 +392,12 @@
     <div style="background:var(--surface); width:95%; max-width:1200px; margin:20px auto; border-radius:20px; padding:15px; position:relative;" id="m-cal-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 id="cal-target-name" style="margin:0; color:var(--primary-dark); font-size:1.2rem;"></h2>
-            <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900;">Cerrar</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button onclick="cambiarAnioCalendario(-1)" style="background:var(--primary); color:white; border:none; width:34px; height:34px; border-radius:50%; font-size:1.1rem; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center;">‹</button>
+                <span id="cal-anio-label" style="font-size:1rem; font-weight:800; color:var(--primary-dark); min-width:42px; text-align:center;"></span>
+                <button onclick="cambiarAnioCalendario(1)" style="background:var(--primary); color:white; border:none; width:34px; height:34px; border-radius:50%; font-size:1.1rem; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center;">›</button>
+                <button onclick="cerrarCalendario()" style="background:var(--danger); color:white; border:none; padding:10px 20px; border-radius:10px; font-weight:900; margin-left:4px;">Cerrar</button>
+            </div>
         </div>
         <div class="legend-container">
             <div class="legend-item" onclick="mostrarInformeLeyenda('is-free','Días Libres Base')"><div class="legend-box is-free"></div><span>Libre</span></div>
@@ -408,8 +407,6 @@
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-vac','Vacaciones')"><div class="legend-box b-vac"></div><span>Vacaciones</span></div>
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-pend','Pendientes')"><div class="legend-box b-pend"></div><span>Pendiente</span></div>
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-generado','Generados')"><div class="legend-box b-generado"></div><span>Generado</span></div>
-            <div class="legend-item"><div class="legend-box is-festivo" style="background:#ef4444;"></div><span>Festivo (trabajas)</span></div>
-            <div class="legend-item"><div class="legend-box is-festivo is-free" style="background:#ef4444;"></div><span>Festivo (libras)</span></div>
         </div>
         <div class="cal-grid" id="m-grid"></div>
     </div>
@@ -494,42 +491,78 @@
 
     const mesesArr = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-    const gruposLibres = {
-        "1":{0:[2,3,10,11,12,13,14,15,23,24,31],1:[1,6,7,11,12,21,22,26,27,28],2:[7,8,12,13,20,21,28,29],3:[2,3,11,12,17,18,25,26,27,28,29,30],4:[8,9,16,17,22,23,27,28],5:[6,7,11,12,13,20,21,25,26],6:[3,4,11,12,16,17,25,26,31],7:[1,8,9,10,11,12,13,21,22,29,30],8:[4,5,9,10,19,24,25,26],9:[3,4,8,9,16,17,24,25,29,30],10:[7,8,13,14,21,22,23,24,25,26],11:[4,5,12,13,18,19,23,24]},
-        "2":{0:[3,4,5,6,7,8,16,17,24,25,30,31],1:[4,5,14,15,19,20,21,28],2:[1,5,6,13,14,21,22,26,27],3:[4,5,10,11,18,19,20,21,22,23],4:[1,2,9,10,15,16,20,21,30,31],5:[4,5,6,13,14,18,19,26,27],6:[4,5,9,10,18,19,24,25],7:[1,2,3,4,5,6,14,15,22,23,28,29],8:[2,3,12,13,17,18,19,26,27],9:[1,2,9,10,17,18,22,23,31],10:[1,6,7,14,15,16,17,18,19,27,28],11:[5,6,11,12,16,17,26,27,31]},
-        "3":{0:[1,9,10,17,18,23,24,28,29],1:[7,8,12,13,14,21,22,26,27],2:[6,7,14,15,19,20,28,29],3:[3,4,11,12,13,14,15,16,24,25],4:[2,3,8,9,13,14,23,24,28,29,30],5:[6,7,11,12,19,20,27,28],6:[2,3,11,12,17,18,25,26,27,28,29,30],7:[7,8,15,16,21,22,26,27],8:[5,6,10,11,12,19,20,24,25],9:[2,3,10,11,15,16,24,25,30,31],10:[7,8,9,10,11,12,20,21,28,29],11:[4,5,9,10,19,20,24,25,26]},
-        "4":{0:[2,3,10,11,16,17,21,22,31],1:[1,5,6,7,14,15,19,20],2:[7,8,12,13,21,22,27,28],3:[4,5,6,7,8,9,17,18,25,26],4:[1,2,6,7,16,17,21,22,23,30,31],5:[4,5,12,13,20,21,25,26],6:[4,5,10,11,18,19,20,21,22,23,31],7:[1,8,9,14,15,19,20,29,30],8:[3,4,5,12,13,17,18,25,26],9:[3,4,8,9,17,18,23,24,31],10:[1,2,3,4,5,13,14,21,22,27,28],11:[2,3,12,13,17,18,19,26,27,31]},
-        "5":{0:[3,4,9,10,14,15,24,25,29,30,31],1:[7,8,12,13,20,21,28],2:[1,5,6,14,15,20,21,28,29,30,31],3:[1,2,10,11,18,19,24,25,29,30],4:[9,10,14,15,16,23,24,28,29],5:[5,6,13,14,18,19,27,28],6:[3,4,11,12,13,14,15,16,24,25],7:[1,2,7,8,12,13,22,23,27,28,29],8:[5,6,10,11,18,19,26,27],9:[1,2,10,11,16,17,24,25,26,27,28,29],10:[6,7,14,15,20,21,25,26],11:[5,6,10,11,12,19,20,24,25]},
-        "6":{0:[2,3,7,8,17,18,22,23,24,31],1:[1,5,6,13,14,21,22,26,27],2:[7,8,13,14,21,22,23,24,25,26],3:[3,4,11,12,17,18,22,23],4:[2,3,7,8,9,16,17,21,22,29,30],5:[6,7,11,12,20,21,26,27],6:[4,5,6,7,8,9,17,18,25,26,31],7:[1,5,6,15,16,20,21,22,29,30],8:[3,4,11,12,19,20,24,25],9:[3,4,9,10,17,18,19,20,21,22,30,31],10:[7,8,13,14,18,19,28,29],11:[3,4,5,12,13,17,18,25,26]},
-        "7":{0:[1,10,11,15,16,17,24,25,29,30],1:[6,7,14,15,19,20,28],2:[1,6,7,14,15,16,17,18,19,27,28],3:[4,5,10,11,15,16,17,25,26,30],4:[1,2,9,10,14,15,22,23,30,31],5:[4,5,13,14,19,20,27,28,29,30],6:[1,2,10,11,18,19,24,25,29,30],7:[8,9,13,14,15,22,23,27,28],8:[4,5,12,13,17,18,26,27],9:[2,3,10,11,12,13,14,15,23,24,31],10:[1,6,7,11,12,21,22,26,27,28],11:[5,6,10,11,18,19,26,27,31]},
-        "8":{0:[3,4,8,9,10,17,18,22,23,30,31],1:[7,8,12,13,21,22,27,28],2:[7,8,9,10,11,12,20,21,28,29],3:[3,4,8,9,18,19,23,24,25],4:[2,3,7,8,15,16,23,24,28,29],5:[6,7,12,13,20,21,22,23,24,25],6:[3,4,11,12,17,18,22,23],7:[1,2,6,7,8,15,16,20,21,28,29],8:[5,6,10,11,19,20,25,26],9:[3,4,5,6,7,8,16,17,24,25,30,31],10:[4,5,14,15,19,20,21,28,29],11:[3,4,11,12,19,20,24,25]},
-        "9":{0:[1,2,3,10,11,15,16,23,24,31],1:[1,5,6,14,15,20,21,28],2:[1,2,3,4,5,13,14,21,22,27,28],3:[1,2,11,12,16,17,18,25,26,30],4:[1,8,9,16,17,22,23,30,31],5:[5,6,13,14,15,16,17,18,26,27],6:[4,5,10,11,15,16,25,26,30,31],7:[1,8,9,13,14,21,22,29,30],8:[3,4,12,13,18,19,26,27,28,29,30],9:[1,9,10,17,18,23,24,28,29],10:[7,8,12,13,14,21,22,26,27],11:[4,5,12,13,17,18,26,27]},
-        "10":{0:[3,4,8,9,16,17,24,25,29,30],1:[7,8,13,14,21,22,23,24,25,26],2:[6,7,14,15,20,21,25,26],3:[4,5,9,10,11,18,19,23,24],4:[1,2,9,10,14,15,23,24,29,30],5:[6,7,8,9,10,11,19,20,27,28],6:[3,4,8,9,18,19,23,24,25],7:[1,2,6,7,14,15,22,23,27,28],8:[5,6,11,12,19,20,21,22,23,24],9:[2,3,10,11,16,17,21,22,31],10:[1,5,6,7,14,15,19,20,27,28],11:[5,6,10,11,19,20,25,26]},
-        "11":{0:[1,2,9,10,17,18,22,23,31],1:[1,6,7,14,15,16,17,18,19,27,28],2:[7,8,13,14,18,19,28,29],3:[2,3,4,11,12,16,17,24,25],4:[2,3,7,8,16,17,22,23,30,31],5:[1,2,3,4,12,13,20,21,26,27],6:[1,2,11,12,16,17,18,25,26,30,31],7:[7,8,15,16,20,21,29,30],8:[4,5,12,13,14,15,16,17,25,26],9:[2,4,9,10,14,15,24,25,29,30,31],10:[7,8,12,13,20,21,28,29],11:[3,4,12,13,18,19,26,27,28,29,30,31]},
-        "12":{0:[2,3,10,11,15,16,24,25,30,31],1:[7,8,9,10,11,12,20,21,28],2:[1,6,7,11,12,21,22,26,27,28],3:[4,5,9,10,17,18,25,26,30],4:[1,9,10,15,16,23,24,25,26,27,28],5:[5,6,13,14,19,20,24,25],6:[4,5,9,10,11,18,19,23,24,31],7:[1,8,9,13,14,22,23,28,29],8:[5,6,7,8,9,10,18,19,26,27],9:[2,3,7,8,17,18,22,23,24,31],10:[1,5,6,13,14,21,22,26,27],11:[5,6,11,12,19,20,21,22,23,24]},
-        "13":{0:[3,4,8,9,17,18,23,24,31],1:[1,2,3,4,5,13,14,21,22,27,28],2:[4,5,14,15,19,20,21,28,29],3:[2,3,10,11,18,19,23,24],4:[2,3,8,9,16,17,18,19,20,21,29,30],5:[6,7,12,13,17,18,27,28],6:[2,3,4,11,12,16,17,24,25],7:[1,2,6,7,15,16,21,22,29,30],8:[1,2,3,11,12,19,20,25,26,30],9:[1,10,11,15,16,17,24,25,29,30],10:[6,7,14,15,19,20,28,29],11:[4,5,12,13,14,15,16,17,25,26]},
-        "14":{0:[1,2,10,11,16,17,24,25,26,27,28,29],1:[6,7,14,15,20,21,25,26],2:[7,8,12,13,14,21,22,26,27],3:[3,4,11,12,16,17,25,26],4:[1,2,9,10,11,12,13,14,22,23,30,31],5:[5,6,10,11,20,21,25,26,27],6:[4,5,9,10,17,18,25,26,30,31],7:[8,9,14,15,22,23,24,25,26,27],8:[4,5,12,13,18,19,23,24],9:[3,4,8,9,10,17,18,22,23,30,31],10:[7,8,12,13,21,22,27,28],11:[5,6,7,8,9,10,18,19,26,27]},
-        "15":{0:[3,4,9,10,17,18,19,20,21,22,30,31],1:[7,8,13,14,18,19,28],2:[1,5,6,7,14,15,19,20,27,28],3:[4,5,9,10,18,19,24,25],4:[2,3,4,5,6,7,15,16,23,24,29,30],5:[3,4,13,14,18,19,20],6:[2,3,10,11,18,19,23,24],7:[1,2,7,8,15,16,17,18,19,20,28,29],8:[5,6,11,12,16,17,26,27],9:[1,2,3,10,11,15,16,23,24,31],10:[1,5,6,14,15,20,21,28,29,30],11:[1,2,3,11,12,19,20,25,26,30,31]}
-    };
+    // ===== CÁLCULO AUTOMÁTICO DE DÍAS LIBRES POR AÑO =====
+    // Patrón 73/27 NOCHE (ciclo de 15 semanas)
+    const _P7327 = [
+        [6,0],[5,6],[6,0],[1,2,3,4],[5,6],
+        [6,0],[5,6],[3,4],[6,0],[4,5,6],
+        [6,0],[4,5],[5,6],[6,0],[4,5]
+    ];
+    // Patrón 80/20 NOCHE (ciclo de 15 semanas)
+    const _P8020 = [
+        [5,6],[6,0],[5,6],[6,0],[1,2,3,4],
+        [5,6],[6,0],[5,6],[6,0],[3,4],
+        [4,5,6],[6,0],[5,6],[6,0],[4,5]
+    ];
 
-    // Grupos libres sistema 80/20 Noche (15 grupos)
-    const gruposLibres8020 = {
-        "1":{0:[3,4,9,10,17,18,19,20,21,22,30,31],1:[7,8,13,14,21,22,25,26],2:[5,6,7,14,15,20,21,28,29],3:[2,3,10,11,18,19,24,25],4:[2,3,4,5,6,7,15,16,23,24,29,30],5:[6,7,10,11,18,19,20,27,28],6:[3,4,11,12,16,17,24,25],7:[1,2,7,8,15,16,17,18,19,20,28,29],8:[5,6,11,12,19,20,23,24],9:[1,2,3,10,11,16,17,24,25,29,30],10:[6,7,14,15,20,21,28,29,30],11:[1,2,3,10,12,19,20,25,26]},
-        "2":{0:[2,3,10,11,12,13,14,15,23,24,31],1:[1,6,7,14,15,18,19,26,27,28],2:[7,8,13,14,21,22,26,27],3:[3,4,11,12,17,18,25,26,27,28,29,30],4:[8,9,16,17,22,23,30,31],5:[3,4,11,12,13,20,21,26,27],6:[4,5,9,10,17,18,25,26,31],7:[1,8,9,10,11,12,13,21,22,29,30],8:[4,5,12,13,16,17,24,25,26],9:[3,4,9,10,17,18,22,23,30,31],10:[7,8,13,14,21,22,23,24,25,26],11:[4,5,12,13,18,19,26,27,30,31]},
-        "3":{0:[3,4,5,6,7,8,16,17,24,25,30,31],1:[7,8,11,12,19,20,21,28],2:[1,6,7,14,15,19,20,27,28],3:[4,5,10,11,18,19,20,21,22,23],4:[1,2,9,10,15,16,23,24,27,28],5:[4,5,6,13,14,19,20,27,28],6:[2,3,10,11,18,19,24,25],7:[1,2,3,4,5,6,14,15,22,23,28,29],8:[5,6,9,10,17,18,19,26,27],9:[2,3,10,11,15,16,23,24,31],10:[1,6,7,14,15,16,17,18,19,27,28],11:[5,6,11,12,19,20,23,24,31]},
-        "4":{0:[1,9,10,17,18,23,24,31],1:[1,4,5,12,13,14,21,22,27,28],2:[7,8,12,13,20,21,28,29],3:[3,4,11,12,13,14,15,16,24,25],4:[2,3,8,9,16,17,20,21,28,29,30],5:[6,7,12,13,20,21,25,26],6:[3,4,11,12,17,18,25,26,27,28,29,30],7:[7,8,15,16,21,22,29,30],8:[2,3,10,11,12,19,20,25,26],9:[3,4,8,9,16,17,24,25,30,31],10:[7,8,9,10,11,12,20,21,28,29],11:[4,5,12,13,16,17,24,25,26]},
-        "5":{0:[2,3,10,11,16,17,24,25,28,29],1:[5,6,7,14,15,20,21,28],2:[1,5,6,13,14,21,22,27,28],3:[4,5,6,7,8,9,17,18,25,26],4:[1,2,9,10,13,14,21,22,23,30,31],5:[5,6,13,14,18,19,26,27],6:[4,5,10,11,18,19,20,21,22,23,31],7:[1,8,9,14,15,22,23,26,27],8:[3,4,5,12,13,18,19,26,27],9:[1,2,9,10,17,18,23,24,31],10:[1,2,3,4,5,13,14,21,22,27,28],11:[5,6,9,10,17,18,19,26,27]},
-        "6":{0:[3,4,9,10,17,18,21,22,29,30,31],1:[7,8,13,14,21,22,26,27],2:[6,7,14,15,20,21,28,29,30,31],3:[1,2,10,11,18,19,24,25],4:[2,3,6,7,14,15,16,23,24,29,30],5:[6,7,11,12,19,20,27,28],6:[3,4,11,12,13,14,15,16,24,25],7:[1,2,7,8,15,16,19,20,27,28,29],8:[5,6,11,12,19,20,24,25],9:[2,3,10,11,16,17,24,25,26,27,28,29],10:[6,7,14,15,20,21,28,29],11:[2,3,10,11,12,19,20,25,26]},
-        "7":{0:[2,3,10,11,14,15,22,23,24,31],1:[1,6,7,14,15,19,20,27,28],2:[7,8,13,14,21,22,23,24,25,26],3:[3,4,11,12,17,18,25,26,29,30],4:[7,8,9,16,17,22,23,30,31],5:[4,5,12,13,20,21,26,27],6:[4,5,6,7,8,9,17,18,25,26,31],7:[1,8,9,12,13,20,21,22,29,30],8:[4,5,12,13,17,18,25,26],9:[3,4,9,10,17,18,19,20,21,22,30,31],10:[7,8,13,14,21,22,25,26],11:[3,4,5,12,13,18,19,26,27,31]},
-        "8":{0:[3,4,7,8,15,16,17,24,25,30,31],1:[7,8,12,13,20,21,28],2:[1,6,7,14,15,16,17,18,19,27,28],3:[4,5,10,11,18,19,22,23,30],4:[1,2,9,10,15,16,23,24,28,29],5:[5,6,13,14,19,20,27,28,29,30],6:[1,2,10,11,18,19,24,25],7:[1,2,5,6,13,14,15,22,23,28,29],8:[5,6,10,11,18,19,26,27],9:[2,3,10,11,12,13,14,15,23,24,31],10:[1,6,7,14,15,18,19,26,27,28],11:[5,6,11,12,19,20,24,25]},
-        "9":{0:[1,8,9,10,17,18,23,24,31],1:[1,5,6,13,14,21,22,27,28],2:[7,8,9,10,11,12,20,21,28,29],3:[3,4,11,12,15,16,23,24,25],4:[2,3,8,9,16,17,21,22,29,30],5:[6,7,12,13,20,21,22,23,24,25],6:[3,4,11,12,17,18,25,26,29,30],7:[6,7,8,15,16,21,22,29,30],8:[3,4,11,12,19,20,25,26],9:[3,4,5,6,7,8,16,17,24,25,30,31],10:[7,8,11,12,19,20,21,28,29],11:[4,5,12,13,17,18,25,26]},
-        "10":{0:[1,2,3,10,11,16,17,24,25,29,30],1:[6,7,14,15,20,21,28],2:[1,2,3,4,5,13,14,21,22,27,28],3:[4,5,8,9,16,17,18,25,26],4:[1,2,9,10,14,15,22,23,30,31],5:[5,6,13,14,15,16,17,18,26,27],6:[4,5,10,11,18,19,22,23,30,31],7:[1,8,9,14,15,22,23,27,28],8:[4,5,12,13,18,19,26,27,28,29,30],9:[1,9,10,17,18,23,24,31],10:[1,4,5,12,13,14,21,22,27,28],11:[5,6,10,11,18,19,26,27]},
-        "11":{0:[3,4,9,10,17,18,22,23,30,31],1:[7,8,13,14,21,22,23,24,25,26],2:[6,7,14,15,20,21,28,29],3:[1,2,9,10,11,18,19,24,25],4:[2,3,7,8,15,16,23,24,29,30],5:[6,7,8,9,10,11,19,20,27,28],6:[3,4,11,12,15,16,23,24,25],7:[1,2,7,8,15,16,20,21,28,29],8:[5,6,11,12,19,20,21,22,23,24],9:[2,3,10,11,16,17,24,25,28,29],10:[5,6,7,14,15,20,21,28,29],11:[3,4,11,12,19,20,25,26]},
-        "12":{0:[2,3,10,11,15,16,23,24,31],1:[1,6,7,14,15,16,17,18,19,27,28],2:[7,8,13,14,21,22,25,26],3:[2,3,4,11,12,17,18,25,26,30],4:[1,8,9,16,17,22,23,30,31],5:[1,2,3,4,12,13,20,21,26,27],6:[4,5,8,9,16,17,18,25,26,31],7:[1,8,9,13,14,21,22,29,30],8:[4,5,12,13,14,15,16,17,25,26],9:[3,4,9,10,17,18,21,22,29,30,31],10:[7,8,13,14,21,22,26,27],11:[4,5,12,13,18,19,26,27,28,29,30,31]},
-        "13":{0:[3,4,8,9,16,17,24,25,30,31],1:[7,8,9,10,11,12,20,21,28],2:[1,6,7,14,15,18,19,26,27,28],3:[4,5,10,11,18,19,23,24],4:[1,2,9,10,15,16,23,24,25,26,27,28],5:[5,6,13,14,19,20,27,28],6:[1,2,9,10,11,18,19,24,25],7:[1,2,6,7,14,15,22,23,28,29],8:[5,6,7,8,9,10,18,19,26,27],9:[2,3,10,11,14,15,22,23,24,31],10:[1,6,7,14,15,19,20,27,28],11:[5,6,11,12,19,20,21,22,23,24]},
-        "14":{0:[1,2,9,10,17,18,23,24,31],1:[1,2,3,4,5,13,14,21,22,27,28],2:[7,8,11,12,19,20,21,28,29],3:[3,4,11,12,16,17,24,25],4:[2,3,8,9,16,17,18,19,20,21,29,30],5:[6,7,12,13,20,21,24,25],6:[2,3,4,11,12,17,18,25,26,30,31],7:[7,8,15,16,21,22,29,30],8:[1,2,3,11,12,19,20,25,26],9:[3,4,7,8,15,16,17,24,25,30,31],10:[7,8,12,13,20,21,28,29],11:[4,5,12,13,14,15,16,17,25,26]},
-        "15":{0:[2,3,10,11,16,17,24,25,26,27,28,29],1:[6,7,14,15,20,21,28],2:[1,4,5,12,13,14,21,22,27,28],3:[4,5,9,10,17,18,25,26],4:[1,2,9,10,11,12,13,14,22,23,30,31],5:[5,6,13,14,17,18,25,26,27],6:[4,5,10,11,18,19,23,24,31],7:[1,8,9,14,15,22,23,24,25,26,27],8:[4,5,12,13,18,19,26,27,30],9:[1,8,9,10,17,18,23,24,31],10:[1,5,6,13,14,21,22,27,28],11:[5,6,7,8,9,10,18,19,26,27]}
-    };
+    function _isoWeekMonday(year, w) {
+        const j4 = new Date(year, 0, 4), dow = j4.getDay() || 7;
+        const mon = new Date(j4);
+        mon.setDate(j4.getDate() - (dow - 1) + (w - 1) * 7);
+        return mon;
+    }
+
+    function _semanasISO(y) {
+        // Tiene 53 semanas si el 1-ene o 31-dic cae en jueves
+        return (new Date(y,0,1).getDay()===4 || new Date(y,11,31).getDay()===4) ? 53 : 52;
+    }
+
+    function _calcGrupos(year, patron, offsetBase, anioBase) {
+        // Calcular el offset del grupo 1 para el año solicitado
+        let off = offsetBase;
+        if (year > anioBase) {
+            for (let y = anioBase; y < year; y++)
+                off = ((off - 1 + _semanasISO(y)) % 15) + 1;
+        } else if (year < anioBase) {
+            for (let y = anioBase; y > year; y--)
+                off = ((off - 1 - (_semanasISO(y-1) % 15) + 150) % 15) + 1;
+        }
+        const grupos = {};
+        for (let g = 1; g <= 15; g++) {
+            const base = ((off - 1 + (g - 1)) % 15);
+            const L = {};
+            for (let m = 0; m < 12; m++) L[m] = [];
+            // Días de enero que pertenecen a la semana ISO del año anterior
+            const dow1 = new Date(year, 0, 1).getDay() || 7;
+            if (dow1 > 1) {
+                const pAnt = patron[((base - 1 + 150) % 15)];
+                for (let d = 1; d < dow1; d++) {
+                    const f = new Date(year, 0, d);
+                    if (f.getFullYear() !== year) continue;
+                    if (pAnt.includes(f.getDay()) && !L[0].includes(d)) L[0].push(d);
+                }
+            }
+            for (let w = 1; w <= 53; w++) {
+                const pSem = patron[((base + (w-1)) % 15)];
+                const lun = _isoWeekMonday(year, w);
+                for (let d = 0; d < 7; d++) {
+                    const f = new Date(lun); f.setDate(lun.getDate() + d);
+                    if (f.getFullYear() !== year) continue;
+                    const dow = f.getDay(), mes = f.getMonth(), dia = f.getDate();
+                    if (pSem.includes(dow) && !L[mes].includes(dia)) L[mes].push(dia);
+                }
+            }
+            for (let m = 0; m < 12; m++) L[m].sort((a,b)=>a-b);
+            grupos[String(g)] = L;
+        }
+        return grupos;
+    }
+
+    // Año base de referencia: 2026, offset grupo1 = 2 para ambos turnos
+    const _ANIO_BASE = 2026, _OFF_BASE = 2;
+    const _anioActual = new Date().getFullYear();
+    const gruposLibres     = _calcGrupos(_anioActual, _P7327, _OFF_BASE, _ANIO_BASE);
+    const gruposLibres8020 = _calcGrupos(_anioActual, _P8020, _OFF_BASE, _ANIO_BASE);
 
     // ===== ESCUCHA FIREBASE EN TIEMPO REAL =====
     let listenerCambios = null, listenerSolicitudes = null;
@@ -910,7 +943,6 @@
         renderList();
         if (modoGrupo) { iniciarPresencia(); iniciarListenerLeidos(); }
         _checkFestivos();
-        _checkVacacionesGenerados();
     }
 
     // ===== FESTIVOS MADRID 2026 =====
@@ -929,11 +961,6 @@
         { fecha: '25/12', nombre: 'Natividad del Señor' }
     ];
 
-    function esFestivo(mIdx, d) {
-        var clave = d + '/' + (mIdx + 1);
-        return _FESTIVOS_2026.some(function(f) { return f.fecha === clave; });
-    }
-
     function _checkFestivos() {
         if (!miID) return;
         var hoy = new Date();
@@ -941,7 +968,7 @@
         _FESTIVOS_2026.forEach(function(f) {
             var parts = f.fecha.split('/');
             var dia = parseInt(parts[0]), mes = parseInt(parts[1]);
-            var fechaFestivo = new Date(2026, mes - 1, dia);
+            var fechaFestivo = new Date(new Date().getFullYear(), mes - 1, dia);
             // Solo los que ya han llegado (fecha <= hoy)
             if (fechaFestivo <= hoy) festivosHoy.push(f);
         });
@@ -973,92 +1000,6 @@
             if (Object.keys(updates).length > 0) {
                 db.ref().update(updates).then(function() { _hmBadges(); });
             }
-        });
-    }
-
-    // ===== GENERADOS POR EXCESO DE DÍAS LIBRES EN VACACIONES =====
-    function _checkVacacionesGenerados() {
-        if (!miID) return;
-
-        var hoy = new Date();
-        var hoyAnio = hoy.getFullYear();
-        // Solo aplica en 2026
-        if (hoyAnio < 2026) return;
-
-        // Obtener datos del usuario para saber su grupo y turno
-        var p = equipoBase.find(function(x) { return x.id === miID; });
-        var grupo = p ? p.g : miGrupoSesion;
-        var turno = p ? p.t : miTipoSesion;
-        if (!grupo || !turno) return;
-        var tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres;
-        var diasLibresBase = tabla[grupo] || {};
-
-        db.ref('cambios/' + miID).once('value').then(function(snapCambios) {
-            var cambios = snapCambios.val() || {};
-
-            // Recoger todos los días marcados como Vacaciones
-            var diasVac = []; // [{mIdx, d}]
-            Object.entries(cambios).forEach(function(e) {
-                var key = e[0], val = e[1];
-                if (val && val.texto === 'Vacaciones') {
-                    var parts = key.split('_');
-                    var mIdx = parseInt(parts[0]), d = parseInt(parts[1]);
-                    if (!isNaN(mIdx) && !isNaN(d)) {
-                        diasVac.push({ mIdx: mIdx, d: d });
-                    }
-                }
-            });
-
-            if (diasVac.length === 0) return;
-
-            // Encontrar el último día de vacaciones
-            diasVac.sort(function(a, b) {
-                return (a.mIdx !== b.mIdx) ? a.mIdx - b.mIdx : a.d - b.d;
-            });
-            var ultimo = diasVac[diasVac.length - 1];
-            var fechaUltimo = new Date(2026, ultimo.mIdx, ultimo.d);
-
-            // Solo actuar si ya pasó el último día de vacaciones
-            if (hoy <= fechaUltimo) return;
-
-            // Contar días libres de base dentro de los días de vacaciones
-            var libresEnVac = 0;
-            diasVac.forEach(function(dv) {
-                var libresDelMes = diasLibresBase[dv.mIdx] || [];
-                if (libresDelMes.includes(dv.d)) libresEnVac++;
-            });
-
-            var MAX_LIBRES_VAC = 8;
-            var generadosADar = libresEnVac - MAX_LIBRES_VAC;
-            if (generadosADar <= 0) return;
-
-            // Comprobar si ya se generaron antes (evitar duplicados)
-            db.ref('historial2/' + miID).once('value').then(function(snapHist) {
-                var yaGenerado = false;
-                snapHist.forEach(function(child) {
-                    var h = child.val();
-                    if (h && h.cat === 'generado' && h.subtipo === 'vacaciones2026') {
-                        yaGenerado = true;
-                    }
-                });
-                if (yaGenerado) return;
-
-                // Añadir los días generados al historial
-                var updates = {};
-                var base = Date.now();
-                for (var i = 0; i < generadosADar; i++) {
-                    var key = base + i;
-                    updates['historial2/' + miID + '/' + key] = {
-                        cat: 'generado',
-                        subtipo: 'vacaciones2026',
-                        ts: key,
-                        fecha: ultimo.d + '/' + (ultimo.mIdx + 1),
-                        nota: 'Generado por exceso de libres en vacaciones (' + libresEnVac + ' libres, máx. 8)',
-                        esLibre: false
-                    };
-                }
-                db.ref().update(updates).then(function() { _hmBadges(); });
-            });
         });
     }
 
@@ -1181,9 +1122,9 @@
         _genDia = diaSeleccionado.d;
         _genMes = diaSeleccionado.mIdx;
         var fechaLibre = _genDia + '/' + (_genMes+1);
-        document.getElementById('mgen2-fecha').textContent = 'Dia libre: ' + fechaLibre;
-        document.getElementById('mgen2-key').value = '';
-        document.getElementById('mgen2-fecha-val').value = fechaLibre;
+        document.getElementById('mgen-fecha').textContent = 'Dia libre: ' + fechaLibre;
+        document.getElementById('mgen-key').value = '';
+        document.getElementById('mgen-fecha-val').value = fechaLibre;
         document.getElementById('mgen-librar-wrap').style.display = 'none';
         _cargarGeneradosDisponibles(fechaLibre);
         document.getElementById('modal-generado').style.display = 'flex';
@@ -1270,8 +1211,8 @@
     }
 
     function _confirmarGeneradoLibrar() {
-        var key = document.getElementById('mgen2-key').value;
-        var fechaGen = document.getElementById('mgen2-fecha-val').value;
+        var key = document.getElementById('mgen-key').value;
+        var fechaGen = document.getElementById('mgen-fecha-val').value;
         var fechaLibre = document.getElementById('mgen-dia-libre').value.trim();
         if (!fechaLibre) { alert('Introduce el dia que vas a librar'); return; }
         // Marcar en historial2
@@ -1884,8 +1825,69 @@
         });
     }
 
+    // Año actualmente visible en el calendario
+    let _calAnio = new Date().getFullYear();
+    // Cache de grupos calculados por año para no recalcular cada vez
+    const _calCache = {};
+
+    function _getGruposParaAnio(anio) {
+        if (!_calCache[anio]) {
+            _calCache[anio] = {
+                g7327: _calcGrupos(anio, _P7327, _OFF_BASE, _ANIO_BASE),
+                g8020: _calcGrupos(anio, _P8020, _OFF_BASE, _ANIO_BASE)
+            };
+        }
+        return _calCache[anio];
+    }
+
+    function cambiarAnioCalendario(delta) {
+        _calAnio += delta;
+        if (idCalendarioAbierto) _renderCalAnio(idCalendarioAbierto);
+    }
+
+    function _renderCalAnio(uid) {
+        const p = equipo.find(x => x.id === uid);
+        if (!p) return;
+        document.getElementById('cal-anio-label').innerText = _calAnio;
+        const grupos = _getGruposParaAnio(_calAnio);
+        const tablaAnio = p.t === '80/20' ? grupos.g8020 : grupos.g7327;
+
+        const grid = document.getElementById('m-grid'); grid.innerHTML = "";
+        mesesArr.forEach((m, mIdx) => {
+            let html = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`;
+            let start = new Date(_calAnio, mIdx, 1).getDay(); start = (start === 0) ? 6 : start - 1;
+            for(let i=0; i<start; i++) html += `<div></div>`;
+            const totalDias = new Date(_calAnio, mIdx+1, 0).getDate();
+            for(let d=1; d<=totalDias; d++) {
+                let esLibreReal, data;
+                if (_calAnio === _anioActual) {
+                    ({ esLibreReal, data } = checkEstado(uid, mIdx, d));
+                } else {
+                    esLibreReal = !!(tablaAnio[p.g] && tablaAnio[p.g][mIdx]?.includes(d));
+                    data = null;
+                }
+                let clase = esLibreReal ? "is-free" : "is-work";
+                if ((start + d - 1) % 7 === 6) clase += " is-sun";
+                if (data) clase += " " + data.clase;
+                let forma = esLibreReal ? 'shape-square' : 'shape-circle';
+                if (_calAnio === _anioActual) {
+                    html += `<div class="d-cell ${clase} ${forma}"
+                        onclick="handleDayClick(${d},${mIdx},'${uid}')"
+                        onmousedown="pressStart(event,${d},${mIdx},'${uid}')"
+                        ontouchstart="touchDayStart(event,${d},${mIdx},'${uid}')"
+                        ontouchend="touchDayEnd(event,${d},${mIdx},'${uid}')"
+                        onmouseup="cancelarTodoTimer()">${d}</div>`;
+                } else {
+                    html += `<div class="d-cell ${clase} ${forma}" style="cursor:default;">${d}</div>`;
+                }
+            }
+            grid.innerHTML += html + `</div></div>`;
+        });
+    }
+
     function abrirCal(uid) {
         idCalendarioAbierto = uid;
+        _calAnio = _anioActual;
         if (modoSeleccionActivo && tipoCambio === 'COMP' && uid !== miID) {
             targetCompaneroID = uid;
             document.getElementById('selection-notice').innerText = "PASO 2: ELIGE EL DÍA EN EL CALENDARIO DE " + (equipo.find(x=>x.id===uid)?.n || uid).toUpperCase();
@@ -1893,31 +1895,7 @@
         const p = equipo.find(x => x.id === uid);
         if (!p) return;
         document.getElementById('cal-target-name').innerText = p.n;
-        const grid = document.getElementById('m-grid'); grid.innerHTML = "";
-        mesesArr.forEach((m, mIdx) => {
-            let html = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`;
-            let start = new Date(2026, mIdx, 1).getDay(); start = (start === 0) ? 6 : start - 1;
-            for(let i=0; i<start; i++) html += `<div></div>`;
-            const totalDias = new Date(2026, mIdx+1, 0).getDate();
-            for(let d=1; d<=totalDias; d++) {
-                const { esLibreReal, data } = checkEstado(uid, mIdx, d);
-                let clase = esLibreReal ? "is-free" : "is-work";
-                if ((start + d - 1) % 7 === 6) clase += " is-sun";
-                if (data) clase += " " + data.clase;
-                // Determinar forma: ⭕ círculo = trabaja, ⬜ cuadrado = libre
-                let forma = '';
-                if (esLibreReal) { forma = 'shape-square'; }
-                else { forma = 'shape-circle'; }
-                if (esFestivo(mIdx, d)) clase += " is-festivo";
-                html += `<div class="d-cell ${clase} ${forma}"
-                    onclick="handleDayClick(${d},${mIdx},'${uid}')"
-                    onmousedown="pressStart(event,${d},${mIdx},'${uid}')"
-                    ontouchstart="touchDayStart(event,${d},${mIdx},'${uid}')"
-                    ontouchend="touchDayEnd(event,${d},${mIdx},'${uid}')"
-                    onmouseup="cancelarTodoTimer()">${d}</div>`;
-            }
-            grid.innerHTML += html + `</div></div>`;
-        });
+        _renderCalAnio(uid);
         const calYaAbierto = document.getElementById('m-cal').style.display !== 'none';
         document.getElementById('m-cal').style.display = "block";
         if (!calYaAbierto) _onModalOpen();
@@ -2545,9 +2523,11 @@
     // ===== PANEL TODOS LOS GRUPOS =====
     let panelTurno = '73/27';
     let panelMes = new Date().getMonth();
+    let panelAnio = new Date().getFullYear();
 
     function abrirPanelGrupos() {
         panelMes = mHoy;
+        panelAnio = new Date().getFullYear();
         panelTurno = '73/27';
         document.getElementById('grupos-panel').style.display = 'flex'; _onModalOpen();
         renderPanelGrupos();
@@ -2558,27 +2538,35 @@
     }
 
     function abrirCalGrupo(grupo, turno) {
-        const tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres;
+        // Usar el año que está viendo el panel de grupos
+        const anioVer = panelAnio;
+        let tabla;
+        if (anioVer === _anioActual) {
+            tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres;
+        } else {
+            const gAnio = _getGruposParaAnio(anioVer);
+            tabla = turno === '80/20' ? gAnio.g8020 : gAnio.g7327;
+        }
         const grid = document.getElementById('m-grid');
         grid.innerHTML = '';
-        document.getElementById('cal-target-name').innerText = 'Grupo ' + grupo + ' · ' + turno + ' · Días libres';
+        document.getElementById('cal-target-name').innerText = 'Grupo ' + grupo + ' · ' + turno + ' · ' + anioVer;
+        document.getElementById('cal-anio-label').innerText = anioVer;
 
         mesesArr.forEach((m, mIdx) => {
             const diasLibres = (tabla[grupo] && tabla[grupo][mIdx]) ? tabla[grupo][mIdx] : [];
-            let html = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`;
-            let start = new Date(2026, mIdx, 1).getDay();
+            let h = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`;
+            let start = new Date(anioVer, mIdx, 1).getDay();
             start = (start === 0) ? 6 : start - 1;
-            for (let i = 0; i < start; i++) html += `<div></div>`;
-            const totalDias = new Date(2026, mIdx + 1, 0).getDate();
+            for (let i = 0; i < start; i++) h += `<div></div>`;
+            const totalDias = new Date(anioVer, mIdx + 1, 0).getDate();
             for (let d = 1; d <= totalDias; d++) {
                 const esLibre = diasLibres.includes(d);
                 const esDom = (start + d - 1) % 7 === 6;
                 let clase = esLibre ? 'is-free' : 'is-work';
                 if (esDom) clase += ' is-sun';
-                if (esFestivo(mIdx, d)) clase += ' is-festivo';
-                html += `<div class="d-cell ${clase}">${d}</div>`;
+                h += `<div class="d-cell ${clase}">${d}</div>`;
             }
-            grid.innerHTML += html + `</div></div>`;
+            grid.innerHTML += h + `</div></div>`;
         });
 
         document.getElementById('m-cal').style.display = 'block';
@@ -2598,13 +2586,22 @@
     }
 
     function cambiarMesPanel(dir) {
-        panelMes = (panelMes + dir + 12) % 12;
+        panelMes += dir;
+        if (panelMes > 11) { panelMes = 0; panelAnio++; }
+        else if (panelMes < 0) { panelMes = 11; panelAnio--; }
         renderPanelGrupos();
     }
 
     function renderPanelGrupos() {
-        document.getElementById('pg-mes-label').innerText = mesesArr[panelMes] + ' 2026';
-        const tabla = panelTurno === '80/20' ? gruposLibres8020 : gruposLibres;
+        document.getElementById('pg-mes-label').innerText = mesesArr[panelMes] + ' ' + panelAnio;
+        // Obtener grupos del año correcto (usa cache si ya fue calculado)
+        let tabla;
+        if (panelAnio === _anioActual) {
+            tabla = panelTurno === '80/20' ? gruposLibres8020 : gruposLibres;
+        } else {
+            const gAnio = _getGruposParaAnio(panelAnio);
+            tabla = panelTurno === '80/20' ? gAnio.g8020 : gAnio.g7327;
+        }
         const cont = document.getElementById('pg-grupos-lista');
         cont.innerHTML = '';
 
@@ -3794,6 +3791,11 @@ const _modalCierres = [
     { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
     { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
     { id: 'historial-modal',      fn: () => cerrarHistorial() },
+    { id: 'modal-generado-decision', fn: () => document.getElementById('modal-generado-decision').style.display='none' },
+    { id: 'modal-generado',       fn: () => document.getElementById('modal-generado').style.display='none' },
+    { id: 'modal-tipo-propio',    fn: () => { document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none'; } },
+    { id: 'modal-pendiente-tipo', fn: () => document.getElementById('modal-pendiente-tipo').style.display='none' },
+    { id: 'historial-modal',      fn: () => cerrarHistorial() },
     { id: 'grupos-panel',     fn: () => document.getElementById('grupos-panel').style.display = 'none' },
 ];
 
@@ -3885,9 +3887,9 @@ if ('serviceWorker' in navigator) {
 <div id="modal-generado" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.75); z-index:7000; align-items:center; justify-content:center; padding:20px;">
     <div style="background:var(--surface); padding:24px; border-radius:20px; width:100%; max-width:320px; border:1px solid var(--pink);">
         <h3 style="margin:0 0 6px 0; color:#be185d; text-align:center;">✨ Usar día generado</h3>
-        <div id="mgen2-fecha" style="font-size:0.9rem; font-weight:800; color:#be185d; margin-bottom:12px; text-align:center;"></div>
-        <input type="hidden" id="mgen2-key">
-        <input type="hidden" id="mgen2-fecha-val">
+        <div id="mgen-fecha" style="font-size:0.9rem; font-weight:800; color:#be185d; margin-bottom:12px; text-align:center;"></div>
+        <input type="hidden" id="mgen-key">
+        <input type="hidden" id="mgen-fecha-val">
         <div id="mgen-lista" style="max-height:200px; overflow-y:auto; margin-bottom:12px;"></div>
         <div id="mgen-librar-wrap" style="display:none; background:#f0fdf4; border:1px solid var(--success); border-radius:12px; padding:14px; margin-bottom:12px;">
             <div style="font-size:0.85rem; font-weight:800; color:#166534; margin-bottom:10px;">📅 ¿Qué día vas a librar?</div>
@@ -3933,5 +3935,17 @@ if ('serviceWorker' in navigator) {
     </div>
 </div>
 
+
+    <script>
+    // Poner año actual en títulos
+    (function(){
+        var y = new Date().getFullYear();
+        document.title = 'Planificación ' + y;
+        var t = document.getElementById('anio-titulo');
+        var s = document.getElementById('anio-splash');
+        if(t) t.textContent = y;
+        if(s) s.textContent = y;
+    })();
+    </script>
 </body>
 </html>
