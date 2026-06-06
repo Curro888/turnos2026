@@ -1,3 +1,7 @@
+
+
+
+ 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -41,6 +45,10 @@
         .is-work { background: #f8fafc; color: #475569; }
         body.dark-mode .is-free { background: #4a2828; color: #fca5a5; }
         body.dark-mode .is-work { background: #2a3245; color: #a8b8cc; }
+        .is-festivo { background: #ef4444 !important; color: #000 !important; font-weight: 700; }
+        .is-festivo-libre { background: #ef4444 !important; color: #fff !important; font-weight: 700; }
+        body.dark-mode .is-festivo { background: #dc2626 !important; color: #000 !important; }
+        body.dark-mode .is-festivo-libre { background: #dc2626 !important; color: #fff !important; }
         body.dark-mode #m-cal { background: rgba(20, 22, 40, 0.96); }
         body.dark-mode .cal-grid { background: transparent; }
         body.dark-mode .legend-container { background: #252840; }
@@ -533,10 +541,12 @@
             const L = {};
             for (let m = 0; m < 12; m++) L[m] = [];
             // Días de enero que pertenecen a la semana ISO del año anterior
-            const dow1 = new Date(year, 0, 1).getDay() || 7;
-            if (dow1 > 1) {
+            // Solo aplica si el lunes de sem ISO 1 cae dentro del año (ej 2027: empieza el 4 ene)
+            // Si cae en dic del año anterior (ej 2025: empieza el 30 dic 2024), el bucle ya los cubre
+            const _lun1 = _isoWeekMonday(year, 1);
+            if (_lun1.getFullYear() === year && _lun1.getDate() > 1) {
                 const pAnt = patron[((base - 1 + 150) % 15)];
-                for (let d = 1; d < dow1; d++) {
+                for (let d = 1; d < _lun1.getDate(); d++) {
                     const f = new Date(year, 0, d);
                     if (f.getFullYear() !== year) continue;
                     if (pAnt.includes(f.getDay()) && !L[0].includes(d)) L[0].push(d);
@@ -953,13 +963,23 @@
         { fecha: '3/4',   nombre: 'Viernes Santo' },
         { fecha: '1/5',   nombre: 'Fiesta del Trabajo' },
         { fecha: '2/5',   nombre: 'Fiesta de la Comunidad de Madrid' },
+        { fecha: '15/5',  nombre: 'San Isidro Labrador' },
         { fecha: '15/8',  nombre: 'Asunción de la Virgen' },
         { fecha: '12/10', nombre: 'Fiesta Nacional de España' },
         { fecha: '2/11',  nombre: 'Traslado de Todos los Santos' },
+        { fecha: '9/11',  nombre: 'Nuestra Señora de la Almudena' },
         { fecha: '7/12',  nombre: 'Traslado del Día de la Constitución' },
         { fecha: '8/12',  nombre: 'Inmaculada Concepción' },
         { fecha: '25/12', nombre: 'Natividad del Señor' }
     ];
+
+    function _esFestivo(dia, mes) {
+        // mes en base 1 (como los festivos), dia en base 1
+        return _FESTIVOS_2026.some(function(f) {
+            var parts = f.fecha.split('/');
+            return parseInt(parts[0]) === dia && parseInt(parts[1]) === mes;
+        });
+    }
 
     function _checkFestivos() {
         if (!miID) return;
@@ -1476,6 +1496,10 @@
     }
 
     function cerrarSesion() {
+        // Borrar presencia inmediatamente al cerrar sesión
+        if (miID && grupoActual) {
+            db.ref(`presencia/${grupoActual}/${miID}`).remove();
+        }
         if (listenerCambios) { listenerCambios.off(); listenerCambios = null; }
         if (listenerSolicitudes) { listenerSolicitudes.off(); listenerSolicitudes = null; }
         if (listenerMiembros) { listenerMiembros.off(); listenerMiembros = null; }
@@ -1785,6 +1809,15 @@
 
     function iniciarPresencia() {
         if (!grupoActual || !miID) return;
+        // Borrar presencia en CUALQUIER otro grupo donde este usuario pudiera estar activo
+        db.ref('presencia').once('value', snap => {
+            const todos = snap.val() || {};
+            Object.keys(todos).forEach(g => {
+                if (g !== grupoActual && todos[g][miID]) {
+                    db.ref(`presencia/${g}/${miID}`).remove();
+                }
+            });
+        });
         const ref = db.ref(`presencia/${grupoActual}/${miID}`);
         // Marcar como conectado
         ref.set({ ts: Date.now(), n: miNombreCompleto });
@@ -1869,6 +1902,8 @@
                 let clase = esLibreReal ? "is-free" : "is-work";
                 if ((start + d - 1) % 7 === 6) clase += " is-sun";
                 if (data) clase += " " + data.clase;
+                // Festivo: rojo fondo, negro si trabaja, blanco si libra
+                if (_esFestivo(d, mIdx + 1)) clase = esLibreReal ? "is-festivo-libre" : "is-festivo";
                 let forma = esLibreReal ? 'shape-square' : 'shape-circle';
                 if (_calAnio === _anioActual) {
                     html += `<div class="d-cell ${clase} ${forma}"
@@ -2564,6 +2599,7 @@
                 const esDom = (start + d - 1) % 7 === 6;
                 let clase = esLibre ? 'is-free' : 'is-work';
                 if (esDom) clase += ' is-sun';
+                if (_esFestivo(d, mIdx + 1)) clase = esLibre ? 'is-festivo-libre' : 'is-festivo';
                 h += `<div class="d-cell ${clase}">${d}</div>`;
             }
             grid.innerHTML += h + `</div></div>`;
@@ -3454,7 +3490,7 @@
         for (let i = 0; i < 12; i++) {
             diasLibresPorMes.push(tablaGrupo[i] || []);
         }
-        const festivos2026 = ['0_1','0_6','3_2','3_9','4_1','4_15','7_15','9_12','10_1','10_9','11_6','11_8','11_25'];
+        const festivos2026 = ['0_1','0_6','3_2','3_9','4_1','4_2','4_15','7_15','9_12','10_1','10_9','11_6','11_8','11_25'];
         const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         let totalLibres = 0, finesLibres = 0, festivosLibres = 0, htmlMeses = '';
 
