@@ -214,6 +214,7 @@
                 <option value="">Selecciona tu turno</option>
                 <option value="73/27">🌙 N · 73/27</option>
                 <option value="80/20">🌙 N · 80/20</option>
+                <option value="80/20MT">☀️ 80/20 M/T</option>
             </select>
             <select id="grupoMiGrupo" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
                 <option value="">Selecciona tu grupo de libres</option>
@@ -243,6 +244,7 @@
                 <option value="">Selecciona tu turno</option>
                 <option value="73/27">🌙 N · 73/27</option>
                 <option value="80/20">🌙 N · 80/20</option>
+                <option value="80/20MT">☀️ 80/20 M/T</option>
             </select>
             <select id="nuevoMiGrupo" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
                 <option value="">Selecciona tu grupo de libres</option>
@@ -281,6 +283,7 @@
                     <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
                     <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
                     <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
+                    <div id="dmenu-limpiar-festivos" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:#d97706; border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();limpiarFestivosGenerados();">🧹 Limpiar festivos antiguos</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
                 </div>
             </div>
@@ -440,6 +443,7 @@
         <div style="display:flex; gap:8px; margin-bottom:12px;">
             <button id="pg-tab-7327" onclick="setPanelTurno('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
             <button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
+            <button id="pg-tab-8020mt" onclick="setPanelTurno('80/20MT')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">☀️ 80/20 M/T</button>
         </div>
         <!-- Navegación mes -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; background:var(--surface2); border-radius:12px; padding:8px 14px;">
@@ -512,6 +516,12 @@
         [5,6],[6,0],[5,6],[6,0],[3,4],
         [4,5,6],[6,0],[5,6],[6,0],[4,5]
     ];
+    // Patrón 80/20 MAÑANA-TARDE (ciclo de 15 semanas)
+    const _P8020MT = [
+        [6,0],[6,0],[6,0],[6,0],[1,2,3,4],
+        [6,0],[6,0],[6,0],[6,0],[3,4],
+        [5,6,0],[6,0],[6,0],[6,0],[4,5]
+    ];
 
     function _isoWeekMonday(year, w) {
         const j4 = new Date(year, 0, 4), dow = j4.getDay() || 7;
@@ -571,8 +581,9 @@
     // Año base de referencia: 2026, offset grupo1 = 2 para ambos turnos
     const _ANIO_BASE = 2026, _OFF_BASE = 2;
     const _anioActual = new Date().getFullYear();
-    const gruposLibres     = _calcGrupos(_anioActual, _P7327, _OFF_BASE, _ANIO_BASE);
-    const gruposLibres8020 = _calcGrupos(_anioActual, _P8020, _OFF_BASE, _ANIO_BASE);
+    const gruposLibres      = _calcGrupos(_anioActual, _P7327,   _OFF_BASE, _ANIO_BASE);
+    const gruposLibres8020  = _calcGrupos(_anioActual, _P8020,   _OFF_BASE, _ANIO_BASE);
+    const gruposLibres8020MT= _calcGrupos(_anioActual, _P8020MT, _OFF_BASE, _ANIO_BASE);
 
     // ===== ESCUCHA FIREBASE EN TIEMPO REAL =====
     let listenerCambios = null, listenerSolicitudes = null;
@@ -938,6 +949,7 @@
         }
         if (modoGrupo) {
             document.getElementById('dmenu-editar-grupo').style.display = 'block';
+            document.getElementById('dmenu-limpiar-festivos').style.display = 'block';
             document.getElementById('dmenu-companeros').style.display = 'none';
             document.getElementById('dmenu-chat').style.display = 'block';
             document.getElementById('dmenu-stats').style.display = 'block';
@@ -1495,6 +1507,42 @@
         });
     }
 
+
+    function limpiarFestivosGenerados() {
+        if (!confirm('¿Borrar los 7 festivos introducidos manualmente antes del sistema automático?\nSolo se borrarán: 1/1, 6/1, 2/4, 3/4, 1/5, 2/5 y 15/5. El resto se conserva.')) return;
+        
+        // Solo borrar estos 7 festivos que se metieron a mano antes del sistema automático
+        const fechasABorrar = ['1/1','6/1','2/4','3/4','1/5','2/5','15/5'];
+        
+        db.ref(`grupos/${grupoActual}/miembros`).once('value').then(function(snap) {
+            const miembros = snap.val() || {};
+            const ids = Object.keys(miembros);
+            let pendientes = ids.length;
+            let totalBorrados = 0;
+            
+            if (pendientes === 0) { alert('No hay miembros en el grupo.'); return; }
+            
+            ids.forEach(function(uid) {
+                db.ref('historial2/' + uid).once('value').then(function(hSnap) {
+                    const updates = {};
+                    hSnap.forEach(function(child) {
+                        const h = child.val();
+                        if (h && h.cat === 'generado' && h.subtipo === 'festivo' && fechasABorrar.includes(h.fecha)) {
+                            updates['historial2/' + uid + '/' + child.key] = null;
+                            totalBorrados++;
+                        }
+                    });
+                    if (Object.keys(updates).length > 0) {
+                        db.ref().update(updates);
+                    }
+                    pendientes--;
+                    if (pendientes === 0) {
+                        alert('✅ Listo. Se han borrado ' + totalBorrados + ' festivos manuales.\nLos demás festivos y cambios están intactos.');
+                    }
+                });
+            });
+        });
+    }
     function cerrarSesion() {
         // Borrar presencia inmediatamente al cerrar sesión
         if (miID && grupoActual) {
@@ -1714,6 +1762,7 @@
                     <select id="ei-tipo-${m.id}" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:var(--surface2);">
                         <option value="73/27" ${m.t==='73/27'?'selected':''}>🌙 N · 73/27</option>
                         <option value="80/20" ${m.t==='80/20'?'selected':''}>🌙 N · 80/20</option>
+                        <option value="80/20MT" ${m.t==='80/20MT'?'selected':''}>☀️ 80/20 M/T</option>
                     </select>
                     <select id="ei-grp-${m.id}" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:var(--surface2);">
                         ${grupoOpts}
@@ -1866,8 +1915,9 @@
     function _getGruposParaAnio(anio) {
         if (!_calCache[anio]) {
             _calCache[anio] = {
-                g7327: _calcGrupos(anio, _P7327, _OFF_BASE, _ANIO_BASE),
-                g8020: _calcGrupos(anio, _P8020, _OFF_BASE, _ANIO_BASE)
+                g7327:   _calcGrupos(anio, _P7327,   _OFF_BASE, _ANIO_BASE),
+                g8020:   _calcGrupos(anio, _P8020,   _OFF_BASE, _ANIO_BASE),
+                g8020mt: _calcGrupos(anio, _P8020MT, _OFF_BASE, _ANIO_BASE)
             };
         }
         return _calCache[anio];
@@ -1883,7 +1933,7 @@
         if (!p) return;
         document.getElementById('cal-anio-label').innerText = _calAnio;
         const grupos = _getGruposParaAnio(_calAnio);
-        const tablaAnio = p.t === '80/20' ? grupos.g8020 : grupos.g7327;
+        const tablaAnio = p.t === '80/20' ? grupos.g8020 : p.t === '80/20MT' ? grupos.g8020mt : grupos.g7327;
 
         const grid = document.getElementById('m-grid'); grid.innerHTML = "";
         mesesArr.forEach((m, mIdx) => {
@@ -2577,10 +2627,10 @@
         const anioVer = panelAnio;
         let tabla;
         if (anioVer === _anioActual) {
-            tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres;
+            tabla = turno === '80/20' ? gruposLibres8020 : turno === '80/20MT' ? gruposLibres8020MT : gruposLibres;
         } else {
             const gAnio = _getGruposParaAnio(anioVer);
-            tabla = turno === '80/20' ? gAnio.g8020 : gAnio.g7327;
+            tabla = turno === '80/20' ? gAnio.g8020 : turno === '80/20MT' ? gAnio.g8020mt : gAnio.g7327;
         }
         const grid = document.getElementById('m-grid');
         grid.innerHTML = '';
@@ -2611,6 +2661,12 @@
     }
 
     function setPanelTurno(turno) {
+        const btnMT = document.getElementById('pg-tab-8020mt');
+        if (btnMT) {
+            btnMT.style.background = turno==='80/20MT' ? 'var(--primary)' : 'var(--surface2)';
+            btnMT.style.color = turno==='80/20MT' ? 'white' : 'var(--primary)';
+            btnMT.style.borderColor = turno==='80/20MT' ? 'var(--primary)' : '#ddd6fe';
+        }
         panelTurno = turno;
         document.getElementById('pg-tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
         document.getElementById('pg-tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)';
@@ -2633,10 +2689,10 @@
         // Obtener grupos del año correcto (usa cache si ya fue calculado)
         let tabla;
         if (panelAnio === _anioActual) {
-            tabla = panelTurno === '80/20' ? gruposLibres8020 : gruposLibres;
+            tabla = panelTurno === '80/20' ? gruposLibres8020 : panelTurno === '80/20MT' ? gruposLibres8020MT : gruposLibres;
         } else {
             const gAnio = _getGruposParaAnio(panelAnio);
-            tabla = panelTurno === '80/20' ? gAnio.g8020 : gAnio.g7327;
+            tabla = panelTurno === '80/20' ? gAnio.g8020 : panelTurno === '80/20MT' ? gAnio.g8020mt : gAnio.g7327;
         }
         const cont = document.getElementById('pg-grupos-lista');
         cont.innerHTML = '';
