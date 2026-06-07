@@ -1,7 +1,3 @@
-
-
-
- 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -215,6 +211,7 @@
                 <option value="73/27">🌙 N · 73/27</option>
                 <option value="80/20">🌙 N · 80/20</option>
                 <option value="80/20MT">☀️ 80/20 M/T</option>
+                <option value="73/27MT">☀️ 73/27 M/T</option>
             </select>
             <select id="grupoMiGrupo" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
                 <option value="">Selecciona tu grupo de libres</option>
@@ -245,6 +242,7 @@
                 <option value="73/27">🌙 N · 73/27</option>
                 <option value="80/20">🌙 N · 80/20</option>
                 <option value="80/20MT">☀️ 80/20 M/T</option>
+                <option value="73/27MT">☀️ 73/27 M/T</option>
             </select>
             <select id="nuevoMiGrupo" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
                 <option value="">Selecciona tu grupo de libres</option>
@@ -444,6 +442,7 @@
             <button id="pg-tab-7327" onclick="setPanelTurno('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
             <button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
             <button id="pg-tab-8020mt" onclick="setPanelTurno('80/20MT')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">☀️ 80/20 M/T</button>
+            <button id="pg-tab-7327mt" onclick="setPanelTurno('73/27MT')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">☀️ 73/27 M/T</button>
         </div>
         <!-- Navegación mes -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; background:var(--surface2); border-radius:12px; padding:8px 14px;">
@@ -516,6 +515,12 @@
         [5,6],[6,0],[5,6],[6,0],[3,4],
         [4,5,6],[6,0],[5,6],[6,0],[4,5]
     ];
+    // Patrón 73/27 MAÑANA-TARDE (ciclo de 15 semanas)
+    const _P7327MT = [
+        [6,0],[6,0],[6,0],[1,2,3,4],[6,0],
+        [6,0],[6,0],[3,4],[5,6,0],[6,0],
+        [6,0],[4,5],[6,0],[6,0],[4,5]
+    ];
     // Patrón 80/20 MAÑANA-TARDE (ciclo de 15 semanas)
     const _P8020MT = [
         [6,0],[6,0],[6,0],[6,0],[1,2,3,4],
@@ -584,6 +589,7 @@
     const gruposLibres      = _calcGrupos(_anioActual, _P7327,   _OFF_BASE, _ANIO_BASE);
     const gruposLibres8020  = _calcGrupos(_anioActual, _P8020,   _OFF_BASE, _ANIO_BASE);
     const gruposLibres8020MT= _calcGrupos(_anioActual, _P8020MT, _OFF_BASE, _ANIO_BASE);
+    const gruposLibres7327MT = _calcGrupos(_anioActual, _P7327MT, _OFF_BASE, _ANIO_BASE);
 
     // ===== ESCUCHA FIREBASE EN TIEMPO REAL =====
     let listenerCambios = null, listenerSolicitudes = null;
@@ -1763,6 +1769,7 @@
                         <option value="73/27" ${m.t==='73/27'?'selected':''}>🌙 N · 73/27</option>
                         <option value="80/20" ${m.t==='80/20'?'selected':''}>🌙 N · 80/20</option>
                         <option value="80/20MT" ${m.t==='80/20MT'?'selected':''}>☀️ 80/20 M/T</option>
+                        <option value="73/27MT" ${m.t==='73/27MT'?'selected':''}>☀️ 73/27 M/T</option>
                     </select>
                     <select id="ei-grp-${m.id}" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:var(--surface2);">
                         ${grupoOpts}
@@ -1909,6 +1916,10 @@
 
     // Año actualmente visible en el calendario
     let _calAnio = new Date().getFullYear();
+    // Para recordar si el calendario fue abierto desde el panel de grupos
+    let _calModoGrupo = false;
+    let _calGrupoActivo = null;
+    let _calTurnoActivo = null;
     // Cache de grupos calculados por año para no recalcular cada vez
     const _calCache = {};
 
@@ -1917,7 +1928,8 @@
             _calCache[anio] = {
                 g7327:   _calcGrupos(anio, _P7327,   _OFF_BASE, _ANIO_BASE),
                 g8020:   _calcGrupos(anio, _P8020,   _OFF_BASE, _ANIO_BASE),
-                g8020mt: _calcGrupos(anio, _P8020MT, _OFF_BASE, _ANIO_BASE)
+                g8020mt: _calcGrupos(anio, _P8020MT, _OFF_BASE, _ANIO_BASE),
+                g7327mt: _calcGrupos(anio, _P7327MT, _OFF_BASE, _ANIO_BASE)
             };
         }
         return _calCache[anio];
@@ -1925,7 +1937,12 @@
 
     function cambiarAnioCalendario(delta) {
         _calAnio += delta;
-        if (idCalendarioAbierto) _renderCalAnio(idCalendarioAbierto);
+        if (_calModoGrupo && _calGrupoActivo) {
+            // Modo grupo: re-renderizar el calendario del grupo
+            _renderCalGrupoAnio(_calGrupoActivo, _calTurnoActivo);
+        } else if (idCalendarioAbierto) {
+            _renderCalAnio(idCalendarioAbierto);
+        }
     }
 
     function _renderCalAnio(uid) {
@@ -1933,7 +1950,7 @@
         if (!p) return;
         document.getElementById('cal-anio-label').innerText = _calAnio;
         const grupos = _getGruposParaAnio(_calAnio);
-        const tablaAnio = p.t === '80/20' ? grupos.g8020 : p.t === '80/20MT' ? grupos.g8020mt : grupos.g7327;
+        const tablaAnio = p.t === '80/20' ? grupos.g8020 : p.t === '80/20MT' ? grupos.g8020mt : p.t === '73/27MT' ? grupos.g7327mt : grupos.g7327;
 
         const grid = document.getElementById('m-grid'); grid.innerHTML = "";
         mesesArr.forEach((m, mIdx) => {
@@ -2622,21 +2639,19 @@
         document.getElementById('grupos-panel').style.display = 'none';
     }
 
-    function abrirCalGrupo(grupo, turno) {
-        // Usar el año que está viendo el panel de grupos
-        const anioVer = panelAnio;
+    function _renderCalGrupoAnio(grupo, turno) {
+        const anioVer = _calAnio;
         let tabla;
         if (anioVer === _anioActual) {
-            tabla = turno === '80/20' ? gruposLibres8020 : turno === '80/20MT' ? gruposLibres8020MT : gruposLibres;
+            tabla = turno === '80/20' ? gruposLibres8020 : turno === '80/20MT' ? gruposLibres8020MT : turno === '73/27MT' ? gruposLibres7327MT : gruposLibres;
         } else {
             const gAnio = _getGruposParaAnio(anioVer);
-            tabla = turno === '80/20' ? gAnio.g8020 : turno === '80/20MT' ? gAnio.g8020mt : gAnio.g7327;
+            tabla = turno === '80/20' ? gAnio.g8020 : turno === '80/20MT' ? gAnio.g8020mt : turno === '73/27MT' ? gAnio.g7327mt : gAnio.g7327;
         }
-        const grid = document.getElementById('m-grid');
-        grid.innerHTML = '';
         document.getElementById('cal-target-name').innerText = 'Grupo ' + grupo + ' · ' + turno + ' · ' + anioVer;
         document.getElementById('cal-anio-label').innerText = anioVer;
-
+        const grid = document.getElementById('m-grid');
+        grid.innerHTML = '';
         mesesArr.forEach((m, mIdx) => {
             const diasLibres = (tabla[grupo] && tabla[grupo][mIdx]) ? tabla[grupo][mIdx] : [];
             let h = `<div class="month-box"><div style="text-align:center; font-weight:bold; color:var(--primary-dark); margin-bottom:8px;">${m}</div><div class="days-container">`;
@@ -2654,6 +2669,26 @@
             }
             grid.innerHTML += h + `</div></div>`;
         });
+    }
+
+    function abrirCalGrupo(grupo, turno) {
+        // Usar el año que está viendo el panel de grupos
+        const anioVer = panelAnio;
+        let tabla;
+        if (anioVer === _anioActual) {
+            tabla = turno === '80/20' ? gruposLibres8020 : turno === '80/20MT' ? gruposLibres8020MT : gruposLibres;
+        } else {
+            const gAnio = _getGruposParaAnio(anioVer);
+            tabla = turno === '80/20' ? gAnio.g8020 : turno === '80/20MT' ? gAnio.g8020mt : gAnio.g7327;
+        }
+        // Guardar estado para que las flechas de año funcionen
+        _calModoGrupo = true;
+        _calGrupoActivo = grupo;
+        _calTurnoActivo = turno;
+        _calAnio = anioVer;
+        idCalendarioAbierto = null;
+
+        _renderCalGrupoAnio(grupo, turno);
 
         document.getElementById('m-cal').style.display = 'block';
         document.getElementById('m-cal').style.zIndex = '6000';
@@ -2666,6 +2701,12 @@
             btnMT.style.background = turno==='80/20MT' ? 'var(--primary)' : 'var(--surface2)';
             btnMT.style.color = turno==='80/20MT' ? 'white' : 'var(--primary)';
             btnMT.style.borderColor = turno==='80/20MT' ? 'var(--primary)' : '#ddd6fe';
+        }
+        const btn7327MT = document.getElementById('pg-tab-7327mt');
+        if (btn7327MT) {
+            btn7327MT.style.background = turno==='73/27MT' ? 'var(--primary)' : 'var(--surface2)';
+            btn7327MT.style.color = turno==='73/27MT' ? 'white' : 'var(--primary)';
+            btn7327MT.style.borderColor = turno==='73/27MT' ? 'var(--primary)' : '#ddd6fe';
         }
         panelTurno = turno;
         document.getElementById('pg-tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
@@ -2689,10 +2730,10 @@
         // Obtener grupos del año correcto (usa cache si ya fue calculado)
         let tabla;
         if (panelAnio === _anioActual) {
-            tabla = panelTurno === '80/20' ? gruposLibres8020 : panelTurno === '80/20MT' ? gruposLibres8020MT : gruposLibres;
+            tabla = panelTurno === '80/20' ? gruposLibres8020 : panelTurno === '80/20MT' ? gruposLibres8020MT : panelTurno === '73/27MT' ? gruposLibres7327MT : gruposLibres;
         } else {
             const gAnio = _getGruposParaAnio(panelAnio);
-            tabla = panelTurno === '80/20' ? gAnio.g8020 : panelTurno === '80/20MT' ? gAnio.g8020mt : gAnio.g7327;
+            tabla = panelTurno === '80/20' ? gAnio.g8020 : panelTurno === '80/20MT' ? gAnio.g8020mt : panelTurno === '73/27MT' ? gAnio.g7327mt : gAnio.g7327;
         }
         const cont = document.getElementById('pg-grupos-lista');
         cont.innerHTML = '';
