@@ -974,6 +974,13 @@
 
     // ===== FESTIVOS MADRID 2026 =====
     var _FESTIVOS_2026 = [
+        { fecha: '1/1',   nombre: 'Año Nuevo' },
+        { fecha: '6/1',   nombre: 'Epifanía del Señor' },
+        { fecha: '2/4',   nombre: 'Jueves Santo' },
+        { fecha: '3/4',   nombre: 'Viernes Santo' },
+        { fecha: '1/5',   nombre: 'Fiesta del Trabajo' },
+        { fecha: '2/5',   nombre: 'Fiesta de la Comunidad de Madrid' },
+        { fecha: '15/5',  nombre: 'San Isidro Labrador' },
         { fecha: '15/8',  nombre: 'Asunción de la Virgen' },
         { fecha: '12/10', nombre: 'Fiesta Nacional de España' },
         { fecha: '2/11',  nombre: 'Traslado de Todos los Santos' },
@@ -983,8 +990,10 @@
         { fecha: '25/12', nombre: 'Natividad del Señor' }
     ];
 
-    function _esFestivo(dia, mes) {
-        // mes en base 1 (como los festivos), dia en base 1
+    function _esFestivo(dia, mes, anio) {
+        // Solo marcar festivos en el año actual (2026)
+        // Para años futuros los festivos se añadirán cuando se conozcan
+        if (anio && anio !== _ANIO_BASE) return false;
         return _FESTIVOS_2026.some(function(f) {
             var parts = f.fecha.split('/');
             return parseInt(parts[0]) === dia && parseInt(parts[1]) === mes;
@@ -1957,7 +1966,7 @@
                 if ((start + d - 1) % 7 === 6) clase += " is-sun";
                 if (data) clase += " " + data.clase;
                 // Festivo: rojo fondo, negro si trabaja, blanco si libra
-                if (_esFestivo(d, mIdx + 1)) clase = esLibreReal ? "is-festivo-libre" : "is-festivo";
+                if (_esFestivo(d, mIdx + 1, _calAnio)) clase = esLibreReal ? "is-festivo-libre" : "is-festivo";
                 let forma = esLibreReal ? 'shape-square' : 'shape-circle';
                 if (_calAnio === _anioActual) {
                     html += `<div class="d-cell ${clase} ${forma}"
@@ -2651,7 +2660,7 @@
                 const esDom = (start + d - 1) % 7 === 6;
                 let clase = esLibre ? 'is-free' : 'is-work';
                 if (esDom) clase += ' is-sun';
-                if (_esFestivo(d, mIdx + 1)) clase = esLibre ? 'is-festivo-libre' : 'is-festivo';
+                if (_esFestivo(d, mIdx + 1, _calAnio)) clase = esLibre ? 'is-festivo-libre' : 'is-festivo';
                 h += `<div class="d-cell ${clase}">${d}</div>`;
             }
             grid.innerHTML += h + `</div></div>`;
@@ -3574,7 +3583,7 @@
         for (let i = 0; i < 12; i++) {
             diasLibresPorMes.push(tablaGrupo[i] || []);
         }
-        const festivos2026 = ['7_15','9_12','10_2','10_9','11_7','11_8','11_25'];
+        const festivos2026 = ['0_1','0_6','3_2','3_3','4_1','4_2','4_15','7_15','9_12','10_2','10_9','11_7','11_8','11_25'];
         const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         let totalLibres = 0, finesLibres = 0, festivosLibres = 0, htmlMeses = '';
 
