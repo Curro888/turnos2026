@@ -281,7 +281,6 @@
                     <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
                     <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
                     <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
-                    <div id="dmenu-limpiar-festivos" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:#d97706; border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();limpiarFestivosGenerados();">🧹 Limpiar festivos antiguos</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
                 </div>
             </div>
@@ -955,7 +954,7 @@
         }
         if (modoGrupo) {
             document.getElementById('dmenu-editar-grupo').style.display = 'block';
-            document.getElementById('dmenu-limpiar-festivos').style.display = 'block';
+
             document.getElementById('dmenu-companeros').style.display = 'none';
             document.getElementById('dmenu-chat').style.display = 'block';
             document.getElementById('dmenu-stats').style.display = 'block';
@@ -999,14 +998,43 @@
         });
     }
 
+
+    // Función de limpieza de festivos pasados - ejecutar desde consola: limpiarTodosFestivos()
+    window.limpiarTodosFestivos = function() {
+        if (!db) { alert('Debes estar conectado a Firebase'); return; }
+        const fechas = ['1/1','6/1','2/4','3/4','1/5','2/5','15/5'];
+        let totalBorrados = 0;
+        // Recorrer todos los usuarios en historial2
+        db.ref('historial2').once('value').then(function(snap) {
+            const updates = {};
+            snap.forEach(function(userSnap) {
+                userSnap.forEach(function(child) {
+                    const h = child.val();
+                    if (h && h.cat === 'generado' && h.subtipo === 'festivo' && fechas.includes(h.fecha)) {
+                        updates['historial2/' + userSnap.key + '/' + child.key] = null;
+                        totalBorrados++;
+                    }
+                });
+            });
+            if (Object.keys(updates).length > 0) {
+                db.ref().update(updates).then(function() {
+                    alert('✅ Borrados ' + totalBorrados + ' festivos de todos los usuarios.');
+                });
+            } else {
+                alert('No se encontraron festivos para borrar.');
+            }
+        });
+    };
     function _checkFestivos() {
         if (!miID) return;
         var hoy = new Date();
+        // Solo generar festivos del año actual, nunca de años futuros
+        if (hoy.getFullYear() !== _ANIO_BASE) return;
         var festivosHoy = [];
         _FESTIVOS_2026.forEach(function(f) {
             var parts = f.fecha.split('/');
             var dia = parseInt(parts[0]), mes = parseInt(parts[1]);
-            var fechaFestivo = new Date(new Date().getFullYear(), mes - 1, dia);
+            var fechaFestivo = new Date(_ANIO_BASE, mes - 1, dia);
             // Solo los que ya han llegado (fecha <= hoy)
             if (fechaFestivo <= hoy) festivosHoy.push(f);
         });
@@ -1514,41 +1542,6 @@
     }
 
 
-    function limpiarFestivosGenerados() {
-        if (!confirm('¿Borrar los 7 festivos introducidos manualmente antes del sistema automático?\nSolo se borrarán: 1/1, 6/1, 2/4, 3/4, 1/5, 2/5 y 15/5. El resto se conserva.')) return;
-        
-        // Solo borrar estos 7 festivos que se metieron a mano antes del sistema automático
-        const fechasABorrar = ['1/1','6/1','2/4','3/4','1/5','2/5','15/5'];
-        
-        db.ref(`grupos/${grupoActual}/miembros`).once('value').then(function(snap) {
-            const miembros = snap.val() || {};
-            const ids = Object.keys(miembros);
-            let pendientes = ids.length;
-            let totalBorrados = 0;
-            
-            if (pendientes === 0) { alert('No hay miembros en el grupo.'); return; }
-            
-            ids.forEach(function(uid) {
-                db.ref('historial2/' + uid).once('value').then(function(hSnap) {
-                    const updates = {};
-                    hSnap.forEach(function(child) {
-                        const h = child.val();
-                        if (h && h.cat === 'generado' && h.subtipo === 'festivo' && fechasABorrar.includes(h.fecha)) {
-                            updates['historial2/' + uid + '/' + child.key] = null;
-                            totalBorrados++;
-                        }
-                    });
-                    if (Object.keys(updates).length > 0) {
-                        db.ref().update(updates);
-                    }
-                    pendientes--;
-                    if (pendientes === 0) {
-                        alert('✅ Listo. Se han borrado ' + totalBorrados + ' festivos manuales.\nLos demás festivos y cambios están intactos.');
-                    }
-                });
-            });
-        });
-    }
     function cerrarSesion() {
         // Borrar presencia inmediatamente al cerrar sesión
         if (miID && grupoActual) {
