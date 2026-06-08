@@ -999,32 +999,6 @@
     }
 
 
-    // Función de limpieza de festivos pasados - ejecutar desde consola: limpiarTodosFestivos()
-    window.limpiarTodosFestivos = function() {
-        if (!db) { alert('Debes estar conectado a Firebase'); return; }
-        const fechas = ['1/1','6/1','2/4','3/4','1/5','2/5','15/5'];
-        let totalBorrados = 0;
-        // Recorrer todos los usuarios en historial2
-        db.ref('historial2').once('value').then(function(snap) {
-            const updates = {};
-            snap.forEach(function(userSnap) {
-                userSnap.forEach(function(child) {
-                    const h = child.val();
-                    if (h && h.cat === 'generado' && h.subtipo === 'festivo' && fechas.includes(h.fecha)) {
-                        updates['historial2/' + userSnap.key + '/' + child.key] = null;
-                        totalBorrados++;
-                    }
-                });
-            });
-            if (Object.keys(updates).length > 0) {
-                db.ref().update(updates).then(function() {
-                    alert('✅ Borrados ' + totalBorrados + ' festivos de todos los usuarios.');
-                });
-            } else {
-                alert('No se encontraron festivos para borrar.');
-            }
-        });
-    };
     function _checkFestivos() {
         if (!miID) return;
         var hoy = new Date();
