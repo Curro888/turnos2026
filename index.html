@@ -999,6 +999,33 @@
     }
 
 
+
+    // Función de limpieza oculta - usar desde consola: limpiarTodosFestivos()
+    window.limpiarTodosFestivos = function() {
+        if (!db) { alert('Debes estar conectado'); return; }
+        const fechas = ['1/1','6/1','2/4','3/4','1/5','2/5','15/5'];
+        db.ref('historial2').once('value').then(function(snap) {
+            const updates = {};
+            let total = 0;
+            snap.forEach(function(userSnap) {
+                userSnap.forEach(function(child) {
+                    const h = child.val();
+                    if (h && h.cat === 'generado' && h.subtipo === 'festivo' && fechas.includes(h.fecha)) {
+                        updates['historial2/' + userSnap.key + '/' + child.key] = null;
+                        total++;
+                    }
+                });
+            });
+            if (Object.keys(updates).length > 0) {
+                db.ref().update(updates).then(function() {
+                    alert('✅ Borrados ' + total + ' festivos de todos los usuarios.');
+                });
+            } else {
+                alert('No hay festivos para borrar.');
+            }
+        });
+    };
+
     function _checkFestivos() {
         if (!miID) return;
         var hoy = new Date();
