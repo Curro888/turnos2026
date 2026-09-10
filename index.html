@@ -3165,6 +3165,14 @@ function _generarManual() {
     var _hmNav = []; // pila de navegación: 'portada' | 'detalle' | 'resolver' | 'editar'
 
     // Helpers globales para onclick en HTML dinámico
+        window._borrarVacacionDesdeHistorial = function(btn) {
+        if (!confirm('¿Borrar este día de vacaciones?')) return;
+        var key = btn.getAttribute('data-vac-key');
+        db.ref('cambios/' + miID + '/' + key).remove().then(function() {
+            _hmCargar('vacaciones');
+            _hmBadges();
+        });
+    };
   window._hmDel = function(btn) {
     var path = btn.dataset.path;
     if (!confirm('¿Borrar esta entrada?')) return;
@@ -3267,11 +3275,16 @@ function _generarManual() {
             var bl = document.getElementById('badge-l26');
             if (bl) { bl.style.display = c.l26 > 0 ? 'block' : 'none'; bl.textContent = c.l26; }
         });
-        db.ref('cambios/' + miID).once('value').then(function(snapSR) {
-            var sr = 0;
-            if (snapSR.val()) Object.values(snapSR.val()).forEach(function(c) { if (c && c.clase === 'b-sinret') sr++; });
+                db.ref('cambios/' + miID).once('value').then(function(snapSR) {
+            var sr = 0, vac = 0;
+            if (snapSR.val()) Object.values(snapSR.val()).forEach(function(c) {
+                if (c && c.clase === 'b-sinret') sr++;
+                if (c && c.clase === 'b-vac') vac++;
+            });
             var bsr = document.getElementById('badge-sinret');
             if (bsr) { bsr.style.display = sr > 0 ? 'block' : 'none'; bsr.textContent = sr; }
+            var bv = document.getElementById('badge-vacaciones');
+            if (bv) { bv.style.display = vac > 0 ? 'block' : 'none'; bv.textContent = vac; }
         });
         db.ref('notas/' + miID).once('value').then(function(snap) {
             var n = Object.keys(snap.val() || {}).length;
@@ -3284,10 +3297,10 @@ function _generarManual() {
 
     function abrirCategoria(cat) {
         _hmCat = cat;
-        var titulos = { generado:'\u2728 Generado', pendiente:'\u23f3 Pendiente', comp:'Con companero', propio:'Cambio propio', notas:'\ud83d\udcdd Mis Notas', sinret:'\ud83d\udd34 Sin Retribuir' };
+                var titulos = { generado:'\u2728 Generado', pendiente:'\u23f3 Pendiente', comp:'Con companero', propio:'Cambio propio', notas:'\ud83d\udcdd Mis Notas', sinret:'\ud83d\udd34 Sin Retribuir', vacaciones:'\ud83c\udf34 Vacaciones' };
         document.getElementById('hm-titulo').textContent = titulos[cat] || cat;
         document.getElementById('hm-form-wrap').style.display = 'none';
-        document.getElementById('hm-btn-add').style.display = (cat === 'notas' || cat === 'sinret') ? 'none' : 'inline-block';
+        document.getElementById('hm-btn-add').style.display = (cat === 'notas' || cat === 'sinret' || cat === 'vacaciones') ? 'none' : 'inline-block';
         _hmIr('detalle');
         _hmPush('detalle');
         if (_hmListener) { _hmListener.off(); _hmListener = null; }
@@ -3323,9 +3336,36 @@ function _generarManual() {
         return '<button data-key="' + key + '" data-cat="' + cat + '" onclick="_hmEdit(this)" style="background:#ede9fe;color:#7c3aed;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">\u270f\ufe0f</button>';
     }
 
-    function _hmCargar(cat) {
+        function _hmCargar(cat) {
         var cont = document.getElementById('hm-items');
         cont.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;">Cargando...</div>';
+
+        if (cat === 'vacaciones') {
+            db.ref('cambios/' + miID).once('value').then(function(snap) {
+                var items = Object.entries(snap.val() || {}).filter(function(e) { return e[1] && e[1].clase === 'b-vac'; });
+                items.sort(function(a,b) {
+                    var pa = a[0].split('_'), pb = b[0].split('_');
+                    var ma = parseInt(pa[0]), da = parseInt(pa[1]);
+                    var mb = parseInt(pb[0]), db2 = parseInt(pb[1]);
+                    return ma !== mb ? ma - mb : da - db2;
+                });
+                if (!items.length) { cont.innerHTML='<div style="text-align:center;color:#64748b;padding:20px;">Sin días de vacaciones marcados.<br>Mantén pulsado un día y elige 🌴 Vacaciones.</div>'; return; }
+                var meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                cont.innerHTML = items.map(function(item) {
+                    var k = item[0];
+                    var parts = k.split('_');
+                    var mIdx = parseInt(parts[0]), d = parseInt(parts[1]);
+                    var fechaLabel = d + ' ' + (meses[mIdx]||'') + ' ' + _anioActual;
+                    return '<div style="border:2px solid #16a34a;border-radius:12px;padding:14px;margin-bottom:10px;background:#f0fdf4;">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                            '<div style="font-weight:800;color:#166534;">🌴 ' + fechaLabel + '</div>' +
+                            '<button data-vac-key="'+k+'" onclick="_borrarVacacionDesdeHistorial(this)" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">🗑️</button>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            });
+            return;
+        }
 
         if (cat === 'notas') {
             db.ref('notas/' + miID).once('value').then(function(snap) {
@@ -3999,6 +4039,12 @@ function _generarManual() {
                     <div style="font-weight:800; color:#991b1b;">Sin Retribuir</div>
                     <div style="font-size:0.72rem; color:#991b1b; opacity:0.7; margin-top:3px;">Días sin compensar</div>
                     <div id="badge-sinret" style="display:none; position:absolute; top:8px; right:10px; background:#ef4444; color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
+                </div>
+                                <div onclick="abrirCategoria('vacaciones')" style="border:2px solid #16a34a; background:#f0fdf4; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
+                    <div style="font-size:1.8rem; margin-bottom:6px;">🌴</div>
+                    <div style="font-weight:800; color:#166534;">Vacaciones</div>
+                    <div style="font-size:0.72rem; color:#166534; opacity:0.7; margin-top:3px;">Días marcados</div>
+                    <div id="badge-vacaciones" style="display:none; position:absolute; top:8px; right:10px; background:#16a34a; color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
                 </div>
                 <div onclick="abrirCategoria('notas')" style="border:2px solid #06b6d4; background:#ecfeff; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
                     <div style="font-size:1.8rem; margin-bottom:6px;">📝</div>
