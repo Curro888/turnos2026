@@ -3830,9 +3830,17 @@ function _generarManual() {
 
     // ===== ESTADÍSTICAS =====
     function abrirEstadisticas() {
-        document.getElementById('stats-modal').style.display = 'flex'; _onModalOpen();
+    document.getElementById('stats-modal').style.display = 'flex'; _onModalOpen();
+    if (dbCambios && dbCambios[miID]) {
         renderEstadisticas();
+    } else {
+        db.ref('cambios').once('value').then(function(snap) {
+            dbCambios = snap.val() || {};
+            renderEstadisticas();
+        });
     }
+}
+    
 
     function cerrarEstadisticas() {
         document.getElementById('stats-modal').style.display = 'none';
