@@ -3189,7 +3189,10 @@ function _generarManual() {
             return mm + '_' + dd;
         }
 
-        if (h && h.cat === 'generado') {
+               if (h && h.cat === 'generado') {
+            if (h.subtipo === 'festivo' && h.fecha) {
+                updates['festivosDescartados/' + miID + '/' + h.fecha.replace('/', '-')] = true;
+            }
             if (!h.resuelto && h.fecha) {
                 // Aún sin usar: borrar la marca del día donde se generó
                 var k1 = clave(h.fecha);
