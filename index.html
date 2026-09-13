@@ -661,6 +661,26 @@
                 }
             }
         });
+                listenerCambios = db.ref('cambios');
+        listenerCambios.on('value', (snapshot) => {
+            dbCambios = snapshot.val() || {};
+            if (miID) {
+                renderList();
+                if (idCalendarioAbierto) abrirCal(idCalendarioAbierto);
+                // Refrescar panel lateral si está abierto
+                if (panelDiaAbierto && document.getElementById('side-panel').style.display !== 'none') {
+                    verDia(panelDiaAbierto.d, panelDiaAbierto.mIdx, panelDiaAbierto.uid);
+                }
+                // Refrescar modal de día individual si está abierto
+                if (panelDiaAbierto && document.getElementById('dia-modal').style.display !== 'none') {
+                    verDiaIndividual(panelDiaAbierto.d, panelDiaAbierto.mIdx);
+                }
+                // Refrescar estadísticas si están abiertas
+                if (document.getElementById('stats-modal').style.display !== 'none') {
+                    renderEstadisticas();
+                }
+            }
+        });
 
         listenerSolicitudes = db.ref('solicitudes');
         listenerSolicitudes.on('value', (snapshot) => {
@@ -3829,16 +3849,9 @@ function _generarManual() {
     }
 
     // ===== ESTADÍSTICAS =====
-    function abrirEstadisticas() {
+   function abrirEstadisticas() {
     document.getElementById('stats-modal').style.display = 'flex'; _onModalOpen();
-    document.getElementById('stats-content').innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">Cargando...</p>';
-    db.ref('cambios/' + miID).once('value').then(function(snap) {
-        if (!dbCambios) dbCambios = {};
-        dbCambios[miID] = snap.val() || {};
-        renderEstadisticas();
-    }).catch(function() {
-        renderEstadisticas();
-    });
+    renderEstadisticas();
 }
     
 
