@@ -3831,14 +3831,14 @@ function _generarManual() {
     // ===== ESTADÍSTICAS =====
     function abrirEstadisticas() {
     document.getElementById('stats-modal').style.display = 'flex'; _onModalOpen();
-    if (dbCambios && dbCambios[miID]) {
+    document.getElementById('stats-content').innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">Cargando...</p>';
+    db.ref('cambios/' + miID).once('value').then(function(snap) {
+        if (!dbCambios) dbCambios = {};
+        dbCambios[miID] = snap.val() || {};
         renderEstadisticas();
-    } else {
-        db.ref('cambios').once('value').then(function(snap) {
-            dbCambios = snap.val() || {};
-            renderEstadisticas();
-        });
-    }
+    }).catch(function() {
+        renderEstadisticas();
+    });
 }
     
 
