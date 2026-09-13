@@ -1087,49 +1087,55 @@
         });
     };
 
-    function _checkFestivos() {
-        if (!miID) return;
-        var hoy = new Date();
-        // Solo generar festivos del año actual, nunca de años futuros
-        if (hoy.getFullYear() !== _ANIO_BASE) return;
-        var festivosHoy = [];
-        _FESTIVOS_2026.forEach(function(f) {
-            var parts = f.fecha.split('/');
-            var dia = parseInt(parts[0]), mes = parseInt(parts[1]);
-            var fechaFestivo = new Date(_ANIO_BASE, mes - 1, dia);
-            // Solo los que ya han llegado (fecha <= hoy)
-            if (fechaFestivo <= hoy) festivosHoy.push(f);
-        });
-        if (!festivosHoy.length) return;
+function _checkFestivos() {
+    if (!miID) return;
+    var hoy = new Date();
+    // Solo generar festivos del año actual, nunca de años futuros
+    if (hoy.getFullYear() !== _ANIO_BASE) return;
+    var festivosHoy = [];
+    _FESTIVOS_2026.forEach(function(f) {
+        var parts = f.fecha.split('/');
+        var dia = parseInt(parts[0]), mes = parseInt(parts[1]);
+        var fechaFestivo = new Date(_ANIO_BASE, mes - 1, dia);
+        // Solo los que ya han llegado (fecha <= hoy)
+        if (fechaFestivo <= hoy) festivosHoy.push(f);
+    });
+    if (!festivosHoy.length) return;
 
-        db.ref('historial2/' + miID).once('value').then(function(snap) {
-            var existentes = {};
-            snap.forEach(function(child) {
-                var h = child.val();
-                if (h && h.cat === 'generado' && h.subtipo === 'festivo') {
-                    existentes[h.fecha] = true;
-                }
-            });
-            var updates = {};
-            var base = Date.now();
-            festivosHoy.forEach(function(f, idx) {
-                if (!existentes[f.fecha]) {
-                    var key = base + idx;
-                    updates['historial2/' + miID + '/' + key] = {
-                        cat: 'generado',
-                        subtipo: 'festivo',
-                        ts: key,
-                        fecha: f.fecha,
-                        nota: f.nombre,
-                        esLibre: false
-                    };
-                }
-            });
-            if (Object.keys(updates).length > 0) {
-                db.ref().update(updates).then(function() { _hmBadges(); });
+    Promise.all([
+        db.ref('historial2/' + miID).once('value'),
+        db.ref('festivosDescartados/' + miID).once('value')
+    ]).then(function(results) {
+        var snap = results[0], snapDesc = results[1];
+        var existentes = {};
+        snap.forEach(function(child) {
+            var h = child.val();
+            if (h && h.cat === 'generado' && h.subtipo === 'festivo') {
+                existentes[h.fecha] = true;
             }
         });
-    }
+        var descartados = snapDesc.val() || {};
+        var updates = {};
+        var base = Date.now();
+        festivosHoy.forEach(function(f, idx) {
+            var fechaKey = f.fecha.replace('/', '-');
+            if (!existentes[f.fecha] && !descartados[fechaKey]) {
+                var key = base + idx;
+                updates['historial2/' + miID + '/' + key] = {
+                    cat: 'generado',
+                    subtipo: 'festivo',
+                    ts: key,
+                    fecha: f.fecha,
+                    nota: f.nombre,
+                    esLibre: false
+                };
+            }
+        });
+        if (Object.keys(updates).length > 0) {
+            db.ref().update(updates).then(function() { _hmBadges(); });
+        }
+    });
+}
     // ===== FOTOS DE PERFIL =====
     let dbFotos = {};
     let listenerFotos = null;
