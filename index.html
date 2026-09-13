@@ -659,22 +659,6 @@
                 if (panelDiaAbierto && document.getElementById('dia-modal').style.display !== 'none') {
                     verDiaIndividual(panelDiaAbierto.d, panelDiaAbierto.mIdx);
                 }
-            }
-        });
-                listenerCambios = db.ref('cambios');
-        listenerCambios.on('value', (snapshot) => {
-            dbCambios = snapshot.val() || {};
-            if (miID) {
-                renderList();
-                if (idCalendarioAbierto) abrirCal(idCalendarioAbierto);
-                // Refrescar panel lateral si está abierto
-                if (panelDiaAbierto && document.getElementById('side-panel').style.display !== 'none') {
-                    verDia(panelDiaAbierto.d, panelDiaAbierto.mIdx, panelDiaAbierto.uid);
-                }
-                // Refrescar modal de día individual si está abierto
-                if (panelDiaAbierto && document.getElementById('dia-modal').style.display !== 'none') {
-                    verDiaIndividual(panelDiaAbierto.d, panelDiaAbierto.mIdx);
-                }
                 // Refrescar estadísticas si están abiertas
                 if (document.getElementById('stats-modal').style.display !== 'none') {
                     renderEstadisticas();
