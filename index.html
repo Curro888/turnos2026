@@ -4271,7 +4271,7 @@ window.addEventListener('popstate', function(e) {
         } else if (_modalCount === 0) {
             history.pushState({ base: true }, '');
         }
-    } else {
+        } else {
         history.pushState({ base: true }, '');
         document.body.style.position = '';
         document.body.style.top = '';
@@ -4282,6 +4282,9 @@ window.addEventListener('popstate', function(e) {
         document.body.style.touchAction = '';
         window.scrollTo(0, _scrollYGuardado);
     }
+});
+
+// Bloqueo del gesto "pull to refresh" nativo de Chrome/TWA.
 
 // Bloqueo del gesto "pull to refresh" nativo de Chrome/TWA.
 // Chrome solo respeta el bloqueo si se hace en touchstart con passive:false,
