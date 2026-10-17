@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Planificación</title>
+    <meta name="apple-mobile-web-app-title" content="Libres Talleres">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Libres Talleres EMT</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
      <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -14,18 +15,18 @@
     <link rel="icon" href="Bulldog.png">
     <style>
         :root {
-            --bg: #f5f3ff; --primary: #8b5cf6; --primary-dark: #7c3aed;
-            --text: #1e1b4b; --danger: #ef4444; --success: #22c55e;
-            --white: #ffffff; --yellow: #facc15; --card-blue: #bae6fd;
+            --bg: #F0F0F3; --primary: #2563eb; --primary-dark: #1d4ed8;
+            --text: #0f172a; --danger: #ef4444; --success: #22c55e;
+            --white: #ffffff; --yellow: #facc15; --card-blue: #F0F0F3;
             --free-bg: #fee2e2; --pink: #f472b6;
-            --surface: #ffffff; --border: #ddd6fe; --surface2: #f5f3ff;
-            --text2: #64748b; --card-bg: #bae6fd;
+            --surface: #ffffff; --border: #E0E1E6; --surface2: #F0F0F3;
+            --text2: #64748b; --card-bg: #F0F0F3;
         }
         body.dark-mode {
-            --bg: #0f0f1a; --text: #e2e0ff; --white: #1a1a2e;
-            --surface: #1a1a2e; --border: #3b3460; --surface2: #13131f;
-            --text2: #9994cc; --card-bg: #1e3a5f; --card-blue: #1e3a5f;
-            --free-bg: #3b1a1a; --primary-dark: #a78bfa;
+            --bg: #000000; --text: #e2e0ff; --white: #212225;
+            --surface: #0b0b0c; --border: #2E3135; --surface2: #212225;
+            --text2: #B0B4BA; --card-bg: #212225; --card-blue: #212225;
+            --free-bg: #3b1a1a; --primary-dark: #60a5fa;
         }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; user-select: none; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-top: env(safe-area-inset-top); overscroll-behavior-y: none; transition: background 0.3s, color 0.3s; }
@@ -67,13 +68,13 @@
         body.dark-mode .member-row { background: #1e2a3a !important; border-color: #2e4a7f; }
         body.dark-mode .member-row .member-name { color: var(--text) !important; }
         /* Stats modal dark mode: card backgrounds and small labels */
-        body.dark-mode #stats-modal [style*="background:#f5f3ff"],
+        body.dark-mode #stats-modal [style*="background:#F0F0F3"],
         body.dark-mode #stats-modal [style*="background:#f0fdf4"],
         body.dark-mode #stats-modal [style*="background:#f0f9ff"],
         body.dark-mode #stats-modal [style*="background:#faf5ff"],
         body.dark-mode #stats-modal [style*="background:#fef2f2"],
         body.dark-mode #stats-modal [style*="background:#fefce8"],
-        body.dark-mode #stats-modal [style*="background: #f5f3ff"],
+        body.dark-mode #stats-modal [style*="background: #F0F0F3"],
         body.dark-mode #stats-modal [style*="background: #f0fdf4"],
         body.dark-mode #stats-modal [style*="background: #f0f9ff"],
         body.dark-mode #stats-modal [style*="background: #faf5ff"],
@@ -81,14 +82,14 @@
         body.dark-mode #stats-modal [style*="color:#64748b"],
         body.dark-mode #stats-modal [style*="color: #64748b"] { color: #a8b8cc !important; }
         /* Edit group modal inline edit panel */
-        body.dark-mode #edit-group-modal [style*="background:#f5f3ff"] { background: #1e2a3a !important; }
+        body.dark-mode #edit-group-modal [style*="background:#F0F0F3"] { background: #1e2a3a !important; }
         body.dark-mode #edit-group-modal [style*="color:#94a3b8"],
         body.dark-mode #edit-group-modal [style*="color: #94a3b8"] { color: #7a8fa8 !important; }
         body.dark-mode #edit-group-modal input,
         body.dark-mode #edit-group-modal select { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; }
         body.dark-mode .user-card { background: #1e3a5f !important; border-color: #2e4a7f; }
         body.dark-mode #m-cal-box { background: #2a2d45 !important; }
-        body.dark-mode #cal-target-name { color: #c4b5fd; }
+        body.dark-mode #cal-target-name { color: #93c5fd; }
         body.dark-mode .member-sub { color: var(--text) !important; }
         body.dark-mode [style*="color:#64748b"] { color: var(--text) !important; }
         body.dark-mode [style*="color: #64748b"] { color: var(--text) !important; }
@@ -96,7 +97,7 @@
 
         body.dark-mode .b-inter        { background: #2a2000 !important; color: #fde68a !important; border: 2px solid #ca8a04 !important; }
         body.dark-mode .b-cambio-libre { background: #3b0f0f !important; color: #fca5a5 !important; border: 2px solid #ef4444 !important; }
-        body.dark-mode .b-pend         { background: #1e1040 !important; color: #c4b5fd !important; border: 2px solid #7c3aed !important; }
+        body.dark-mode .b-pend         { background: #1e1040 !important; color: #93c5fd !important; border: 2px solid #1d4ed8 !important; }
         body.dark-mode .b-generado     { background: #2d0a1e !important; color: #f9a8d4 !important; border: 2px solid #ec4899 !important; }
         body.dark-mode .b-l26          { background: #431407 !important; color: #fdba74 !important; border: 2px solid #ea580c !important; }
         body.dark-mode .b-vac          { background: #052e16 !important; color: #86efac !important; border: 2px solid #16a34a !important; }
@@ -105,7 +106,7 @@
 
         .b-inter      { background: #fef08a !important; color: #854d0e !important; border: 2px solid #ca8a04 !important; } /* amarillo: trabajas */
         .b-cambio-libre { background: #fee2e2 !important; color: #991b1b !important; border: 2px solid #ef4444 !important; }
-        .b-pend       { background: #ede9fe !important; color: #5b21b6 !important; border: 2px solid #7c3aed !important; }
+        .b-pend       { background: #dbeafe !important; color: #5b21b6 !important; border: 2px solid #1d4ed8 !important; }
         .b-vac        { background: #bbf7d0 !important; color: #166534 !important; border: 2px solid #16a34a !important; }
         .b-generado   { background: #fce7f3 !important; color: #be185d !important; border: 2px solid #ec4899 !important; }
         .b-l26        { background: #fed7aa !important; color: #9a3412 !important; border: 2px solid #ea580c !important; }
@@ -156,7 +157,7 @@
         select.input-app { appearance: none; background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 15px center; }
 
         /* MEMBER LIST in group setup */
-        .member-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #ddd6fe; border-radius: 10px; margin-bottom: 8px; background: #faf9ff; font-size: 0.85rem; }
+        .member-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #E0E1E6; border-radius: 10px; margin-bottom: 8px; background: #faf9ff; font-size: 0.85rem; }
         .member-row .member-name { font-weight: 700; color: var(--text); }
         .member-row .member-sub { font-size: 0.75rem; color: #64748b; }
         .btn-danger-sm { background: #fee2e2; color: var(--danger); border: none; border-radius: 8px; padding: 6px 10px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
@@ -186,9 +187,9 @@
 </div>
 
 <!-- ===== LOGIN ===== -->
-<div id="login-view" style="position:fixed; inset:0; background:#1e1b4b; display:flex; align-items:center; justify-content:center; z-index:9999; overflow-y:auto; padding: 20px 0;">
+<div id="login-view" style="position:fixed; inset:0; background:#0f172a; display:flex; align-items:center; justify-content:center; z-index:9999; overflow-y:auto; padding: 20px 0;">
     <div style="background:var(--surface); padding:28px; border-radius:20px; text-align:center; width:90%; max-width:340px; border-bottom:5px solid var(--primary);">
-        <h2 style="color:var(--primary); margin:0 0 4px 0;">Planificación <span id="anio-titulo"></span></h2>
+        <h2 style="color:var(--primary); margin:0 0 4px 0;">Libres Talleres EMT <span id="anio-titulo"></span></h2>
         <p style="font-size:0.8rem; color:#64748b; margin-bottom:20px;">¿Cómo quieres acceder?</p>
 
         <!-- PASO -1: Elegir grupo guardado -->
@@ -297,16 +298,16 @@
             <span id="user-title" style="font-weight:800; color:var(--primary-dark); font-size:0.88rem; max-width:45vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;"></span>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
-            <button onclick="abrirPanelGrupos()" style="padding:8px 11px; border-radius:8px; border:1px solid #ddd6fe; background:var(--surface2); font-size:0.85rem; color:var(--primary);">📅</button>
+            <button onclick="abrirPanelGrupos()" style="padding:8px 11px; border-radius:8px; border:1px solid #E0E1E6; background:var(--surface2); font-size:0.85rem; color:var(--primary);">📅</button>
             <div style="position:relative;">
                 <button onclick="toggleMenu()" style="padding:8px 13px; border-radius:8px; border:1px solid var(--primary); background:var(--primary); color:white; font-size:0.85rem; font-weight:800; position:relative;">
                     ☰
                 </button>
                 <div id="dropdown-menu" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:0 8px 30px rgba(139,92,246,0.18); z-index:9999; min-width:200px; overflow:hidden;">
-                    <div id="dmenu-editar-grupo" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer; active-background:#f5f3ff;" ontouchend="this.click()" onclick="closeMenu();abrirEditorGrupo();">✏️ Editar grupo</div>
-                                      <div id="dmenu-companeros" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirCompaneros();">👥 Compañeros</div>
-                    <div id="dmenu-foto" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();subirFotoPerfil(miID);">🖼️ Cambiar mi foto</div> 
-                    <div id="dmenu-stats" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #f5f3ff; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirEstadisticas();">📊 Estadísticas</div>
+                    <div id="dmenu-editar-grupo" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #F0F0F3; cursor:pointer; active-background:#F0F0F3;" ontouchend="this.click()" onclick="closeMenu();abrirEditorGrupo();">✏️ Editar grupo</div>
+                                      <div id="dmenu-companeros" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #F0F0F3; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirCompaneros();">👥 Compañeros</div>
+                    <div id="dmenu-foto" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #F0F0F3; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();subirFotoPerfil(miID);">🖼️ Cambiar mi foto</div> 
+                    <div id="dmenu-stats" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid #F0F0F3; cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();abrirEstadisticas();">📊 Estadísticas</div>
                     <div id="dmenu-notif" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();activarNotificaciones();">🔔 Activar notificaciones</div>
                     <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
                     <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
@@ -326,12 +327,12 @@
 
         <div style="display:flex; gap:8px; margin-bottom:15px;">
             <button id="tab-7327" onclick="mostrarTablaComp('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
-            <button id="tab-8020" onclick="mostrarTablaComp('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
+            <button id="tab-8020" onclick="mostrarTablaComp('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #E0E1E6; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
         </div>
 
         <div id="comp-grupos-container"></div>
 
-        <button onclick="cerrarCompaneros()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
+        <button onclick="cerrarCompaneros()" style="width:100%; padding:12px; background:#F0F0F3; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
     </div>
 </div>
 
@@ -341,7 +342,7 @@
         <h3 id="dia-modal-titulo" style="margin:0 0 15px 0; color:var(--primary-dark);"></h3>
         <div id="dia-modal-libre" style="margin-bottom:15px;"></div>
         <div id="dia-modal-trabaja"></div>
-        <button onclick="cerrarDiaModal()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
+        <button onclick="cerrarDiaModal()" style="width:100%; padding:12px; background:#F0F0F3; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:15px;">Cerrar</button>
     </div>
 </div>
 
@@ -351,7 +352,7 @@
         <h3 style="color:var(--primary-dark); margin:0 0 5px 0;">✏️ Gestión del Grupo</h3>
         <p id="edit-group-name-label" style="font-size:0.85rem; color:var(--primary-dark); font-weight:700; margin:0 0 15px 0;"></p>
         <div id="member-list-edit"></div>
-        <hr style="border:none; border-top:1px solid #ddd6fe; margin:15px 0;">
+        <hr style="border:none; border-top:1px solid #E0E1E6; margin:15px 0;">
         <p style="font-size:0.85rem; font-weight:700; color:var(--primary-dark); margin:0 0 10px 0;">➕ Añadir miembro</p>
         <input type="text" id="new-member-name" placeholder="Nombre" class="input-app" style="font-size:0.95rem; margin:4px 0;">
         <input type="number" id="new-member-id" placeholder="ID empleado" class="input-app" style="font-size:0.95rem; margin:4px 0;">
@@ -372,7 +373,7 @@
             <option value="15">Grupo 15</option>
         </select>
         <button onclick="añadirMiembro()" style="width:100%; padding:13px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">Añadir al grupo</button>
-        <button onclick="cerrarEditorGrupo()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
+        <button onclick="cerrarEditorGrupo()" style="width:100%; padding:12px; background:#F0F0F3; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
     </div>
 </div>
 
@@ -419,7 +420,7 @@
         <p id="vac-info" style="font-size:0.8rem; color:#64748b; margin:10px 0;"></p>
         <input type="number" id="vac-input" class="input-app" placeholder="Día final">
         <div style="display:flex; gap:10px;">
-            <button onclick="cerrarVacModal()" style="flex:1; padding:12px; background:#f5f3ff; border:none; border-radius:10px; font-weight:bold; color:var(--primary);">Cancelar</button>
+            <button onclick="cerrarVacModal()" style="flex:1; padding:12px; background:#F0F0F3; border:none; border-radius:10px; font-weight:bold; color:var(--primary);">Cancelar</button>
             <button onclick="confirmarVacaciones()" style="flex:1; padding:12px; background:var(--success); color:white; border:none; border-radius:10px; font-weight:bold;">Guardar</button>
         </div>
     </div>
@@ -432,7 +433,7 @@
         <textarea id="nota-input" maxlength="250" placeholder="Escribe tu anotación..." oninput="document.getElementById('nota-contador').innerText = this.value.length + ' / 250'" style="width:100%; min-height:110px; padding:10px; border:1px solid var(--border); border-radius:10px; font-size:0.9rem; background:var(--surface); color:var(--text); box-sizing:border-box; resize:vertical; font-family:inherit;"></textarea>
         <div id="nota-contador" style="text-align:right; font-size:0.72rem; color:#64748b; margin:4px 0 10px;">0 / 250</div>
         <div style="display:flex; gap:10px;">
-            <button onclick="cerrarNotaModal()" style="flex:1; padding:12px; background:#f5f3ff; border:none; border-radius:10px; font-weight:bold; color:var(--primary);">Cancelar</button>
+            <button onclick="cerrarNotaModal()" style="flex:1; padding:12px; background:#F0F0F3; border:none; border-radius:10px; font-weight:bold; color:var(--primary);">Cancelar</button>
             <button onclick="guardarMiNota()" style="flex:1; padding:12px; background:#06b6d4; color:white; border:none; border-radius:10px; font-weight:bold;">Guardar</button>
         </div>
     </div>
@@ -455,7 +456,7 @@
             <div class="legend-item"><div class="legend-box" style="background:#fee2e2; border:2px solid #ef4444;"></div><span>Sin Retribuir</span></div>
             <div class="legend-item"><div class="legend-box" style="background:#fef08a;"></div><span>C. Compañero</span></div>
             <div class="legend-item"><div class="legend-box" style="background:#bbf7d0;"></div><span>Vacaciones</span></div>
-            <div class="legend-item"><div class="legend-box" style="background:#ede9fe;"></div><span>Pendiente</span></div>
+            <div class="legend-item"><div class="legend-box" style="background:#dbeafe;"></div><span>Pendiente</span></div>
             <div class="legend-item" onclick="mostrarInformeLeyenda('b-generado','Generados')"><div class="legend-box" style="background:#fce7f3;"></div><span>Generado</span></div>
             <div class="legend-item"><div class="legend-box" style="background:#fee2e2;"></div><span>Libra (cambio)</span></div>
             <div class="legend-item"><div class="legend-box" style="background:#67e8f9; border-radius:2px;"></div><span>📝 Nota</span></div>
@@ -468,7 +469,7 @@
 <div id="side-panel" style="display:none; position:fixed; right:0; top:0; bottom:0; width:300px; background:var(--surface); z-index:150; padding:20px; overflow-y:auto; border-left:2px solid var(--border); box-shadow:-5px 0 15px rgba(139,92,246,0.1);">
     <div class="close-panel-btn" onclick="document.getElementById('side-panel').style.display='none'">✕</div>
     <h3 id="panel-date" style="color:var(--primary-dark); margin-bottom:5px; padding-right:30px;"></h3>
-    <div id="p-stats" style="margin-bottom:15px; border-bottom:1px solid #f5f3ff; padding-bottom:10px;"></div>
+    <div id="p-stats" style="margin-bottom:15px; border-bottom:1px solid #F0F0F3; padding-bottom:10px;"></div>
     <div id="p-free-list"></div>
     <div id="p-work-list" style="margin-top:20px"></div>
 </div>
@@ -484,9 +485,9 @@
         <!-- Pestañas turno -->
         <div style="display:flex; gap:8px; margin-bottom:12px;">
             <button id="pg-tab-7327" onclick="setPanelTurno('73/27')" style="flex:1; padding:10px; border-radius:10px; border:2px solid var(--primary); background:var(--primary); color:white; font-weight:700; font-size:0.85rem;">🌙 73/27</button>
-            <button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
-            <button id="pg-tab-8020mt" onclick="setPanelTurno('80/20MT')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">☀️ 80/20 M/T</button>
-            <button id="pg-tab-7327mt" onclick="setPanelTurno('73/27MT')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #ddd6fe; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">☀️ 73/27 M/T</button>
+            <button id="pg-tab-8020" onclick="setPanelTurno('80/20')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #E0E1E6; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">🌙 80/20</button>
+            <button id="pg-tab-8020mt" onclick="setPanelTurno('80/20MT')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #E0E1E6; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">☀️ 80/20 M/T</button>
+            <button id="pg-tab-7327mt" onclick="setPanelTurno('73/27MT')" style="flex:1; padding:10px; border-radius:10px; border:2px solid #E0E1E6; background:var(--surface2); color:var(--primary); font-weight:700; font-size:0.85rem;">☀️ 73/27 M/T</button>
         </div>
         <!-- Navegación mes -->
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; background:var(--surface2); border-radius:12px; padding:8px 14px;">
@@ -1731,7 +1732,7 @@ function _generarManual() {
                 cont.innerHTML = '<div style="font-size:0.82rem;font-weight:700;color:#6d28d9;margin-bottom:8px;">Toca el dia trabajado que compensas:</div>';
                 items.forEach(function(p) {
                     var btn = document.createElement('button');
-                    btn.style.cssText = 'width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:#f5f3ff;border:2px solid #8b5cf6;border-radius:12px;font-size:0.88rem;font-weight:700;color:#6d28d9;cursor:pointer;display:block;';
+                    btn.style.cssText = 'width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;background:#F0F0F3;border:2px solid #2563eb;border-radius:12px;font-size:0.88rem;font-weight:700;color:#6d28d9;cursor:pointer;display:block;';
                     btn.innerHTML = '⏳ <b>' + p.fecha + '</b><br><span style="font-size:0.75rem;font-weight:400;color:#94a3b8;">' + p.texto + '</span>';
                     (function(pItem) {
                         btn.addEventListener('click', function() {
@@ -1871,10 +1872,10 @@ function _generarManual() {
         companerosTurnoActivo = turno;
         document.getElementById('tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
         document.getElementById('tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)';
-        document.getElementById('tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#ddd6fe';
+        document.getElementById('tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#E0E1E6';
         document.getElementById('tab-8020').style.background = turno === '80/20' ? 'var(--primary)' : 'white';
         document.getElementById('tab-8020').style.color = turno === '80/20' ? 'white' : 'var(--primary)';
-        document.getElementById('tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#ddd6fe';
+        document.getElementById('tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#E0E1E6';
 
         const comp = cargarCompaneros();
         const tabla = turno === '80/20' ? gruposLibres8020 : gruposLibres;
@@ -1884,16 +1885,16 @@ function _generarManual() {
             const key = `${turno}_${g}`;
             const nombres = comp[key] || [];
             html += `
-            <div style="border:1px solid #ddd6fe; border-radius:12px; padding:12px; margin-bottom:10px; background:#faf9ff;">
+            <div style="border:1px solid #E0E1E6; border-radius:12px; padding:12px; margin-bottom:10px; background:#faf9ff;">
                 <div style="font-weight:700; color:var(--primary-dark); margin-bottom:8px;">Grupo ${g}</div>
                 <div id="nombres-${turno.replace('/','')}-${g}" style="margin-bottom:8px;">
-                    ${nombres.map((n,i) => `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #f5f3ff;">
+                    ${nombres.map((n,i) => `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #F0F0F3;">
                         <span style="font-size:0.85rem; color:var(--text);">${n}</span>
                         <button onclick="eliminarCompanero('${key}',${i})" style="background:#fee2e2; color:var(--danger); border:none; border-radius:6px; padding:3px 8px; font-size:0.75rem; font-weight:700;">✕</button>
                     </div>`).join('')}
                 </div>
                 <div style="display:flex; gap:6px;">
-                    <input type="text" id="input-${turno.replace('/','')}-${g}" placeholder="Nombre..." style="flex:1; padding:8px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.85rem; outline:none;">
+                    <input type="text" id="input-${turno.replace('/','')}-${g}" placeholder="Nombre..." style="flex:1; padding:8px; border:1px solid #E0E1E6; border-radius:8px; font-size:0.85rem; outline:none;">
                     <button onclick="añadirCompanero('${key}','${turno.replace('/','')}-${g}')" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:8px 12px; font-weight:700; font-size:0.85rem;">+</button>
                 </div>
             </div>`;
@@ -1954,15 +1955,15 @@ function _generarManual() {
             const libran = todasPersonas.filter(x => x.libre);
             const trabajan = todasPersonas.filter(x => !x.libre);
             html += `
-            <div style="background:var(--surface2); border-radius:14px; padding:14px; border:1px solid #ddd6fe; margin-bottom:10px;">
+            <div style="background:var(--surface2); border-radius:14px; padding:14px; border:1px solid #E0E1E6; margin-bottom:10px;">
                 <div style="font-weight:700; color:var(--primary-dark); margin-bottom:10px; font-size:0.9rem;">Hoy — ${dHoy}/${mHoy+1}</div>
                 <div style="margin-bottom:8px;">
                     <div style="font-size:0.75rem; font-weight:700; color:var(--danger); margin-bottom:5px;">LIBRAN (${libran.length})</div>
-                    ${libran.length ? libran.map(x=>`<div style="font-size:0.83rem; padding:4px 0; border-bottom:1px solid #f5f3ff; color:var(--text);">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}
+                    ${libran.length ? libran.map(x=>`<div style="font-size:0.83rem; padding:4px 0; border-bottom:1px solid #F0F0F3; color:var(--text);">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}
                 </div>
                 <div>
                     <div style="font-size:0.75rem; font-weight:700; color:var(--primary-dark); margin-bottom:5px;">TRABAJAN (${trabajan.length})</div>
-                    ${trabajan.length ? trabajan.map(x=>`<div style="font-size:0.83rem; padding:4px 0; border-bottom:1px solid #f5f3ff; color:var(--text);">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}
+                    ${trabajan.length ? trabajan.map(x=>`<div style="font-size:0.83rem; padding:4px 0; border-bottom:1px solid #F0F0F3; color:var(--text);">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}
                 </div>
             </div>`;
         }
@@ -1997,10 +1998,10 @@ function _generarManual() {
         document.getElementById('dia-modal-titulo').innerText = `${d}/${mIdx+1} — ${mesesArr[mIdx]}`;
         document.getElementById('dia-modal-libre').innerHTML = `
             <div style="font-size:0.75rem; font-weight:700; color:var(--danger); margin-bottom:6px;">LIBRAN (${libran.length})</div>
-            ${libran.length ? libran.map(x=>`<div style="font-size:0.85rem; padding:5px 0; border-bottom:1px solid #f5f3ff;">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}`;
+            ${libran.length ? libran.map(x=>`<div style="font-size:0.85rem; padding:5px 0; border-bottom:1px solid #F0F0F3;">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}`;
         document.getElementById('dia-modal-trabaja').innerHTML = `
             <div style="font-size:0.75rem; font-weight:700; color:var(--primary-dark); margin-bottom:6px; margin-top:10px;">TRABAJAN (${trabajan.length})</div>
-            ${trabajan.length ? trabajan.map(x=>`<div style="font-size:0.85rem; padding:5px 0; border-bottom:1px solid #f5f3ff;">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}`;
+            ${trabajan.length ? trabajan.map(x=>`<div style="font-size:0.85rem; padding:5px 0; border-bottom:1px solid #F0F0F3;">${x.nombre} <span style="color:#94a3b8; font-size:0.75rem;">G${x.grupo} ${x.turnoReal}</span></div>`).join('') : '<div style="font-size:0.8rem; color:#94a3b8;">Ninguno</div>'}`;
         document.getElementById('dia-modal').style.display = 'flex'; _onModalOpen();
     }
 
@@ -2032,20 +2033,20 @@ function _generarManual() {
                         <div class="member-sub">Grupo ${m.g} · ${esNoche ? '🌙N · ' : ''}${m.t}</div>
                     </div>
                     <div style="display:flex; gap:6px;">
-                        <button style="background:#ede9fe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro('${m.id}','${m.n}','${m.id}','${m.t}','${m.g}')">✏️</button>
+                        <button style="background:#dbeafe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro('${m.id}','${m.n}','${m.id}','${m.t}','${m.g}')">✏️</button>
                         <button class="btn-danger-sm" onclick="eliminarMiembro('${m.id}')">✕</button>
                     </div>
                 </div>
-                <div id="edit-inline-${m.id}" style="display:none; background:#f5f3ff; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
-                    <input type="text" id="ei-nom-${m.id}" value="${m.n}" placeholder="Nombre" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
-                    <input type="number" id="ei-id-${m.id}" value="${m.id}" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
-                    <select id="ei-tipo-${m.id}" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:var(--surface2);">
+                <div id="edit-inline-${m.id}" style="display:none; background:#F0F0F3; border-radius:10px; padding:10px; display:none; flex-direction:column; gap:6px;">
+                    <input type="text" id="ei-nom-${m.id}" value="${m.n}" placeholder="Nombre" style="padding:8px 10px; border:1px solid #E0E1E6; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <input type="number" id="ei-id-${m.id}" value="${m.id}" placeholder="ID empleado" style="padding:8px 10px; border:1px solid #E0E1E6; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box;">
+                    <select id="ei-tipo-${m.id}" style="padding:8px 10px; border:1px solid #E0E1E6; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:var(--surface2);">
                         <option value="73/27" ${m.t==='73/27'?'selected':''}>🌙 N · 73/27</option>
                         <option value="80/20" ${m.t==='80/20'?'selected':''}>🌙 N · 80/20</option>
                         <option value="80/20MT" ${m.t==='80/20MT'?'selected':''}>☀️ 80/20 M/T</option>
                         <option value="73/27MT" ${m.t==='73/27MT'?'selected':''}>☀️ 73/27 M/T</option>
                     </select>
-                    <select id="ei-grp-${m.id}" style="padding:8px 10px; border:1px solid #ddd6fe; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:var(--surface2);">
+                    <select id="ei-grp-${m.id}" style="padding:8px 10px; border:1px solid #E0E1E6; border-radius:8px; font-size:0.88rem; outline:none; width:100%; box-sizing:border-box; background:var(--surface2);">
                         ${grupoOpts}
                     </select>
                     <div style="display:flex; gap:6px;">
@@ -2305,7 +2306,7 @@ function _generarManual() {
         document.getElementById('panel-date').innerText = d + " " + mesesArr[mIdx];
         equipo.forEach(e => {
             const { esLibreReal, data } = checkEstado(e.id, mIdx, d);
-            const html = `<div style="padding:8px; border-bottom:1px solid #f5f3ff; font-size:0.85rem;"><b style="color:var(--text)">${e.n}</b><br><small style="color:#64748b">${data ? data.texto : (esLibreReal?'Libre Base':'Trabaja Base')}</small></div>`;
+            const html = `<div style="padding:8px; border-bottom:1px solid #F0F0F3; font-size:0.85rem;"><b style="color:var(--text)">${e.n}</b><br><small style="color:#64748b">${data ? data.texto : (esLibreReal?'Libre Base':'Trabaja Base')}</small></div>`;
             if (esLibreReal) { htmlFree += html; countFree++; } else { htmlWork += html; countWork++; }
         });
         document.getElementById('p-free-list').innerHTML = `<b style="color:var(--danger)">LIBRAN (${countFree}):</b>` + htmlFree;
@@ -3050,21 +3051,21 @@ function _generarManual() {
         if (btnMT) {
             btnMT.style.background = turno==='80/20MT' ? 'var(--primary)' : 'var(--surface2)';
             btnMT.style.color = turno==='80/20MT' ? 'white' : 'var(--primary)';
-            btnMT.style.borderColor = turno==='80/20MT' ? 'var(--primary)' : '#ddd6fe';
+            btnMT.style.borderColor = turno==='80/20MT' ? 'var(--primary)' : '#E0E1E6';
         }
         const btn7327MT = document.getElementById('pg-tab-7327mt');
         if (btn7327MT) {
             btn7327MT.style.background = turno==='73/27MT' ? 'var(--primary)' : 'var(--surface2)';
             btn7327MT.style.color = turno==='73/27MT' ? 'white' : 'var(--primary)';
-            btn7327MT.style.borderColor = turno==='73/27MT' ? 'var(--primary)' : '#ddd6fe';
+            btn7327MT.style.borderColor = turno==='73/27MT' ? 'var(--primary)' : '#E0E1E6';
         }
         panelTurno = turno;
         document.getElementById('pg-tab-7327').style.background = turno === '73/27' ? 'var(--primary)' : 'white';
         document.getElementById('pg-tab-7327').style.color = turno === '73/27' ? 'white' : 'var(--primary)';
-        document.getElementById('pg-tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#ddd6fe';
+        document.getElementById('pg-tab-7327').style.borderColor = turno === '73/27' ? 'var(--primary)' : '#E0E1E6';
         document.getElementById('pg-tab-8020').style.background = turno === '80/20' ? 'var(--primary)' : 'white';
         document.getElementById('pg-tab-8020').style.color = turno === '80/20' ? 'white' : 'var(--primary)';
-        document.getElementById('pg-tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#ddd6fe';
+        document.getElementById('pg-tab-8020').style.borderColor = turno === '80/20' ? 'var(--primary)' : '#E0E1E6';
         renderPanelGrupos();
     }
 
@@ -3346,7 +3347,7 @@ function _generarManual() {
         return '<button data-path="' + path + '" onclick="_hmDel(this)" style="background:#fee2e2;color:#ef4444;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">\ud83d\uddd1\ufe0f</button>';
     }
     function _hmBtnEditar(key, cat) {
-        return '<button data-key="' + key + '" data-cat="' + cat + '" onclick="_hmEdit(this)" style="background:#ede9fe;color:#7c3aed;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">\u270f\ufe0f</button>';
+        return '<button data-key="' + key + '" data-cat="' + cat + '" onclick="_hmEdit(this)" style="background:#dbeafe;color:#1d4ed8;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;flex-shrink:0;">\u270f\ufe0f</button>';
     }
 
         function _hmCargar(cat) {
@@ -3467,7 +3468,7 @@ function _generarManual() {
                 return true;
             }).sort(function(a,b){ return (b[1].ts||0)-(a[1].ts||0); });
             if (!items.length) { cont.innerHTML='<div style="text-align:center;color:#64748b;padding:20px;">Sin entradas a\u00fan. Pulsa \u2795</div>'; return; }
-            var E = { generado:{borde:'#f472b6',bg:'#fdf2f8',color:'#be185d'}, pendiente:{borde:'#8b5cf6',bg:'#f5f3ff',color:'#6d28d9'}, propio:{borde:'#ef4444',bg:'#fff1f2',color:'#ef4444'} };
+            var E = { generado:{borde:'#f472b6',bg:'#fdf2f8',color:'#be185d'}, pendiente:{borde:'#2563eb',bg:'#F0F0F3',color:'#6d28d9'}, propio:{borde:'#ef4444',bg:'#fff1f2',color:'#ef4444'} };
             var e = E[cat] || E.generado;
             cont.innerHTML = (function() {
                 if (cat !== 'generado') return items.map(renderItemGen).join('');
@@ -3520,7 +3521,7 @@ function _generarManual() {
                     var res = h.resuelto;
                     var btnRes = res
                         ? '<span style="font-size:0.72rem;background:#f0fdf4;color:#166534;border-radius:8px;padding:4px 8px;font-weight:700;border:1px solid #22c55e;">\u2705 Resuelto</span>'
-                        : '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_hmRes(this)" style="background:#8b5cf6;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>';
+                        : '<button data-key="'+k+'" data-fecha="'+(h.fecha||'')+'" onclick="_hmRes(this)" style="background:#2563eb;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;">Resolver</button>';
                     var resInfo = res
                         ? '<div style="font-size:0.78rem;color:#166534;background:#f0fdf4;border-radius:8px;padding:6px 10px;border:1px solid #22c55e;margin-bottom:4px;">'+(res.accion==='libre'?'\u25fb Libras \u00b7 compensa el <b>'+res.diaComp+'</b> \u26aa':'\u26aa Trabajas')+'</div>'
                         : '';
@@ -3896,7 +3897,7 @@ function _generarManual() {
             });
             const totalCambiosMes = nComp + nPropio + nPend + nGen;
             let etiquetasCambios = '';
-            if (nComp > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#ede9fe; color:#7c3aed; padding:2px 5px; border-radius:6px; margin-left:2px;">🤝' + nComp + '</span>';
+            if (nComp > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#dbeafe; color:#1d4ed8; padding:2px 5px; border-radius:6px; margin-left:2px;">🤝' + nComp + '</span>';
             if (nPropio > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:6px; margin-left:2px;">🔄' + nPropio + '</span>';
             if (nPend > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#fef3c7; color:#b45309; padding:2px 5px; border-radius:6px; margin-left:2px;">⏳' + nPend + '</span>';
             if (nGen > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#fce7f3; color:#be185d; padding:2px 5px; border-radius:6px; margin-left:2px;">✨' + nGen + '</span>';
@@ -3951,7 +3952,7 @@ function _generarManual() {
 
         document.getElementById('stats-content').innerHTML =
             '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;">' +
-                '<div style="background:#f5f3ff; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:var(--primary);">' + totalLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">TOTAL LIBRES</div></div>' +
+                '<div style="background:#F0F0F3; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:var(--primary);">' + totalLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">TOTAL LIBRES</div></div>' +
                 '<div style="background:#f0fdf4; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:#16a34a;">' + finesLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">FIN DE SEMANA</div></div>' +
                 '<div style="background:#fef2f2; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:#dc2626;">' + festivosLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">FESTIVOS</div></div>' +
             '</div>' +
@@ -4007,7 +4008,7 @@ function _generarManual() {
             <button onclick="cerrarEstadisticas()" style="background:#fee2e2; color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-weight:700;">✕</button>
         </div>
         <div id="stats-content"></div>
-        <button onclick="cerrarEstadisticas()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;">Cerrar</button>
+        <button onclick="cerrarEstadisticas()" style="width:100%; padding:12px; background:#F0F0F3; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark); margin-top:10px;">Cerrar</button>
     </div>
 </div>
 
@@ -4030,7 +4031,7 @@ function _generarManual() {
                     <div id="badge-festivo" style="display:none; position:absolute; bottom:8px; right:10px; background:#3b82f6; color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
                     <div id="badge-l26" style="display:none; position:absolute; bottom:8px; left:10px; background:#ea580c; color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
                 </div>
-                <div onclick="abrirCategoria('pendiente')" style="border:2px solid var(--primary); background:#f5f3ff; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
+                <div onclick="abrirCategoria('pendiente')" style="border:2px solid var(--primary); background:#F0F0F3; border-radius:16px; padding:18px 14px; cursor:pointer; text-align:center; position:relative; -webkit-tap-highlight-color:transparent;">
                     <div style="font-size:1.8rem; margin-bottom:6px;">⏳</div>
                     <div style="font-weight:800; color:var(--primary-dark);">Pendiente</div>
                     <div style="font-size:0.72rem; color:var(--primary-dark); opacity:0.7; margin-top:3px;">Por resolver</div>
@@ -4067,14 +4068,14 @@ function _generarManual() {
                     <div id="badge-notas" style="display:none; position:absolute; top:8px; right:10px; background:#06b6d4; color:white; border-radius:20px; padding:1px 7px; font-size:0.7rem; font-weight:800;"></div>
                 </div>
             </div>
-            <button onclick="cerrarHistorial()" style="width:100%; padding:12px; background:#f5f3ff; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
+            <button onclick="cerrarHistorial()" style="width:100%; padding:12px; background:#F0F0F3; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
         </div>
 
         <!-- DETALLE CATEGORÍA -->
         <div id="hm-detalle" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <button onclick="hmVolverPortada()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
+                    <button onclick="hmVolverPortada()" style="background:#F0F0F3; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
                     <span id="hm-titulo" style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;"></span>
                 </div>
                 <button id="hm-btn-add" onclick="hmMostrarForm()" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:7px 13px; font-weight:700;">➕</button>
@@ -4118,7 +4119,7 @@ function _generarManual() {
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button onclick="hmGuardar()" style="flex:1; background:var(--primary); color:white; border:none; border-radius:8px; padding:8px; font-weight:700;">💾 Guardar</button>
-                    <button onclick="document.getElementById('hm-form-wrap').style.display='none'" style="flex:1; background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:8px; font-weight:700;">Cancelar</button>
+                    <button onclick="document.getElementById('hm-form-wrap').style.display='none'" style="flex:1; background:#F0F0F3; color:var(--primary-dark); border:none; border-radius:8px; padding:8px; font-weight:700;">Cancelar</button>
                 </div>
             </div>
             <div id="hm-items" style="max-height:55vh; overflow-y:auto; overscroll-behavior:contain; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch;"></div>
@@ -4127,24 +4128,24 @@ function _generarManual() {
         <!-- EDITAR ENTRADA -->
         <div id="hm-editar" style="display:none;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-                <button onclick="hmVolverDetalle()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
+                <button onclick="hmVolverDetalle()" style="background:#F0F0F3; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
                 <span id="hm-edit-titulo" style="font-weight:800; color:var(--primary-dark); font-size:0.95rem;"></span>
             </div>
             <input type="hidden" id="hm-edit-cat">
             <div id="hm-edit-body" style="margin-bottom:12px;"></div>
             <div style="display:flex; gap:8px;">
                 <button onclick="hmGuardarEdicion()" style="flex:1; background:var(--primary); color:white; border:none; border-radius:8px; padding:12px; font-weight:700;">💾 Guardar cambios</button>
-                <button onclick="hmVolverDetalle()" style="flex:1; background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:12px; font-weight:700;">Cancelar</button>
+                <button onclick="hmVolverDetalle()" style="flex:1; background:#F0F0F3; color:var(--primary-dark); border:none; border-radius:8px; padding:12px; font-weight:700;">Cancelar</button>
             </div>
         </div>
 
         <!-- RESOLVER PENDIENTE -->
         <div id="hm-resolver" style="display:none;">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
-                <button onclick="hmVolverDetalle()" style="background:#f5f3ff; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
+                <button onclick="hmVolverDetalle()" style="background:#F0F0F3; color:var(--primary-dark); border:none; border-radius:8px; padding:7px 12px; font-weight:800;">← Atrás</button>
                 <span style="font-weight:800; color:var(--primary-dark);">⏳ Resolver pendiente</span>
             </div>
-            <div id="hm-pend-info" style="background:#f5f3ff; border:1px solid var(--primary); border-radius:12px; padding:12px; margin-bottom:16px; font-size:0.9rem; color:var(--primary-dark); font-weight:700;"></div>
+            <div id="hm-pend-info" style="background:#F0F0F3; border:1px solid var(--primary); border-radius:12px; padding:12px; margin-bottom:16px; font-size:0.9rem; color:var(--primary-dark); font-weight:700;"></div>
             <p style="font-size:0.88rem; color:var(--text); margin:0 0 12px 0; font-weight:600;">¿Cómo se resuelve este día?</p>
             <div style="display:flex; gap:10px; margin-bottom:16px;">
                 <button onclick="hmResolver('libre')" style="width:100%; padding:16px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; line-height:1.5; cursor:pointer;">⬜ Librar<br><span style="font-size:0.72rem; font-weight:500;">Marcar en el calendario</span></button>
@@ -4331,7 +4332,7 @@ if ('serviceWorker' in navigator) {
             <button onclick="_cerrarDecidirGenerado(); _generarManual();" style="flex:1; padding:14px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; cursor:pointer; line-height:1.5;">🆕 Generar<br><span style="font-size:0.72rem; font-weight:500;">Crear uno nuevo</span></button>
             <button onclick="_cerrarDecidirGenerado(); _abrirModalGenerado();" style="flex:1; padding:14px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; cursor:pointer; line-height:1.5;">♻️ Usar<br><span style="font-size:0.72rem; font-weight:500;">Gastar uno guardado</span></button>
         </div>
-        <button onclick="_cerrarDecidirGenerado();" style="width:100%; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
+        <button onclick="_cerrarDecidirGenerado();" style="width:100%; padding:10px; background:#F0F0F3; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
     </div>
 </div>
 <div id="modal-generado-decision" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.75); z-index:7000; align-items:center; justify-content:center; padding:20px;">
@@ -4345,7 +4346,7 @@ if ('serviceWorker' in navigator) {
             <button onclick="_elegirDecision('librar')" style="flex:1; padding:14px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; cursor:pointer; line-height:1.5;">⬜ Librar<br><span style="font-size:0.72rem; font-weight:500;">Marcar en calendario</span></button>
             <button onclick="_elegirDecision('cobrar')" style="flex:1; padding:14px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; cursor:pointer; line-height:1.5;">💰 Cobrar<br><span style="font-size:0.72rem; font-weight:500;">Solicitar cobro</span></button>
         </div>
-        <button onclick="document.getElementById('modal-generado-decision').style.display='none';" style="width:100%; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
+        <button onclick="document.getElementById('modal-generado-decision').style.display='none';" style="width:100%; padding:10px; background:#F0F0F3; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
     </div>
 </div>
 
@@ -4361,7 +4362,7 @@ if ('serviceWorker' in navigator) {
             <input id="mgen-dia-libre" type="text" placeholder="Fecha (ej: 20/4/2026)" style="width:100%; padding:10px; border:1px solid var(--success); border-radius:8px; font-size:0.9rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:10px;">
             <button onclick="_confirmarGeneradoLibrar()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:10px; font-weight:800;">✅ Confirmar</button>
         </div>
-        <button onclick="document.getElementById('modal-generado').style.display='none';" style="width:100%; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
+        <button onclick="document.getElementById('modal-generado').style.display='none';" style="width:100%; padding:10px; background:#F0F0F3; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
     </div>
 </div>
 
@@ -4375,7 +4376,7 @@ if ('serviceWorker' in navigator) {
             <button onclick="_elegirTipoPropioD1('trabaja')" style="flex:1; padding:14px 8px; background:#f0fdf4; border:2px solid var(--success); border-radius:14px; font-weight:800; color:#166534; cursor:pointer; line-height:1.5;">⭕ Trabajas<br><span style="font-size:0.72rem; font-weight:500;">Día trabajado</span></button>
             <button onclick="_elegirTipoPropioD1('libra')" style="flex:1; padding:14px 8px; background:#fdf2f8; border:2px solid var(--pink); border-radius:14px; font-weight:800; color:#be185d; cursor:pointer; line-height:1.5;">⬜ Libras<br><span style="font-size:0.72rem; font-weight:500;">Día libre</span></button>
         </div>
-        <button onclick="document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none';" style="width:100%; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
+        <button onclick="document.getElementById('modal-tipo-propio').style.display='none'; modoSeleccionActivo=false; document.getElementById('selection-notice').style.display='none';" style="width:100%; padding:10px; background:#F0F0F3; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
     </div>
 </div>
 
@@ -4396,7 +4397,7 @@ if ('serviceWorker' in navigator) {
             <input id="mpt-dia-comp" type="text" placeholder="O escribe la fecha (ej: 15/3/2026)" style="width:100%; padding:10px; border:1px solid var(--success); border-radius:8px; font-size:0.9rem; background:var(--surface); color:var(--text); box-sizing:border-box; margin-bottom:10px;">
             <button onclick="_confirmarPendienteLibra()" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:10px; font-weight:800;">✅ Confirmar</button>
         </div>
-        <button onclick="document.getElementById('modal-pendiente-tipo').style.display='none';" style="width:100%; padding:10px; background:#f5f3ff; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
+        <button onclick="document.getElementById('modal-pendiente-tipo').style.display='none';" style="width:100%; padding:10px; background:#F0F0F3; border:none; border-radius:10px; color:var(--primary-dark); font-weight:700;">Cancelar</button>
     </div>
 </div>
 
@@ -4405,7 +4406,7 @@ if ('serviceWorker' in navigator) {
     // Poner año actual en títulos
     (function(){
         var y = new Date().getFullYear();
-        document.title = 'Planificación ' + y;
+        document.title = 'Libres Talleres EMT ' + y;
         var t = document.getElementById('anio-titulo');
         var s = document.getElementById('anio-splash');
         if(t) t.textContent = y;

@@ -1,11 +1,11 @@
 {
-  "name": "Turnos 2026",
-  "short_name": "Turnos2026",
-  "description": "Planificación de turnos del equipo 2026",
+  "name": "Libres Talleres EMT",
+  "short_name": "Libres Talleres",
+  "description": "Libres y turnos de talleres de la EMT",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#1e1b4b",
-  "theme_color": "#7c3aed",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
   "orientation": "portrait",
   "icons": [
     {
