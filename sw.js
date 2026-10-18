@@ -1,9 +1,11 @@
-const CACHE_NAME = 'turnos2026-v9';
+const CACHE_NAME = 'turnos2026-v10';
 const SHELL = [
     './',
     './index.html',
     './manifest.json',
-    './Bulldog.png',
+    './icon-192.png',
+    './icon-512.png',
+    './apple-touch-icon.png',
     './notif.mp3'
 ];
 
