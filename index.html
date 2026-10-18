@@ -312,6 +312,8 @@
                     <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
                     <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();window.open('https://miestacion.emtmadrid.es/','_blank','noopener');">🌐 Web EMT</div>
+                    <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();guardarCopia();">💾 Guardar copia de seguridad</div>
+                    <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();pedirCopia();">📥 Restaurar copia</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
                 </div>
             </div>
@@ -375,6 +377,20 @@
         </select>
         <button onclick="añadirMiembro()" style="width:100%; padding:13px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">Añadir al grupo</button>
         <button onclick="cerrarEditorGrupo()" style="width:100%; padding:12px; background:#F0F0F3; border:none; border-radius:12px; font-weight:bold; color:var(--primary-dark);">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modal restaurar copia de seguridad -->
+<div id="modal-copia" style="display:none; position:fixed; inset:0; background:rgba(30,27,75,0.7); z-index:7500; align-items:center; justify-content:center; padding:20px;">
+    <div class="modal-box">
+        <div style="font-size:2rem; margin-bottom:8px;">📥</div>
+        <h3 style="margin:0 0 10px 0; color:var(--primary-dark);">Restaurar copia</h3>
+        <div style="font-size:0.8rem; color:#475569; margin-bottom:10px;">Pega aquí el mensaje completo de tu copia (empieza por LIBRESEMT-COPIA).</div>
+        <textarea id="copia-texto" placeholder="Pega aquí la copia" style="width:100%; min-height:120px; padding:8px; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box;"></textarea>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+            <button onclick="cerrarCopia()" style="flex:1; padding:12px; background:#fee2e2; border:none; border-radius:10px; font-weight:bold; color:var(--danger);">Cancelar</button>
+            <button onclick="restaurarCopia()" style="flex:1; padding:12px; background:var(--success); color:white; border:none; border-radius:10px; font-weight:bold;">Restaurar</button>
+        </div>
     </div>
 </div>
 
@@ -1219,6 +1235,52 @@ function _checkFestivos() {
     function toggleMenu() {
         const m = document.getElementById('dropdown-menu');
         m.style.display = m.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // ===== COPIA DE SEGURIDAD =====
+    // Mismo formato que en las apps: se puede guardar en una y restaurar en otra.
+    async function guardarCopia() {
+        try {
+            const id = String(miID);
+            const r = await Promise.all([db.ref('cambios/' + id).once('value'), db.ref('historial2/' + id).once('value'), db.ref('notas/' + id).once('value')]);
+            const txt = 'LIBRESEMT-COPIA\n' + JSON.stringify({ v: 1, id: id, fecha: new Date().toISOString(), cambios: r[0].val() || {}, historial: r[1].val() || {}, notas: r[2].val() || {} });
+            const nombre = 'Copia de seguridad Libres EMT.txt';
+            if (navigator.share) {
+                try {
+                    const fl = new File([txt], nombre, { type: 'text/plain' });
+                    if (navigator.canShare && navigator.canShare({ files: [fl] })) { await navigator.share({ files: [fl], title: nombre }); return; }
+                    await navigator.share({ title: nombre, text: txt }); return;
+                } catch (e) { if (e && e.name === 'AbortError') return; }
+            }
+            const u = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
+            const a = document.createElement('a'); a.href = u; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(function() { URL.revokeObjectURL(u); }, 2000);
+        } catch (e) { alert('No se ha podido guardar la copia. Comprueba la conexión e inténtalo de nuevo.'); }
+    }
+    function pedirCopia() {
+        document.getElementById('copia-texto').value = '';
+        document.getElementById('modal-copia').style.display = 'flex';
+    }
+    function cerrarCopia() { document.getElementById('modal-copia').style.display = 'none'; }
+    async function restaurarCopia() {
+        try {
+            const bruto = String(document.getElementById('copia-texto').value || '');
+            if (bruto.length > 3000000) { alert('El texto es demasiado grande para ser una copia válida.'); return; }
+            const i = bruto.indexOf('{'), j = bruto.lastIndexOf('}');
+            if (i < 0 || j <= i) { alert('No encuentro una copia en ese texto. Pega el mensaje completo que guardaste.'); return; }
+            let cp; try { cp = JSON.parse(bruto.slice(i, j + 1)); } catch (e) { alert('El texto está incompleto o cortado. Pega la copia entera.'); return; }
+            const ok = function(x) { return x == null || (typeof x === 'object' && !Array.isArray(x)); };
+            if (!cp || cp.v !== 1 || !cp.id || !ok(cp.cambios) || !ok(cp.historial) || !ok(cp.notas)) { alert('Ese texto no es una copia válida de esta app.'); return; }
+            const id = String(miID);
+            if (String(cp.id) !== id) { alert('Esta copia es del empleado ' + cp.id + ' y tú has entrado como ' + id + '. No se puede restaurar.'); return; }
+            const nc = Object.keys(cp.cambios || {}).length, nh = Object.keys(cp.historial || {}).length, nn = Object.keys(cp.notas || {}).length;
+            const cuando = cp.fecha ? new Date(cp.fecha).toLocaleDateString('es-ES') : '';
+            if (!confirm('Copia del ' + cuando + ': ' + nc + ' cambios, ' + nh + ' registros de historial y ' + nn + ' notas.\n\nSustituirá lo que tienes ahora. ¿Continuar?')) return;
+            const up = {};
+            up['cambios/' + id] = nc ? cp.cambios : null; up['historial2/' + id] = nh ? cp.historial : null; up['notas/' + id] = nn ? cp.notas : null;
+            await db.ref().update(up);
+            cerrarCopia(); alert('Copia restaurada correctamente.');
+        } catch (e) { alert('No se ha podido restaurar. Inténtalo de nuevo con conexión.'); }
     }
 
     function closeMenu() {
