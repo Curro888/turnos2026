@@ -317,6 +317,7 @@
                     <div id="dmenu-historial" style="display:none; padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" onclick="closeMenu();abrirHistorial();">📋 Mis cambios</div>
                     <div id="dmenu-darkmode" style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();toggleDarkMode();">🌙 Modo oscuro</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();window.open('https://miestacion.emtmadrid.es/','_blank','noopener');">🌐 Web EMT</div>
+                    <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();bajarAvisoICS();">📅 Aviso del día 14 al calendario</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();guardarCopia();">💾 Guardar copia de seguridad</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--text); border-bottom:1px solid var(--border); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();pedirCopia();">📥 Restaurar copia</div>
                     <div style="padding:15px 18px; font-size:0.92rem; font-weight:700; color:var(--danger); cursor:pointer;" ontouchend="this.click()" onclick="closeMenu();cerrarSesion();">🚪 Cerrar sesión</div>
@@ -324,6 +325,7 @@
             </div>
         </div>
     </header>
+    <div id="av14" style="display:none;margin:10px 10px 0;padding:12px 14px;border-radius:14px;background:#fef3c7;border:2px solid #f59e0b;color:#78350f;font-size:0.9rem"></div>
     <div id="list-container" style="padding:10px"></div>
 </div>
 
@@ -3433,6 +3435,26 @@ function _generarManual() {
         const splash = document.getElementById('splash-screen');
         if (splash) splash.remove();
     }, 2000);
+
+    // Aviso del día 14: último día para pedir cobro de días (del 1 al 15 hasta las 23:59)
+    function pintarAviso14() {
+        const el = document.getElementById('av14'); if (!el) return;
+        const d = new Date().getDate();
+        if (d !== 14 && d !== 15) { el.style.display = 'none'; return; }
+        el.innerHTML = '<b>📅 Último día para pedir cobro de días</b><div style="margin-top:4px">' + (d === 14 ? 'Hoy es 14: tienes hasta mañana 15 a las 23:59.' : 'Hoy es 15: tienes hasta las 23:59.') + '</div>';
+        el.style.display = 'block';
+    }
+    pintarAviso14();
+    setInterval(pintarAviso14, 600000);
+    function bajarAvisoICS() {
+        const n = new Date(); let y = n.getFullYear(), m = n.getMonth();
+        if (n.getDate() > 14 || (n.getDate() === 14 && n.getHours() >= 22)) m++;
+        const f = new Date(y, m, 14), pad = x => String(x).padStart(2, '0'), ds = f.getFullYear() + pad(f.getMonth() + 1) + '14';
+        const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Libres EMT//ES','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:aviso-dia14-libres-emt@curro','DTSTAMP:' + ds + 'T000000Z','DTSTART:' + ds + 'T220000','DTEND:' + ds + 'T221500','RRULE:FREQ=MONTHLY;BYMONTHDAY=14','SUMMARY:📅 Último día para pedir cobro de días','DESCRIPTION:Hoy es 14: tienes hasta mañana 15 a las 23:59 para pedir días para cobrar.','BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:Último día para pedir cobro de días','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+        const u = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+        const a = document.createElement('a'); a.href = u; a.download = 'aviso-dia-14.ics'; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(u), 4000);
+    }
 
     function toggleDarkMode() {
         const dark = document.body.classList.toggle('dark-mode');
