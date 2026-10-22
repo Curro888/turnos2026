@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turnos2026-v14';
+const CACHE_NAME = 'turnos2026-v15';
 const SHELL = [
     './',
     './index.html',

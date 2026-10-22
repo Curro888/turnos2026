@@ -36,7 +36,10 @@
         .card-libra { border-left: 6px solid var(--danger); }
         .name-big { font-size: 1.1rem; font-weight: 800; color: var(--text); }
         .id-black { font-size: 0.9rem; color: #334155; font-weight: 900; margin-left: 8px; }
-        .info-tag { font-size: 0.75rem; color: var(--primary-dark); background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px; font-weight: 700; margin-right: 8px; border: 1px solid #7dd3fc; }
+        .info-tag { font-size: 0.75rem; color: var(--primary-dark); background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px; font-weight: 700; margin-right: 8px; border: 1px solid #7dd3fc; white-space: nowrap; flex-shrink: 0; }
+        .user-card > div:first-child { flex: 1; min-width: 0; flex-wrap: wrap; }
+        .user-card > div:last-child { flex-shrink: 0; }
+        .id-black { white-space: nowrap; }
         .d-cell { padding: 10px 0; font-size: 0.85rem; text-align: center; border-radius: 6px; cursor: pointer; margin: 2px; font-weight: 500; border: 1px solid transparent; }
         .d-cell.shape-circle { border-radius: 50% !important; width: 32px; height: 32px; line-height: 32px; padding: 0; margin: 2px auto; display: flex; align-items: center; justify-content: center; }
         .d-cell.shape-square { border-radius: 4px !important; }
@@ -2532,13 +2535,14 @@ function _generarManual() {
             cont.innerHTML += `
                         <div class="member-row" id="mrow-${m.id}" style="flex-direction:column; align-items:stretch; gap:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="display:flex; align-items:center;">
+                    <div style="display:flex; align-items:center; min-width:0; flex:1;">
                         ${avatarHTML(m.id, m.n, true, 'avatar-wrap-sm')}
-                    <div>
+                    <div style="min-width:0;">
                         <div class="member-name">${m.n} <span style="color:#94a3b8; font-weight:500">#${m.id}</span></div>
                         <div class="member-sub">Grupo ${m.g} · ${esNoche ? '🌙N · ' : ''}${m.t}</div>
                     </div>
-                    <div style="display:flex; gap:6px;">
+                    </div>
+                    <div style="display:flex; gap:6px; flex-shrink:0;">
                         <button style="background:#dbeafe; color:var(--primary-dark); border:none; border-radius:8px; padding:6px 10px; font-weight:700; font-size:0.75rem;" onclick="toggleEditMiembro('${m.id}','${m.n}','${m.id}','${m.t}','${m.g}')">✏️</button>
                         <button class="btn-danger-sm" onclick="eliminarMiembro('${m.id}')">✕</button>
                     </div>
