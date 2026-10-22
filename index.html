@@ -37,7 +37,9 @@
         .name-big { font-size: 1.1rem; font-weight: 800; color: var(--text); }
         .id-black { font-size: 0.9rem; color: #334155; font-weight: 900; margin-left: 8px; }
         .info-tag { font-size: 0.75rem; color: var(--primary-dark); background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 6px; font-weight: 700; margin-right: 8px; border: 1px solid #7dd3fc; white-space: nowrap; flex-shrink: 0; }
-        .user-card > div:first-child { flex: 1; min-width: 0; flex-wrap: wrap; }
+        .user-card > div:first-child { flex: 1; min-width: 0; }
+        .user-card .nom-col { min-width: 0; line-height: 1.15; }
+        .user-card .nom-col .id-black { display: block; margin-left: 0; font-size: 0.8rem; opacity: .85; }
         .user-card > div:last-child { flex-shrink: 0; }
         .id-black { white-space: nowrap; }
         .d-cell { padding: 10px 0; font-size: 0.85rem; text-align: center; border-radius: 6px; cursor: pointer; margin: 2px; font-weight: 500; border: 1px solid transparent; }
@@ -2690,7 +2692,7 @@ function _generarManual() {
             const puntito = conectado ? `<span style="display:inline-block; width:9px; height:9px; background:#22c55e; border-radius:50%; margin-left:6px; box-shadow:0 0 4px #22c55e;" title="En línea"></span>` : '';
             cont.innerHTML += `
             <div class="user-card ${esLibreReal ? 'card-libra' : 'card-trabaja'}">
-                <div style="display:flex; align-items:center;">${avatarHTML(e.id, e.n, e.id === miID)}<span class="name-big">${e.n}</span><span class="id-black">${e.id}</span>${puntito}</div>
+                <div style="display:flex; align-items:center;">${avatarHTML(e.id, e.n, e.id === miID)}<div class="nom-col"><span class="name-big">${e.n}</span>${puntito}<span class="id-black">${e.id}</span></div></div>
                 <div style="display:flex; align-items:center;">
                     <div class="info-tag">${tagLabel}</div>
                     <button class="btn-main" onclick="abrirCal('${e.id}')">Calendario</button>
