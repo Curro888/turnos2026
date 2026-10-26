@@ -4484,13 +4484,35 @@ function _generarManual() {
             '</div>' +
             '<div style="background:#faf5ff; border-radius:12px; padding:12px; text-align:center; margin-bottom:8px;"><div style="font-size:1.6rem; font-weight:900; color:var(--primary);">' + horasAnio.toFixed(1) + 'h</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">TOTAL AÑO HASTA HOY</div></div>';
 
+        // ===== DÍAS TRABAJADOS POR MES (laborables / sábados / domingos) =====
+        let filasTrab = '', tL = 0, tS = 0, tD = 0;
+        for (let m = 0; m <= 11; m++) {
+            const nDias = new Date(_anioActual, m + 1, 0).getDate();
+            let l = 0, sa = 0, dom = 0;
+            for (let d = 1; d <= nDias; d++) {
+                const est = checkEstado(miID, m, d);
+                if (est.esLibreReal) continue;
+                const dow = new Date(_anioActual, m, d).getDay();
+                if (dow === 0) dom++; else if (dow === 6) sa++; else l++;
+            }
+            tL += l; tS += sa; tD += dom;
+            filasTrab += '<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:7px 4px; font-weight:700; color:var(--primary-dark);">' + meses2[m] + '</td><td style="text-align:center;">' + l + '</td><td style="text-align:center;">' + sa + '</td><td style="text-align:center;">' + dom + '</td><td style="text-align:center; font-weight:800; color:var(--primary);">' + (l + sa + dom) + '</td></tr>';
+        }
+        const htmlTrab =
+            '<div style="font-weight:700; color:var(--primary-dark); margin:16px 0 8px; font-size:0.85rem;">📊 Días trabajados por mes (' + _anioActual + '):</div>' +
+            '<table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:var(--text); margin-bottom:8px;">' +
+                '<tr style="font-size:0.68rem; color:#94a3b8; font-weight:700; border-bottom:2px solid #E0E1E6;"><th style="text-align:left; padding:6px 4px;">MES</th><th>LABORAB.</th><th>SÁB.</th><th>DOM.</th><th>TOTAL</th></tr>' +
+                filasTrab +
+                '<tr style="font-weight:800; border-top:2px solid #E0E1E6;"><td style="padding:8px 4px;">Total año</td><td style="text-align:center;">' + tL + '</td><td style="text-align:center;">' + tS + '</td><td style="text-align:center;">' + tD + '</td><td style="text-align:center; color:var(--primary);">' + (tL + tS + tD) + '</td></tr>' +
+            '</table>';
+
         document.getElementById('stats-content').innerHTML =
             '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px;">' +
                 '<div style="background:#F0F0F3; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:var(--primary);">' + totalLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">TOTAL LIBRES</div></div>' +
                 '<div style="background:#f0fdf4; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:#16a34a;">' + finesLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">FIN DE SEMANA</div></div>' +
                 '<div style="background:#fef2f2; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:#dc2626;">' + festivosLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">FESTIVOS</div></div>' +
             '</div>' +
-            htmlHoras +
+            htmlHoras + htmlTrab +
             '<div style="font-weight:700; color:var(--primary-dark); margin-bottom:8px; font-size:0.85rem;">Detalle por mes:</div>' +
             '<div style="display:flex; justify-content:flex-end; gap:16px; margin-bottom:6px; font-size:0.7rem; color:#94a3b8; font-weight:600;"><span>LIBRES</span><span style="color:#16a34a">FDS</span><span style="color:#dc2626">FEST</span></div>' +
             htmlMeses;
