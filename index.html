@@ -4406,6 +4406,7 @@ function _generarManual() {
         }
         const festivos2026 = ['0_1','0_6','3_2','3_3','4_1','4_2','4_15','7_15','9_12','10_2','10_9','11_7','11_8','11_25'];
         const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        const meses3 = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
         let totalLibres = 0, finesLibres = 0, festivosLibres = 0, htmlMeses = '';
 
         diasLibresPorMes.forEach((dias, mIdx) => {
@@ -4435,15 +4436,11 @@ function _generarManual() {
             if (nPropio > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:6px; margin-left:2px;">🔄' + nPropio + '</span>';
             if (nPend > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#fef3c7; color:#b45309; padding:2px 5px; border-radius:6px; margin-left:2px;">⏳' + nPend + '</span>';
             if (nGen > 0) etiquetasCambios += '<span style="font-size:0.7rem; background:#fce7f3; color:#be185d; padding:2px 5px; border-radius:6px; margin-left:2px;">✨' + nGen + '</span>';
-            htmlMeses += '<div style="padding:8px 0; border-bottom:1px solid #E0E1E6;">' +
-                '<div style="display:grid; grid-template-columns:48px 1fr 1fr 1fr; align-items:center; text-align:center;">' +
-                '<span style="text-align:left; font-weight:800; color:var(--primary-dark);">' + meses[mIdx] + '</span>' +
-                '<span style="font-size:1.05rem; font-weight:800; color:var(--text);">' + dias.length + '</span>' +
-                '<span style="font-size:1.05rem; font-weight:800; color:#16a34a;">' + fdsEsMes + '</span>' +
-                '<span style="font-size:1.05rem; font-weight:800; color:#dc2626;">' + festEsMes + '</span>' +
-                '</div>' +
-                (totalCambiosMes > 0 ? '<div style="display:flex; flex-wrap:wrap; gap:3px; margin-top:4px; padding-left:48px;">' + etiquetasCambios + '</div>' : '') +
-                '</div>';
+            htmlMeses += '<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:7px 4px; font-weight:700; color:var(--primary-dark);">' + meses3[mIdx] + '</td>' +
+                '<td style="text-align:center; font-weight:800; color:var(--primary);">' + dias.length + '</td>' +
+                '<td style="text-align:center; color:#16a34a;">' + fdsEsMes + '</td>' +
+                '<td style="text-align:center; color:#dc2626;">' + festEsMes + '</td></tr>' +
+                (totalCambiosMes > 0 ? '<tr style="border-bottom:1px solid #f1f5f9;"><td colspan="4" style="padding:0 4px 6px;"><div style="display:flex; flex-wrap:wrap; gap:3px;">' + etiquetasCambios + '</div></td></tr>' : '');
         });
 
         // ===== CONTADOR DE HORAS =====
@@ -4513,9 +4510,12 @@ function _generarManual() {
                 '<div style="background:#fef2f2; border-radius:12px; padding:12px; text-align:center;"><div style="font-size:1.8rem; font-weight:900; color:#dc2626;">' + festivosLibres + '</div><div style="font-size:0.7rem; color:#64748b; font-weight:600;">FESTIVOS</div></div>' +
             '</div>' +
             htmlHoras + htmlTrab +
-            '<div style="font-weight:700; color:var(--primary-dark); margin-bottom:8px; font-size:0.85rem;">Detalle por mes:</div>' +
-            '<div style="display:grid; grid-template-columns:48px 1fr 1fr 1fr; text-align:center; margin-bottom:6px; font-size:0.72rem; font-weight:700; letter-spacing:.03em; color:#94a3b8; border-bottom:2px solid #E0E1E6; padding-bottom:6px;"><span></span><span>LIBRES</span><span style="color:#16a34a">FIN DE SEMANA</span><span style="color:#dc2626">FESTIVOS</span></div>' +
-            htmlMeses;
+            '<div style="font-weight:700; color:var(--primary-dark); margin:16px 0 8px; font-size:0.85rem;">🗓️ Detalle por mes (' + _anioActual + '):</div>' +
+            '<table style="width:100%; border-collapse:collapse; font-size:0.85rem; color:var(--text); margin-bottom:8px;">' +
+                '<tr style="font-size:0.68rem; color:#94a3b8; font-weight:700; border-bottom:2px solid #E0E1E6;"><th style="text-align:left; padding:6px 4px;">MES</th><th>LIBRES</th><th style="color:#16a34a;">FIN SEM.</th><th style="color:#dc2626;">FESTIVOS</th></tr>' +
+                htmlMeses +
+                '<tr style="font-weight:800; border-top:2px solid #E0E1E6;"><td style="padding:8px 4px;">Total año</td><td style="text-align:center; color:var(--primary);">' + totalLibres + '</td><td style="text-align:center; color:#16a34a;">' + finesLibres + '</td><td style="text-align:center; color:#dc2626;">' + festivosLibres + '</td></tr>' +
+            '</table>';
     }
 
     // ===== PANEL TODOS LOS GRUPOS FIN =====
