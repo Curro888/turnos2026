@@ -2624,10 +2624,22 @@ function _generarManual() {
     function cerrarEditorGrupo() { document.getElementById('edit-group-modal').style.display = 'none'; }
 
     // ===== LÓGICA DE CALENDARIO =====
+    // La app guarda los cambios con el año ("2026_7_15"); la web antigua los guardaba sin año ("7_15").
+    // Aquí se leen los dos formatos (el nuevo manda, igual que en la app).
+    function cambioDia(uid, mIdx, d) {
+        const c = dbCambios[uid];
+        if (!c) return null;
+        const nuevo = c[`${_anioActual}_${mIdx}_${d}`];
+        if (nuevo) return nuevo;
+        if (_anioActual === 2026) return c[`${mIdx}_${d}`] || null;
+        return null;
+    }
+    function claveCambioNueva(mIdx, d) { return `${_anioActual}_${mIdx}_${d}`; }
+
     function checkEstado(uid, mIdx, d) {
         const p = equipo.find(x => x.id === uid);
         if (!p) return { esLibreReal: false, data: null };
-        const data = (dbCambios[uid] && dbCambios[uid][`${mIdx}_${d}`]) ? dbCambios[uid][`${mIdx}_${d}`] : null;
+        const data = cambioDia(uid, mIdx, d);
         const tabla = (p.t === '80/20') ? gruposLibres8020 : (p.t === '80/20MT') ? gruposLibres8020MT : (p.t === '73/27MT') ? gruposLibres7327MT : gruposLibres;
         const libreBase = (tabla[p.g] && tabla[p.g][mIdx]?.includes(d));
         let esLibreReal = libreBase;
@@ -3288,7 +3300,7 @@ function _generarManual() {
 
     function borrarCambio() {
         const { d, mIdx, uid } = diaSeleccionado;
-        const data = dbCambios[uid]?.[`${mIdx}_${d}`];
+        const data = cambioDia(uid, mIdx, d);
         const esVacaciones = data?.texto === 'Vacaciones';
         const esCambioComp = (data?.clase === 'b-inter' || data?.clase === 'b-cambio-libre') && data?.linkedUid;
         const tieneNota = !!(dbNotas[uid]?.[`${mIdx}_${d}`]);
@@ -3306,6 +3318,7 @@ function _generarManual() {
             if (confirm(`Este día es un cambio con ${compNombre}.\n¿Borrar el cambio para los dos?`)) {
                 const updates = {
                     [`cambios/${uid}/${mIdx}_${d}`]: null,
+                    [`cambios/${uid}/${claveCambioNueva(mIdx, d)}`]: null,
                     [`cambios/${linkedUid}/${linkedKey}`]: null
                 };
                 // Buscar también el otro día vinculado del compañero
@@ -3331,13 +3344,13 @@ function _generarManual() {
             const totalDias = new Date(2026, mIdx + 1, 0).getDate();
             const diasVac = [];
             for (let i = 1; i <= totalDias; i++) {
-                if (dbCambios[uid]?.[`${mIdx}_${i}`]?.texto === 'Vacaciones') diasVac.push(i);
+                if (cambioDia(uid, mIdx, i)?.texto === 'Vacaciones') diasVac.push(i);
             }
             if (diasVac.length > 1) {
                 const opcion = confirm(`Hay ${diasVac.length} días de vacaciones en este mes.\n\nAceptar = todo el mes\nCancelar = solo este día`);
                 if (opcion) {
                     const updates = {};
-                    diasVac.forEach(i => updates[`cambios/${uid}/${mIdx}_${i}`] = null);
+                    diasVac.forEach(i => { updates[`cambios/${uid}/${mIdx}_${i}`] = null; updates[`cambios/${uid}/${claveCambioNueva(mIdx, i)}`] = null; });
                     db.ref().update(updates).then(function() {
                         cerrarDesplegables();
                         diasVac.forEach(function(dv) { _hmBorrarPorFecha(dv + '/' + (mIdx+1)); });
@@ -3347,7 +3360,7 @@ function _generarManual() {
             }
         }
 
-        db.ref(`cambios/${uid}/${mIdx}_${d}`).remove().then(function() {
+        db.ref().update({ [`cambios/${uid}/${mIdx}_${d}`]: null, [`cambios/${uid}/${claveCambioNueva(mIdx, d)}`]: null }).then(function() {
             if (tieneNota) db.ref(`notas/${uid}/${mIdx}_${d}`).remove();
             cerrarDesplegables();
             if (uid === miID) {
@@ -4421,7 +4434,7 @@ function _generarManual() {
             finesLibres += fdsEsMes;
             festivosLibres += festEsMes;
             const cambiosMiID = dbCambios[miID] || {};
-            const keysDelMes = Object.keys(cambiosMiID).filter(k => k.startsWith(mIdx + '_'));
+            const keysDelMes = Object.keys(cambiosMiID).filter(k => k.startsWith(mIdx + '_') || k.startsWith(_anioActual + '_' + mIdx + '_'));
             let nComp = 0, nPropio = 0, nPend = 0, nGen = 0;
             keysDelMes.forEach(k => {
                 const c = cambiosMiID[k];
