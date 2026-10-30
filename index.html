@@ -549,6 +549,10 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    // Ahorra conexiones de Firebase: se desconecta al cambiar de pestaña/minimizar y se reconecta al volver
+    document.addEventListener('visibilitychange', function() {
+        try { if (document.visibilityState === 'hidden') db.goOffline(); else db.goOnline(); } catch (e) {}
+    });
     firebase.auth().signInAnonymously().catch(function(e) { console.error('Login anónimo falló:', e); });
 
     // ===== ESTADO =====
