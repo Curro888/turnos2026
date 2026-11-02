@@ -1510,11 +1510,31 @@
         { fecha: '25/12', nombre: 'Natividad del Señor' }
     ];
 
+    // ===== FESTIVOS MADRID 2027 (Comunidad de Madrid + fiestas locales del municipio) =====
+    var _FESTIVOS_2027 = [
+        { fecha: '1/1',   nombre: 'Año Nuevo' },
+        { fecha: '6/1',   nombre: 'Epifanía del Señor' },
+        { fecha: '19/3',  nombre: 'San José' },
+        { fecha: '25/3',  nombre: 'Jueves Santo' },
+        { fecha: '26/3',  nombre: 'Viernes Santo' },
+        { fecha: '1/5',   nombre: 'Fiesta del Trabajo' },
+        { fecha: '15/5',  nombre: 'San Isidro Labrador' },
+        { fecha: '16/8',  nombre: 'Traslado de la Asunción de la Virgen' },
+        { fecha: '12/10', nombre: 'Fiesta Nacional de España' },
+        { fecha: '1/11',  nombre: 'Todos los Santos' },
+        { fecha: '9/11',  nombre: 'Nuestra Señora de la Almudena' },
+        { fecha: '6/12',  nombre: 'Día de la Constitución' },
+        { fecha: '8/12',  nombre: 'Inmaculada Concepción' },
+        { fecha: '25/12', nombre: 'Natividad del Señor' }
+    ];
+
     function _esFestivo(dia, mes, anio) {
-        // Solo marcar festivos en el año actual (2026)
-        // Para años futuros los festivos se añadirán cuando se conozcan
-        if (anio && anio !== _ANIO_BASE) return false;
-        return _FESTIVOS_2026.some(function(f) {
+        // 2026 (año base) y 2027 tienen festivos cargados; otros años no se marcan
+        var lista = null;
+        if (anio === 2027) lista = _FESTIVOS_2027;
+        else if (!anio || anio === _ANIO_BASE) lista = _FESTIVOS_2026;
+        if (!lista) return false;
+        return lista.some(function(f) {
             var parts = f.fecha.split('/');
             return parseInt(parts[0]) === dia && parseInt(parts[1]) === mes;
         });
