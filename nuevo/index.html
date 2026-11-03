@@ -168,7 +168,29 @@ let hbTimer=null;
 let SEL=null,PEND=null,vistas=new Set(),vigPend=null;
 let hist={},notas={},HV=null;
 
-function guardarSesion(){LS.set('sesion2026',S)}
+function setCookie(n,v,d){try{const x=new Date();x.setTime(x.getTime()+d*864e5);document.cookie=n+'='+encodeURIComponent(v)+';expires='+x.toUTCString()+';path=/;SameSite=Lax'}catch(e){}}
+function getCookie(n){try{const v=document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)');return v?decodeURIComponent(v.pop()):null}catch(e){return null}}
+function abrirIDB(){return new Promise((res,rej)=>{try{const q=indexedDB.open('turnos2026',1);q.onupgradeneeded=e=>e.target.result.createObjectStore('sesion',{keyPath:'k'});q.onsuccess=e=>res(e.target.result);q.onerror=()=>rej()}catch(e){rej()}})}
+function idbSet(k,v){return abrirIDB().then(d=>new Promise((res,rej)=>{const tx=d.transaction('sesion','readwrite');tx.objectStore('sesion').put({k:k,v:v});tx.oncomplete=res;tx.onerror=rej}))}
+function idbGet(k){return abrirIDB().then(d=>new Promise(res=>{const q=d.transaction('sesion','readonly').objectStore('sesion').get(k);q.onsuccess=()=>res(q.result?q.result.v:null);q.onerror=()=>res(null)}))}
+function guardarSesion(){
+  LS.set('sesion2026',S);
+  if(!S)return;
+  idbSet('sesion2026',JSON.stringify(S)).catch(()=>{});
+  setCookie('uid2026',S.miID,365);
+  try{db.ref('sesiones/'+S.miID).set(S).catch(()=>{})}catch(e){}
+}
+function borrarSesionGuardada(){
+  const id=S&&S.miID;
+  try{localStorage.removeItem('sesion2026')}catch(e){}idbSet('sesion2026','').catch(()=>{});
+  try{document.cookie='uid2026=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'}catch(e){}
+  if(id){try{db.ref('sesiones/'+id).remove().catch(()=>{})}catch(e){}}
+}
+async function recuperarSesion(){
+  try{const raw=await idbGet('sesion2026');if(raw){const s=JSON.parse(raw);if(s&&s.miID&&s.miGrupoSesion)return s}}catch(e){}
+  try{const id=getCookie('uid2026');if(id){await authP;const s=(await db.ref('sesiones/'+id).once('value')).val();if(s&&s.miID&&s.miGrupoSesion)return s}}catch(e){}
+  return null;
+}
 function modal(html){$('modalc').innerHTML=html;$('modal').classList.remove('hide')}
 function cerrarModal(){$('modal').classList.add('hide');$('modalc').innerHTML=''}
 $('modal').addEventListener('click',e=>{if(e.target.id==='modal')cerrarModal()});
@@ -1024,7 +1046,7 @@ async function eliminarGrupo(){
   try{
     await db.ref('grupos/'+c).remove();await db.ref('chats/'+c).remove();await db.ref('chatLeidos/'+c).remove();await db.ref('presencia/'+c).remove();
     LS.set('misGrupos2026',(LS.get('misGrupos2026')||[]).filter(g=>g.codigo!==c));
-    cerrarModal();limpiar();LS.del('sesion2026');S=null;LF={modo:null,P:null,sis:'C'};alert('✅ Grupo eliminado.');pantallaLogin();
+    cerrarModal();limpiar();borrarSesionGuardada();S=null;LF={modo:null,P:null,sis:'C'};alert('✅ Grupo eliminado.');pantallaLogin();
   }catch(e){alert('No se pudo borrar el grupo: '+(e.code||e.message||e))}
 }
 function editarPerfil(){
@@ -1088,7 +1110,7 @@ document.addEventListener('click',e=>{
     else if(aj.dataset.aj==='copiaok')restaurarCopia();
     else if(aj.dataset.aj==='ics')bajarAvisoICS();
     else if(aj.dataset.aj==='dark'){document.body.classList.toggle('dark');LS.set('darkMode2026',document.body.classList.contains('dark')?1:0);vAj()}
-    else if(aj.dataset.aj==='salir'&&confirm('¿Cerrar sesión en este iPhone?')){limpiar();LS.del('sesion2026');S=null;LF={modo:null,P:null,sis:'C'};pantallaLogin()}
+    else if(aj.dataset.aj==='salir'&&confirm('¿Cerrar sesión en este iPhone?')){limpiar();borrarSesionGuardada();S=null;LF={modo:null,P:null,sis:'C'};pantallaLogin()}
   }
 });
 
@@ -1154,9 +1176,16 @@ window.addEventListener('popstate',()=>{if(volverAtras())history.pushState({lc:1
 
 // ===== ARRANQUE =====
 (function(){const p=LS.get('darkMode2026');const osc=p===null?(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches):!!p;if(osc)document.body.classList.add('dark')})();
+function arrancar(){
+  if(S&&S.miID&&!S.miPerfil&&S.miGrupoSesion)S.miPerfil={g:String(S.miGrupoSesion),t:String(S.miTipoSesion||''),c:false};
+  if(S&&S.miID&&S.miGrupoSesion){iniciarApp();return true}
+  S=null;return false;
+}
 S=LS.get('sesion2026');
-if(S&&S.miID&&!S.miPerfil&&S.miGrupoSesion)S.miPerfil={g:String(S.miGrupoSesion),t:String(S.miTipoSesion||''),c:false};
-if(S&&S.miID&&S.miGrupoSesion)iniciarApp();else{S=null;pantallaLogin()}
+if(!arrancar()){
+  pantallaLogin();
+  recuperarSesion().then(r=>{if(r&&!S){S=r;LS.set('sesion2026',S);setCookie('uid2026',S.miID,365);arrancar()}});
+}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
