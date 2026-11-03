@@ -1,7 +1,8 @@
-const CACHE_NAME = 'turnos2026-v22';
+const CACHE_NAME = 'turnos2026-v23';
 const SHELL = [
     './',
     './index.html',
+    './datos.js',
     './manifest.json',
     './icon-192.png',
     './icon-512.png',
