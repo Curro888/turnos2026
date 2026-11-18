@@ -222,7 +222,10 @@
         <!-- PASO 1 (individual): ID + contraseña -->
         <div id="step-individual" class="login-step">
             <p style="font-size:0.8rem; color:#64748b; margin:0 0 10px 0;">Acceso individual</p>
+            <input type="text" id="indNombre" placeholder="Tu nombre" class="input-app" style="font-size:1rem; margin:5px 0;">
             <input type="number" id="userID" placeholder="ID Empleado" class="input-app" style="font-size:1rem; margin:5px 0;">
+            <select id="indTipo" class="input-app" style="font-size:1rem; margin:5px 0;"></select>
+            <select id="indGrupo" class="input-app" style="font-size:1rem; margin:5px 0;"></select>
             <input type="password" id="userPass" placeholder="Contraseña" class="input-app" style="font-size:1rem; margin:5px 0 10px 0;">
             <button onclick="validarAcceso()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:10px;">ENTRAR</button>
             <div onclick="volverStep('step-0')" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">← Volver</div>
@@ -1175,13 +1178,28 @@
     function volverStep(stepId) { mostrarStep(stepId); }
 
     // ===== ACCESO INDIVIDUAL =====
+    // Modo individual: la lista contiene solo a la propia persona, con los datos que ella ha escrito
+    function prepararIndividual(id, nombre, grupo, tipo) {
+        equipoBase.length = 0;
+        equipoBase.push({ n: nombre, id: id, g: String(grupo), t: tipo });
+    }
+    ['Tipo', 'Grupo'].forEach(function(k) {
+        var o = document.getElementById('nuevoMi' + k), d = document.getElementById('ind' + k);
+        if (o && d) d.innerHTML = o.innerHTML;
+    });
+
     function validarAcceso() {
         const id = document.getElementById('userID').value.trim();
         const pass = document.getElementById('userPass').value.trim();
-        const p = equipoBase.find(x => x.id === id);
-        if (!p) { alert("ID de empleado no encontrado"); return; }
+        const nombre = document.getElementById('indNombre').value.trim();
+        const tipo = document.getElementById('indTipo').value;
+        const grupo = document.getElementById('indGrupo').value;
+        if (!nombre || !id) { alert("Escribe tu nombre y tu número de empleado"); return; }
+        if (!tipo || !grupo) { alert("Elige tu turno y tu grupo de libres"); return; }
         if (!pass) { alert("Introduce una contraseña"); return; }
-        miID = id; miNombreCompleto = p.n; modoGrupo = false; equipo = equipoBase;
+        miTipoSesion = tipo; miGrupoSesion = grupo;
+        prepararIndividual(id, nombre, grupo, tipo);
+        miID = id; miNombreCompleto = nombre; modoGrupo = false; equipo = equipoBase;
         guardarSesion();
         iniciarApp();
     }
@@ -1434,6 +1452,7 @@
         if (modoGrupo && grupoActual) {
             cargarMiembrosGrupo(grupoActual);
         } else {
+            prepararIndividual(miID, miNombreCompleto, miGrupoSesion, miTipoSesion);
             equipo = equipoBase;
             iniciarApp();
         }
